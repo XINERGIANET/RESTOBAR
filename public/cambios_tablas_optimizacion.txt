@@ -1,0 +1,37 @@
+REPORTE DE CAMBIOS - OPTIMIZACIÓN DE INTERFAZ Y TABLAS RESPONSIVAS
+
+FECHA: 06/02/2026
+
+I. REFINAMIENTOS DE DISEÑO (HEADER Y SIDEBAR)
+-----------------------------------------------
+1. Header: Se eliminó el carácter "/" que precedía al nombre de la sucursal (ej. XPANDECORP).
+2. Icono Menú: Se cambió el color del icono de hamburguesa a blanco para mejorar su visibilidad sobre el fondo azul corporativo.
+3. Navegación Móvil:
+   - Los iconos de acceso rápido se mueven automáticamente al sidebar en dispositivos móviles/tablets para limpiar el menú desplegable del header.
+   - Configuración "Dual Placement": En PC permanecen en el header, en móviles se integran al menú lateral.
+4. Mejoras de Scroll en Sidebar: Se corrigió la visibilidad de los elementos finales del menú (como "Caja chica") en móviles mediante el uso de top-0/bottom-0 y un espaciador físico de seguridad al final de la lista.
+
+II. ESTANDARIZACIÓN DE TABLAS (MOBILE STICKY)
+-----------------------------------------------
+Se implementó un diseño de "columna fija" (sticky) para todas las tablas principales del sistema, permitiendo que la identificación del registro permanezca visible mientras se desliza el resto de la información lateralmente en móviles.
+
+Tablas Actualizadas:
+1. Empresas: Columna "Razón social" fija.
+2. Personal: Botón de expansión y columna "Nombres" fijas (Nombres movido a 2da posición para mejor flujo).
+3. Módulos: Columna "Orden" fija.
+4. Perfiles: Columna "Nombre" fija.
+5. Tipos de Documento: Columna "Nombre" fija.
+6. Vistas: Columna "ID" fija.
+7. Roles: Columna "Nombre" fija.
+8. Tasas de Impuesto: Columna "Código" fija.
+
+III. OPTIMIZACIÓN AGRESIVA DE ESPACIO (WIDTH OPTIMIZATION)
+-----------------------------------------------------------
+Para maximizar el área de visualización en pantallas pequeñas, se aplicaron los siguientes ajustes a todas las columnas fijas:
+1. Reducción de Padding: Se redujo el espacio interno (padding lateral) de px-5 a px-3 en las celdas fijas.
+2. Limitación de Ancho (Max-Width): Se establecieron límites estrictos de ancho (entre 64px y 128px según el contenido) para las columnas fijas.
+3. Truncado de Texto: El contenido de la columna fija se corta automáticamente con puntos suspensivos (truncate) si excede el ancho permitido, evitando que "empuje" al resto de la tabla.
+4. Sombras y Estados: Se añadieron sombras laterales suaves y fondos sólidos para diferenciar claramente la parte fija de la parte móvil de la tabla.
+
+-----------------------------------------------------------
+Cambios realizados por Antigravity AI.
