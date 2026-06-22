@@ -1,0 +1,38 @@
+REGISTRO DE CAMBIOS DE DISEÑO - RESTAURANTE
+==========================================
+
+FECHA: 2026-02-05
+HORA: 15:16:04
+
+ARCHIVOS MODIFICADOS:
+--------------------
+- resources/css/app.css: Refinamiento de utilidades menu-item y menu-dropdown-item para mayor elegancia y soporte de iconos.
+- resources/views/layouts/sidebar.blade.php: Ajustes de espaciado, alineación y visualización del sidebar, incluyendo iconos en submenús.
+- app/Helpers/MenuHelper.php: Actualización para incluir iconos en la estructura de los submenús.
+- public/cambios_diseño.txt: Actualización del registro de cambios.
+
+DESCRIPCIÓN DE CAMBIOS:
+-----------------------
+1. Mejora en la tipografía y peso de fuente en los elementos del menú.
+2. Adición de indicadores visuales sutiles para el estado activo.
+3. Ajuste de paddings y gaps para un diseño más aireado y profesional.
+4. Suavizado de transiciones y efectos hover en light/dark mode.
+5. Integración de iconos en los elementos de submenú para una navegación más visual.
+6. Diferenciación de iconos para Vistas, Roles y Módulos, asignando cada uno un SVG único y elegante.
+7. Implementación de preloader personalizado con el logo de Xinergia y animación de carga superior.
+8. Optimización de la vista de Empresas para dispositivos móviles:
+   - recursos/views/companies/index.blade.php: Tabla responsiva con desplazamiento y filtros apilables.
+   - recursos/views/companies/_form.blade.php: Formulario adaptado a cuadrícula responsiva.
+9. Refinamiento estético del encabezado (Header):
+   - Cambio de fondo blanco a azul de los gráficos (#465fff) para total armonía visual.
+   - Ajuste de contraste para textos, iconos y logo móvil a tonos blancos/claros.
+10. Optimización extrema de la barra de filtros:
+   - Reducción del selector "Por página" al mínimo funcional (w-20).
+   - El campo de búsqueda ahora tiene prioridad máxima (flex-[3]) para ocupar la mayor parte de la barra.
+   - Ajuste de padding en botones para maximizar el área de búsqueda.
+12. Mejora del módulo de Roles:
+   - Formulario con iconos sutiles (Escudo e Información) para mejor escaneo visual.
+   - Aplicación de la barra de filtros optimizada (Buscador expandible y selector compacto).
+   - Estandarización de botones a la paleta corporativa, eliminando colores estridentes.
+13. Estandarización de encabezados de tablas:
+   - Se ha aplicado el azul corporativo (#465fff) con texto blanco a los encabezados de todas las tablas principales (Roles, Empresas, Sucursales, Ventas, Productos, Categorías, Vistas, Módulos y Opciones de Menú), mejorando el contraste y la organización visual.
