@@ -5,7 +5,7 @@
 @import 'tailwindcss';
 
 .turbo-progress-bar {
-  background-color: #FF4622 !important;
+  background-color: #124731 !important;
 }
 
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';

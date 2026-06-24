@@ -94,7 +94,7 @@
                             <div class="flex gap-2 shrink-0 items-end">
                                 <x-ui.button size="md" variant="primary" type="submit"
                                     class="h-11 px-5 shadow-sm hover:shadow-md transition-all duration-200 active:scale-95"
-                                    style="background-color: #C43B25; border-color: #C43B25;">
+                                    style="background-color: #0A2E1F; border-color: #0A2E1F;">
                                     <i class="ri-search-line text-gray-100"></i>
                                     <span class="font-medium text-gray-100">Buscar</span>
                                 </x-ui.button>
@@ -198,7 +198,7 @@
     <div x-data="{ openRow: null }"
         class="table-responsive mt-4 rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03]">
         <table class="w-full table-fixed text-xs">
-            <thead class="bg-[#FF4622] text-white">
+            <thead class="bg-[#124731] text-white">
                 <tr>
                     <th class="w-14 px-2 py-2 text-center first:rounded-tl-xl font-bold uppercase tracking-wider">
                         #
@@ -250,7 +250,7 @@
                             <div class="flex items-center justify-center gap-1">
                                 <button type="button"
                                     @click="openRow === {{ $order->id }} ? openRow = null : openRow = {{ $order->id }}"
-                                    class="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#FF4622] text-white transition hover:opacity-90">
+                                    class="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#124731] text-white transition hover:opacity-90">
                                     <i class="ri-add-line text-xs" x-show="openRow !== {{ $order->id }}"></i>
                                     <i class="ri-subtract-line text-xs" x-show="openRow === {{ $order->id }}"></i>
                                 </button>
@@ -340,7 +340,7 @@
                                 class="rounded-xl border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-900 overflow-hidden shadow-sm">
                                 <div
                                     class="px-4 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/80 flex items-center gap-2">
-                                    <i class="ri-file-list-3-line text-[#FF4622]"></i>
+                                    <i class="ri-file-list-3-line text-[#124731]"></i>
                                     <h4 class="text-xs font-bold text-gray-700 dark:text-gray-200">Detalle del pedido
                                         #{{ $order->movement?->number ?? $order->id }}</h4>
                                 </div>
@@ -433,7 +433,7 @@
                                 <p class="text-gray-500">Crea el primer pedido desde Salones de pedidos.</p>
                                 <x-ui.link-button size="sm" variant="primary"
                                     href="{{ route('orders.index', $viewId ? ['view_id' => $viewId] : []) }}"
-                                    style="background-color: #FF4622; border-color: #FF4622;">
+                                    style="background-color: #124731; border-color: #124731;">
                                     <i class="ri-add-line"></i>
                                     <span>Ir a pedidos</span>
                                 </x-ui.link-button>

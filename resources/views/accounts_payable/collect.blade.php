@@ -66,7 +66,7 @@
 
                         <div class="border-t border-sky-200/80 pt-4 dark:border-gray-600">
                             <p class="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">Saldo pendiente</p>
-                            <p class="text-xl font-bold leading-normal tabular-nums text-[#C43B25] dark:text-orange-300">S/
+                            <p class="text-xl font-bold leading-normal tabular-nums text-[#0A2E1F] dark:text-orange-300">S/
                                 {{ number_format($pending, 2) }}</p>
                         </div>
                     </div>
@@ -79,7 +79,7 @@
                             <div class="max-h-[min(480px,60vh)] w-full min-w-0 overflow-x-auto overflow-y-auto">
                                 <table class="w-full min-w-[280px] text-left text-sm">
                                     <thead class="sticky top-0 z-10 text-xs uppercase tracking-wide"
-                                        style="background-color: #FF4622; color: #FFFFFF;">
+                                        style="background-color: #124731; color: #FFFFFF;">
                                         <tr>
                                             <th class="px-3 py-2.5 font-semibold">Producto</th>
                                             <th class="w-20 px-3 py-2.5 text-right font-semibold">Cant.</th>
@@ -245,7 +245,7 @@
                                 style="background-color: #374151;" class="dark:bg-gray-600">
                                 Usar saldo total
                             </x-ui.button>
-                            <x-ui.button size="md" variant="primary" type="submit" style="background-color: #C43B25;">
+                            <x-ui.button size="md" variant="primary" type="submit" style="background-color: #0A2E1F;">
                                 Registrar abono
                             </x-ui.button>
                             <x-ui.link-button size="md" variant="outline"

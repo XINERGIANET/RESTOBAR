@@ -11,7 +11,7 @@
     <a href="https://xpandecorp.com/" 
        target="_blank" 
        rel="nofollow"
-       class="group relative flex w-full items-center justify-center gap-2 rounded-xl bg-[#FF4622] px-4 py-3 text-sm font-semibold text-white shadow-md shadow-brand-500/20 transition-all duration-300 hover:bg-[#C43B25] hover:shadow-lg hover:shadow-brand-500/40 focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900">
+       class="group relative flex w-full items-center justify-center gap-2 rounded-xl bg-[#124731] px-4 py-3 text-sm font-semibold text-white shadow-md shadow-brand-500/20 transition-all duration-300 hover:bg-[#0A2E1F] hover:shadow-lg hover:shadow-brand-500/40 focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900">
         
         <span>Ir a Xinergia</span>
         

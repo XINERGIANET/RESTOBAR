@@ -9,7 +9,7 @@
 <div class="mt-6 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-900">
 
     <h3 class="text-lg font-bold text-gray-800 dark:text-white flex items-center gap-2 mb-6">
-        <span class="flex h-9 w-9 items-center justify-center rounded-xl bg-[#FF4622]/10 text-[#FF4622]">
+        <span class="flex h-9 w-9 items-center justify-center rounded-xl bg-[#124731]/10 text-[#124731]">
             <i class="ri-line-chart-line text-xl"></i>
         </span>
         Tendencia Mensual

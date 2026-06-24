@@ -13,7 +13,7 @@
     <div class="p-6 sm:p-8" data-back-url="{{ e($backUrl) }}" x-data="{ open: true }" x-init="$watch('open', value => { if (!value) window.location.href = $el.dataset.backUrl })" @keydown.escape.window="window.location.href = $el.dataset.backUrl">
         <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-gray-100 pb-4 dark:border-gray-800">
             <div class="flex items-start gap-4">
-                <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#FF4622]/10 text-[#C43B25] dark:bg-[#FF4622]/20">
+                <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#124731]/10 text-[#0A2E1F] dark:bg-[#124731]/20">
                     <i class="ri-eye-line text-2xl"></i>
                 </div>
                 <div>
@@ -31,7 +31,7 @@
             {{-- Información del movimiento --}}
             <div>
                 <h3 class="text-base font-medium text-gray-800 dark:text-white mb-4 flex items-center gap-2">
-                    <i class="ri-file-list-3-line text-[#FF4622]"></i> Información del Movimiento
+                    <i class="ri-file-list-3-line text-[#124731]"></i> Información del Movimiento
                 </h3>
                 <div class="bg-gray-50 rounded-xl p-5 border border-gray-100 dark:bg-white/[0.02] dark:border-gray-800 space-y-5">
                     <div class="col-span-full">
@@ -68,7 +68,7 @@
             {{-- Desglose de pagos (solo lectura) --}}
             <div>
                 <h3 class="text-base font-medium text-gray-800 dark:text-white mb-4 flex items-center gap-2">
-                    <i class="ri-wallet-3-line text-[#FF4622]"></i> Desglose de Pagos
+                    <i class="ri-wallet-3-line text-[#124731]"></i> Desglose de Pagos
                 </h3>
 
                 <div class="space-y-4">
@@ -106,8 +106,8 @@
                     @endforelse
                 </div>
 
-                <div class="w-fit ml-auto mt-4 flex items-center gap-3 bg-[#FF4622]/10 dark:bg-brand-900/20 px-5 py-2 rounded-lg border border-brand-100 dark:border-brand-800 shadow-sm">
-                    <span class="text-xs text-[#C43B25] uppercase font-bold tracking-wider">Total</span>
+                <div class="w-fit ml-auto mt-4 flex items-center gap-3 bg-[#124731]/10 dark:bg-brand-900/20 px-5 py-2 rounded-lg border border-brand-100 dark:border-brand-800 shadow-sm">
+                    <span class="text-xs text-[#0A2E1F] uppercase font-bold tracking-wider">Total</span>
                     <span class="text-xl font-black text-gray-900 dark:text-white tracking-tight">
                         S/. {{ number_format($totalAmount, 2) }}
                     </span>
@@ -115,7 +115,7 @@
             </div>
 
             <div class="flex gap-3 pt-6 border-t border-gray-100 dark:border-gray-800">
-                <a href="{{ $backUrl }}" class="inline-flex items-center justify-center font-medium gap-2 rounded-xl transition px-5 py-3.5 text-sm bg-[#FF4622] text-white shadow-theme-xs hover:bg-[#C43B25] flex-1 sm:flex-none">
+                <a href="{{ $backUrl }}" class="inline-flex items-center justify-center font-medium gap-2 rounded-xl transition px-5 py-3.5 text-sm bg-[#124731] text-white shadow-theme-xs hover:bg-[#0A2E1F] flex-1 sm:flex-none">
                     <i class="ri-arrow-left-line mr-2"></i> Volver
                 </a>
             </div>

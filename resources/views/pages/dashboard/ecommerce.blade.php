@@ -42,7 +42,7 @@
                 </div>
 
                 <button type="submit"
-                    class="h-10 rounded-lg bg-[#FF4622] px-5 text-sm font-semibold text-white shadow hover:bg-[#e03d1c] transition-colors flex items-center gap-1.5">
+                    class="h-10 rounded-lg bg-[#124731] px-5 text-sm font-semibold text-white shadow hover:bg-[#e03d1c] transition-colors flex items-center gap-1.5">
                     <i class="ri-search-line"></i> Buscar
                 </button>
             </form>

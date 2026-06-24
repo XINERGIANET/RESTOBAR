@@ -93,13 +93,13 @@
                             {!! $SearchIcon !!}
                         </span>
                         <input type="text" name="search" value="{{ request('search') }}" placeholder="Buscar caja..."
-                            class="dark:bg-dark-900 shadow-theme-xs focus:border-[#FF4622] focus:ring-[#FF4622]/10 dark:focus:border-[#FF4622] h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 pl-10 text-sm text-gray-800 placeholder:text-gray-400 focus:ring-3 focus:outline-hidden dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30" />
+                            class="dark:bg-dark-900 shadow-theme-xs focus:border-[#124731] focus:ring-[#124731]/10 dark:focus:border-[#124731] h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 pl-10 text-sm text-gray-800 placeholder:text-gray-400 focus:ring-3 focus:outline-hidden dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30" />
                     </div>
 
                     <div class="flex flex-wrap gap-2">
                         <x-ui.button size="md" variant="primary" type="submit"
                             class="flex-1 sm:flex-none h-11 px-4 shadow-sm hover:shadow-md transition-all duration-200 active:scale-95"
-                            style="background-color: #C43B25; border-color: #C43B25;">
+                            style="background-color: #0A2E1F; border-color: #0A2E1F;">
                             <i class="ri-search-line text-gray-100"></i>
                             <span class="font-medium text-gray-100">Buscar</span>
                         </x-ui.button>
@@ -156,7 +156,7 @@
             <div
                 class="table-responsive mt-4 rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03]">
                 <table class="w-full min-w-max">
-                    <thead style="background-color: #FF4622; color: #FFFFFF;">
+                    <thead style="background-color: #124731; color: #FFFFFF;">
                         <tr>
                             <th class="px-5 py-3 text-left sm:px-6 sticky-left-header">
                                 <p class="font-medium text-theme-xs">ID</p>
@@ -272,7 +272,7 @@
                         <p class="mt-1 text-sm text-gray-500">Ingresa la informacion principal de la caja.</p>
                     </div>
                     <div
-                        class="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#FF4622]/10 text-[#FF4622] dark:bg-[#FF4622]/20">
+                        class="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#124731]/10 text-[#124731] dark:bg-[#124731]/20">
                         <i class="ri-eye-line"></i>
                     </div>
                 </div>

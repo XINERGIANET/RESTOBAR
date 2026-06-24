@@ -30,7 +30,7 @@
                 this.files.splice(index, 1);
             }
         }"
-        class="transition border border-gray-300 border-dashed cursor-pointer dark:hover:border-[#FF4622] dark:border-gray-700 rounded-xl hover:border-[#FF4622]"
+        class="transition border border-gray-300 border-dashed cursor-pointer dark:hover:border-[#124731] dark:border-gray-700 rounded-xl hover:border-[#124731]"
     >
         <div 
             @drop.prevent="handleDrop($event)"
@@ -38,7 +38,7 @@
             @dragleave.prevent="isDragging = false"
             @click="$refs.fileInput.click()"
             :class="isDragging 
-                ? 'border-[#FF4622] bg-gray-100 dark:bg-gray-800' 
+                ? 'border-[#124731] bg-gray-100 dark:bg-gray-800' 
                 : 'border-gray-300 bg-gray-50 dark:border-gray-700 dark:bg-gray-900'"
             class="dropzone rounded-xl border-dashed border-gray-300 p-7 lg:p-10 transition-colors cursor-pointer"
             id="demo-upload"
@@ -84,7 +84,7 @@
                     Drag and drop your PNG, JPG, WebP, SVG images here or browse
                 </span>
 
-                <span class="font-medium underline text-theme-sm text-[#FF4622]">
+                <span class="font-medium underline text-theme-sm text-[#124731]">
                     Browse File
                 </span>
             </div>

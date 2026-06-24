@@ -7,7 +7,7 @@
 
     <div>
         <h3 class="text-base font-medium text-gray-800 dark:text-white mb-4 flex items-center gap-2">
-            <i class="ri-file-list-3-line text-[#FF4622]"></i> Información General
+            <i class="ri-file-list-3-line text-[#124731]"></i> Información General
         </h3>
         <div
             class="bg-gray-50 rounded-xl p-5 border border-gray-100 dark:bg-white/[0.02] dark:border-gray-800 grid grid-cols-1 gap-5">
@@ -21,7 +21,7 @@
                     :readonly="formConcept === 'Apertura de caja' || formConcept === 'Cierre de caja'"
                     :class="formConcept === 'Apertura de caja' || formConcept === 'Cierre de caja' ?
                         'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-white dark:bg-dark-900'"
-                    class="h-11 w-full rounded-lg border-gray-200 px-4 py-2.5 text-sm text-gray-800 placeholder:text-gray-400 focus:border-[#FF4622] focus:ring-1 focus:ring-brand-500 dark:border-gray-700 dark:text-white/90 transition-all" />
+                    class="h-11 w-full rounded-lg border-gray-200 px-4 py-2.5 text-sm text-gray-800 placeholder:text-gray-400 focus:border-[#124731] focus:ring-1 focus:ring-brand-500 dark:border-gray-700 dark:text-white/90 transition-all" />
                 @error('comment')
                     <p class="mt-1 text-xs text-red-500">{{ $message }}</p>
                 @enderror
@@ -35,7 +35,7 @@
                     <div class="relative">
                         <i class="ri-time-line absolute top-1/2 left-3 -translate-y-1/2 text-gray-400"></i>
                         <select name="shift_id" required
-                            class="h-11 w-full rounded-lg border-gray-200 bg-white pl-10 pr-4 text-sm text-gray-800 focus:border-[#FF4622] focus:ring-1 focus:ring-brand-500 dark:border-gray-700 dark:bg-dark-900 dark:text-white/90 appearance-none transition-all">
+                            class="h-11 w-full rounded-lg border-gray-200 bg-white pl-10 pr-4 text-sm text-gray-800 focus:border-[#124731] focus:ring-1 focus:ring-brand-500 dark:border-gray-700 dark:bg-dark-900 dark:text-white/90 appearance-none transition-all">
                             @if (isset($shifts) && count($shifts) > 0)
                                 @foreach ($shifts as $shift)
                                     <option value="{{ $shift->id }}"
@@ -99,7 +99,7 @@
             class="flex flex-col sm:flex-row sm:items-end justify-between mb-6 pb-4 border-b border-gray-100 dark:border-gray-800">
             <div>
                 <h3 class="text-base font-medium text-gray-800 dark:text-white flex items-center gap-2">
-                    <i class="ri-wallet-3-line text-[#FF4622]"></i> Desglose de Pagos
+                    <i class="ri-wallet-3-line text-[#124731]"></i> Desglose de Pagos
                 </h3>
                 <p class="text-sm text-gray-500 mt-1">Agrega uno o más métodos para cubrir el monto.</p>
             </div>
@@ -107,7 +107,7 @@
             <div class="mt-4 sm:mt-0 text-right px-4 py-3 rounded-xl shadow-sm border border-gray-200/70 bg-white/80 backdrop-blur-sm dark:border-gray-700 dark:bg-gray-900/60 transition-colors duration-300"
                 :class="formConcept === 'Cierre de caja' ? 'ring-1 ring-red-200/70 dark:ring-red-900/40' : 'ring-1 ring-brand-200/70 dark:ring-brand-900/40'">
                 <span class="block text-[11px] font-semibold uppercase tracking-[0.18em] mb-1"
-                    :class="formConcept === 'Cierre de caja' ? 'text-red-600 dark:text-red-400' : 'text-[#C43B25] dark:text-[#FF4622]/80'"
+                    :class="formConcept === 'Cierre de caja' ? 'text-red-600 dark:text-red-400' : 'text-[#0A2E1F] dark:text-[#124731]/80'"
                     x-text="formConcept === 'Cierre de caja' ? 'Balance del Turno' : 'Total a Pagar'">
                 </span>
                 <span class="block text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white leading-tight">
@@ -147,7 +147,7 @@
                                             <tr class="border-b border-gray-100 dark:border-gray-700/80 last:border-0">
                                                 <td class="py-1.5 pl-2 pr-1">
                                                     <span class="flex items-center gap-1.5 font-medium text-gray-700 dark:text-gray-300">
-                                                        <i class="text-[#FF4622] shrink-0 text-sm"
+                                                        <i class="text-[#124731] shrink-0 text-sm"
                                                             :class="item.method === 'Efectivo' ? 'ri-money-dollar-circle-line' : (['Billetera Digital','Yape','Plin'].includes(item.method) ? 'ri-smartphone-line' : (item.method === 'Tarjeta de Crédito/Débito' ? 'ri-bank-card-line' : (item.method === 'Transferencia Bancaria' ? 'ri-bank-line' : 'ri-wallet-3-line')))"></i>
                                                         <span class="truncate" x-text="item.method"></span>
                                                     </span>
@@ -201,7 +201,7 @@
                                     class="mb-1.5 block text-xs font-semibold uppercase text-gray-500 tracking-wider">Método</label>
                                 <div class="relative">
                                     {{-- Icono dinámico según selección --}}
-                                    <i class="absolute top-1/2 left-3 -translate-y-1/2 text-[#FF4622]"
+                                    <i class="absolute top-1/2 left-3 -translate-y-1/2 text-[#124731]"
                                         :class="{
                                             'ri-money-dollar-circle-line': row.methodId == '1',
                                             'ri-bank-card-line': row.methodId == '2',
@@ -213,7 +213,7 @@
                                     <select x-model="row.methodId" 
                                         @change="row.methodName = $event.target.options[$event.target.selectedIndex].text"
                                         :name="`payments[${index}][payment_method_id]`" required 
-                                        class="h-11 w-full rounded-lg border-gray-200 bg-white pl-10 pr-8 text-sm text-gray-800 focus:border-[#FF4622] focus:ring-1 focus:ring-brand-500 dark:border-gray-700 dark:bg-dark-900 dark:text-white/90 appearance-none transition-all font-medium">
+                                        class="h-11 w-full rounded-lg border-gray-200 bg-white pl-10 pr-8 text-sm text-gray-800 focus:border-[#124731] focus:ring-1 focus:ring-brand-500 dark:border-gray-700 dark:bg-dark-900 dark:text-white/90 appearance-none transition-all font-medium">
                                         <option value="">Seleccionar...</option>
                                         <option value="1">Efectivo</option>
                                         <option value="2">Tarjeta de Crédito/Débito</option>
@@ -245,7 +245,7 @@
                                     x-effect="if (formConcept === 'Cierre de caja') row.amount = Number(currentBalance).toFixed(2)"
                                     :name="`payments[${index}][amount]`"
                                     required
-                                    class="h-11 w-full rounded-lg border-gray-200 bg-white pl-10 pr-4 text-base font-bold text-gray-900 focus:border-[#FF4622] focus:ring-1 focus:ring-brand-500 dark:border-gray-700 dark:bg-dark-900 dark:text-white placeholder:text-gray-300 transition-all"
+                                    class="h-11 w-full rounded-lg border-gray-200 bg-white pl-10 pr-4 text-base font-bold text-gray-900 focus:border-[#124731] focus:ring-1 focus:ring-brand-500 dark:border-gray-700 dark:bg-dark-900 dark:text-white placeholder:text-gray-300 transition-all"
                                     :class="formConcept === 'Cierre de caja' ? 'bg-gray-100 text-gray-500' : ''"
                                     placeholder="0.00">
                             </div>
@@ -261,7 +261,7 @@
                                         <div>
                                             <label class="block text-xs text-gray-500 mb-1">Tipo Tarjeta</label>
                                             <select :name="`payments[${index}][card_id]`" required
-                                                class="w-full rounded-md border-gray-200 py-2 px-3 text-sm focus:border-[#FF4622] focus:ring-1 focus:ring-brand-500 dark:border-gray-700 dark:bg-dark-900">
+                                                class="w-full rounded-md border-gray-200 py-2 px-3 text-sm focus:border-[#124731] focus:ring-1 focus:ring-brand-500 dark:border-gray-700 dark:bg-dark-900">
                                                 <option value="">Seleccionar</option>
                                                 @foreach ($cards as $card)
                                                     <option value="{{ $card->id }}">{{ $card->description }}
@@ -272,7 +272,7 @@
                                         <div>
                                             <label class="block text-xs text-gray-500 mb-1">Procesador (POS)</label>
                                             <select :name="`payments[${index}][payment_gateway_id]`"
-                                                class="w-full rounded-md border-gray-200 py-2 px-3 text-sm focus:border-[#FF4622] focus:ring-1 focus:ring-brand-500 dark:border-gray-700 dark:bg-dark-900">
+                                                class="w-full rounded-md border-gray-200 py-2 px-3 text-sm focus:border-[#124731] focus:ring-1 focus:ring-brand-500 dark:border-gray-700 dark:bg-dark-900">
                                                 <option value="">Ninguno</option>
                                                 @foreach ($paymentGateways as $pg)
                                                     <option value="{{ $pg->id }}">{{ $pg->description }}</option>
@@ -283,7 +283,7 @@
                                     <div>
                                         <input type="text" :name="`payments[${index}][number]`"
                                             placeholder="N° Lote / Operación (Opcional)"
-                                            class="w-full rounded-md border-gray-200 py-2 px-3 text-sm focus:border-[#FF4622] focus:ring-1 focus:ring-brand-500 dark:border-gray-700 dark:bg-dark-900">
+                                            class="w-full rounded-md border-gray-200 py-2 px-3 text-sm focus:border-[#124731] focus:ring-1 focus:ring-brand-500 dark:border-gray-700 dark:bg-dark-900">
                                     </div>
                                 </div>
                             </template>
@@ -295,7 +295,7 @@
                                         <div>
                                             <label class="block text-xs text-gray-500 mb-1">Aplicación</label>
                                             <select :name="`payments[${index}][digital_wallet_id]`" required
-                                                class="w-full rounded-md border-gray-200 py-2 px-3 text-sm focus:border-[#FF4622] focus:ring-1 focus:ring-brand-500 dark:border-gray-700 dark:bg-dark-900">
+                                                class="w-full rounded-md border-gray-200 py-2 px-3 text-sm focus:border-[#124731] focus:ring-1 focus:ring-brand-500 dark:border-gray-700 dark:bg-dark-900">
                                                 <option value="">Seleccionar</option>
                                                 @foreach ($digitalWallets as $dw)
                                                     <option value="{{ $dw->id }}">{{ $dw->description }}
@@ -307,7 +307,7 @@
                                             <label class="block text-xs text-gray-500 mb-1">N° Celular / Ref.</label>
                                             <input type="text" :name="`payments[${index}][number]`" required
                                                 placeholder="Ej: 999..."
-                                                class="w-full rounded-md border-gray-200 py-2 px-3 text-sm focus:border-[#FF4622] focus:ring-1 focus:ring-brand-500 dark:border-gray-700 dark:bg-dark-900">
+                                                class="w-full rounded-md border-gray-200 py-2 px-3 text-sm focus:border-[#124731] focus:ring-1 focus:ring-brand-500 dark:border-gray-700 dark:bg-dark-900">
                                         </div>
                                     </div>
                                 </div>
@@ -319,7 +319,7 @@
                                     <div>
                                         <label class="block text-xs text-gray-500 mb-1">Banco Destino</label>
                                         <select :name="`payments[${index}][bank_id]`" required
-                                            class="w-full rounded-md border-gray-200 py-2 px-3 text-sm focus:border-[#FF4622] focus:ring-1 focus:ring-brand-500 dark:border-gray-700 dark:bg-dark-900">
+                                            class="w-full rounded-md border-gray-200 py-2 px-3 text-sm focus:border-[#124731] focus:ring-1 focus:ring-brand-500 dark:border-gray-700 dark:bg-dark-900">
                                             <option value="">Seleccionar</option>
                                             @foreach ($banks as $bank)
                                                 <option value="{{ $bank->id }}">{{ $bank->description }}</option>
@@ -329,7 +329,7 @@
                                     <div>
                                         <input type="text" :name="`payments[${index}][number]`" required
                                             placeholder="N° de Operación / Constancia"
-                                            class="w-full rounded-md border-gray-200 py-2 px-3 text-sm focus:border-[#FF4622] focus:ring-1 focus:ring-brand-500 dark:border-gray-700 dark:bg-dark-900">
+                                            class="w-full rounded-md border-gray-200 py-2 px-3 text-sm focus:border-[#124731] focus:ring-1 focus:ring-brand-500 dark:border-gray-700 dark:bg-dark-900">
                                     </div>
                                 </div>
                             </template>
@@ -359,7 +359,7 @@
 
         <div class="mt-5">
             <button type="button" @click="addNewRow()"
-                class="inline-flex items-center gap-2 text-sm font-medium text-[#C43B25] hover:text-brand-700 transition-colors py-2 px-3 rounded-lg hover:bg-[#FF4622]/10 dark:hover:bg-brand-900/20">
+                class="inline-flex items-center gap-2 text-sm font-medium text-[#0A2E1F] hover:text-brand-700 transition-colors py-2 px-3 rounded-lg hover:bg-[#124731]/10 dark:hover:bg-brand-900/20">
                 <span>Agregar otro método de pago</span>
                 <i class="ri-add-fill text-xl"></i>
             </button>

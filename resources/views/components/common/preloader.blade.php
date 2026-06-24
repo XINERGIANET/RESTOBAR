@@ -8,7 +8,7 @@
 >
   <div class="relative flex flex-col items-center gap-6">
     <!-- Spinner above -->
-    <div class="h-16 w-16 animate-spin rounded-full border-4 border-solid border-[#FF4622] border-t-transparent shadow-sm"></div>
+    <div class="h-16 w-16 animate-spin rounded-full border-4 border-solid border-[#124731] border-t-transparent shadow-sm"></div>
     
     <!-- Logo -->
     <div class="relative flex items-center justify-center animate-pulse">

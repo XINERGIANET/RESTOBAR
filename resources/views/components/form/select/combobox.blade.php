@@ -102,7 +102,7 @@
             <button
                 type="button"
                 @click="$dispatch('{{ $iconClickEvent }}')"
-                class="absolute inset-y-0 left-1 my-auto flex h-9 w-9 items-center justify-center rounded-md text-gray-400 transition-colors hover:bg-[#C43B25]/10 hover:text-[#C43B25] focus:outline-none z-10"
+                class="absolute inset-y-0 left-1 my-auto flex h-9 w-9 items-center justify-center rounded-md text-gray-400 transition-colors hover:bg-[#0A2E1F]/10 hover:text-[#0A2E1F] focus:outline-none z-10"
                 title="Acción"
             >
                 <i class="{{ $icon }} text-[18px]"></i>
@@ -125,7 +125,7 @@
             @keydown.enter.prevent="if(filteredOptions.length > 0) selectOption(filteredOptions[0])"
             placeholder="{{ $placeholder }}"
             {{ $disabled ? 'disabled' : '' }}
-            class="h-11 w-full rounded-lg border border-gray-200 bg-white {{ $hideIcon ? 'pl-4' : 'pl-11' }} pr-10 text-sm text-gray-800 placeholder-gray-400 focus:border-[#C43B25] focus:ring-1 focus:ring-[#C43B25] dark:border-gray-700 dark:bg-dark-900 dark:text-white/90 transition-all disabled:opacity-60 disabled:cursor-not-allowed disabled:bg-gray-50 dark:disabled:bg-gray-800/80"
+            class="h-11 w-full rounded-lg border border-gray-200 bg-white {{ $hideIcon ? 'pl-4' : 'pl-11' }} pr-10 text-sm text-gray-800 placeholder-gray-400 focus:border-[#0A2E1F] focus:ring-1 focus:ring-[#0A2E1F] dark:border-gray-700 dark:bg-dark-900 dark:text-white/90 transition-all disabled:opacity-60 disabled:cursor-not-allowed disabled:bg-gray-50 dark:disabled:bg-gray-800/80"
             autocomplete="off"
         >
 
@@ -151,7 +151,7 @@
                     x-show="!value"
                     @mousedown.prevent
                     @click="toggleDropdown()"
-                    class="flex h-8 w-8 items-center justify-center rounded-md text-gray-400 transition-colors hover:bg-gray-100 hover:text-[#C43B25]"
+                    class="flex h-8 w-8 items-center justify-center rounded-md text-gray-400 transition-colors hover:bg-gray-100 hover:text-[#0A2E1F]"
                     title="Abrir opciones"
                 >
                     <i class="ri-arrow-down-s-line text-lg transition-transform duration-200" :class="{'rotate-180': open}"></i>
@@ -161,7 +161,7 @@
                     type="button"
                     @mousedown.prevent
                     @click="toggleDropdown()"
-                    class="flex h-8 w-8 items-center justify-center rounded-md text-gray-400 transition-colors hover:bg-gray-100 hover:text-[#C43B25]"
+                    class="flex h-8 w-8 items-center justify-center rounded-md text-gray-400 transition-colors hover:bg-gray-100 hover:text-[#0A2E1F]"
                     title="Abrir opciones"
                 >
                     <i class="ri-arrow-down-s-line text-lg transition-transform duration-200" :class="{'rotate-180': open}"></i>
@@ -176,7 +176,7 @@
             <ul class="py-1">
                 <template x-for="item in filteredOptions" :key="item.id">
                     <li @click="selectOption(item)"
-                        class="cursor-pointer px-4 py-2 text-sm text-gray-700 hover:bg-[#C43B25]/5 hover:text-[#C43B25] font-medium transition-colors">
+                        class="cursor-pointer px-4 py-2 text-sm text-gray-700 hover:bg-[#0A2E1F]/5 hover:text-[#0A2E1F] font-medium transition-colors">
                         <span x-text="item[displayField]"></span>
                     </li>
                 </template>

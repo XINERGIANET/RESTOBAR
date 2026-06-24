@@ -144,7 +144,7 @@
                                             <svg x-show="$store.sidebar.isExpanded || $store.sidebar.isHovered || $store.sidebar.isMobileOpen"
                                                 class="ml-auto w-4 h-4 transition-transform duration-300 opacity-60"
                                                 :class="{
-                                                    'rotate-180 text-[#FF4622] opacity-100': isSubmenuOpen({{ $groupIndex }}, {{ $itemIndex }})
+                                                    'rotate-180 text-[#124731] opacity-100': isSubmenuOpen({{ $groupIndex }}, {{ $itemIndex }})
                                                 }"
                                                 fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
@@ -195,7 +195,7 @@
                                                 {{ $item['name'] }}
                                                 
                                                 @if (!empty($item['new']))
-                                                    <span class="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-[#FF4622] text-white">new</span>
+                                                    <span class="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-[#124731] text-white">new</span>
                                                 @endif
                                             </span>
                                         </a>

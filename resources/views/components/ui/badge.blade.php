@@ -17,20 +17,20 @@
 
     $variants = [
         'light' => [
-            'primary' => 'bg-[#FF4622]/10 text-[#FF4622] dark:bg-[#C43B25]/20 dark:text-[#FF4622]',
+            'primary' => 'bg-[#124731]/10 text-[#124731] dark:bg-[#0A2E1F]/20 dark:text-[#124731]',
             'success' => 'bg-green-50 text-green-600 dark:bg-green-500/15 dark:text-green-500',
             'error' => 'bg-red-50 text-red-600 dark:bg-red-500/15 dark:text-red-500',
             'warning' => 'bg-yellow-50 text-yellow-600 dark:bg-yellow-500/15 dark:text-orange-400',
-            'info' => 'bg-[#FF4622]/10 text-[#FF4622] dark:bg-[#C43B25]/20 dark:text-[#FF4622]',
+            'info' => 'bg-[#124731]/10 text-[#124731] dark:bg-[#0A2E1F]/20 dark:text-[#124731]',
             'light' => 'bg-gray-100 text-gray-700 dark:bg-white/5 dark:text-white/80',
             'dark' => 'bg-gray-500 text-white dark:bg-white/5 dark:text-white',
         ],
         'solid' => [
-            'primary' => 'bg-[#FF4622] text-white dark:text-white',
+            'primary' => 'bg-[#124731] text-white dark:text-white',
             'success' => 'bg-green-500 text-white dark:text-white',
             'error' => 'bg-red-500 text-white dark:text-white',
             'warning' => 'bg-yellow-500 text-white dark:text-white',
-            'info' => 'bg-[#FF4622] text-white dark:text-white',
+            'info' => 'bg-[#124731] text-white dark:text-white',
             'light' => 'bg-gray-400 dark:bg-white/5 text-white dark:text-white/80',
             'dark' => 'bg-gray-700 text-white dark:text-white',
         ],

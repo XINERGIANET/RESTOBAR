@@ -52,7 +52,7 @@
                             name="search"
                             value="{{ $search }}"
                             placeholder="Buscar por nombre"
-                            class="dark:bg-dark-900 shadow-theme-xs focus:border-[#FF4622] focus:ring-[#FF4622]/10 dark:focus:border-[#FF4622] h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 pl-10 text-sm text-gray-800 placeholder:text-gray-400 focus:ring-3 focus:outline-hidden dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30"
+                            class="dark:bg-dark-900 shadow-theme-xs focus:border-[#124731] focus:ring-[#124731]/10 dark:focus:border-[#124731] h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 pl-10 text-sm text-gray-800 placeholder:text-gray-400 focus:ring-3 focus:outline-hidden dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30"
                         />
                     </div>
                     <div class="flex flex-wrap gap-2">
@@ -140,7 +140,7 @@
                                                 size="icon"
                                                 variant="primary"
                                                 type="submit"
-                                                className="{{ $operation->status ? 'bg-[#FF4622] text-white hover:bg-[#C43B25]' : 'bg-gray-500 text-white hover:bg-gray-600' }} ring-0 rounded-full"
+                                                className="{{ $operation->status ? 'bg-[#124731] text-white hover:bg-[#0A2E1F]' : 'bg-gray-500 text-white hover:bg-gray-600' }} ring-0 rounded-full"
                                                 style="border-radius: 100%;"
                                                 aria-label="{{ $operation->status ? 'Desactivar' : 'Activar' }}"
                                             >
@@ -190,7 +190,7 @@
             <div class="p-6 sm:p-8">
                 <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div class="flex items-center gap-4">
-                        <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#FF4622]/10 text-[#FF4622] dark:bg-[#FF4622]/20">
+                        <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#124731]/10 text-[#124731] dark:bg-[#124731]/20">
                             <i class="ri-list-check-2 text-2xl"></i>
                         </div>
                         <div>
@@ -232,7 +232,7 @@
                         <input
                             type="checkbox"
                             data-select-all
-                            class="h-4 w-4 rounded border-gray-300 text-[#FF4622] focus:ring-brand-500"
+                            class="h-4 w-4 rounded border-gray-300 text-[#124731] focus:ring-brand-500"
                             @change="const scope = $el.closest('[data-select-scope]') || $el.closest('form') || document; scope.querySelectorAll('input[data-select-item]').forEach((input) => { if (!input.disabled) { input.checked = $el.checked; } });"
                         />
                         <span>Seleccionar todos</span>
@@ -246,7 +246,7 @@
                                     name="operations[]"
                                     value="{{ $operation->id }}"
                                     data-select-item
-                                    class="h-4 w-4 rounded border-gray-300 text-[#FF4622] focus:ring-brand-500"
+                                    class="h-4 w-4 rounded border-gray-300 text-[#124731] focus:ring-brand-500"
                                     @checked(in_array($operation->id, $assignedOperationIds ?? [], true))
                                 />
                                 <span class="flex h-9 w-9 items-center justify-center rounded-lg text-white" style="background-color: {{ $operation->color }}">

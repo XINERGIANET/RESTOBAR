@@ -7,7 +7,7 @@
                 <div class="relative">
                     <input type="checkbox" id="toggle1" class="sr-only" @change="switcherToggle = !switcherToggle" />
                     <div class="block h-6 w-11 rounded-full"
-                        :class="switcherToggle ? 'bg-[#FF4622] dark:bg-[#FF4622]' : 'bg-gray-200 dark:bg-white/10'">
+                        :class="switcherToggle ? 'bg-[#124731] dark:bg-[#124731]' : 'bg-gray-200 dark:bg-white/10'">
                     </div>
                     <div :class="switcherToggle ? 'translate-x-full' : 'translate-x-0'"
                         class="shadow-theme-sm absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white duration-300 ease-linear">
@@ -24,7 +24,7 @@
                 <div class="relative">
                     <input type="checkbox" id="toggle2" class="sr-only" @change="switcherToggle = !switcherToggle" />
                     <div class="block h-6 w-11 rounded-full"
-                        :class="switcherToggle ? 'bg-[#FF4622] dark:bg-[#FF4622]' : 'bg-gray-200 dark:bg-white/10'">
+                        :class="switcherToggle ? 'bg-[#124731] dark:bg-[#124731]' : 'bg-gray-200 dark:bg-white/10'">
                     </div>
                     <div :class="switcherToggle ? 'translate-x-full' : 'translate-x-0'"
                         class="shadow-theme-sm absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white duration-300 ease-linear">
@@ -42,7 +42,7 @@
                     <input type="checkbox" id="toggle3" class="sr-only" @change="switcherToggle = !switcherToggle"
                         disabled />
                     <div class="block h-6 w-11 rounded-full"
-                        :class="switcherToggle ? 'bg-[#FF4622] dark:bg-[#FF4622]' : 'bg-gray-100 dark:bg-gray-800'">
+                        :class="switcherToggle ? 'bg-[#124731] dark:bg-[#124731]' : 'bg-gray-100 dark:bg-gray-800'">
                     </div>
                     <div :class="switcherToggle ? 'translate-x-full' : 'translate-x-0'"
                         class="shadow-theme-sm absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-gray-50 duration-300 ease-linear">

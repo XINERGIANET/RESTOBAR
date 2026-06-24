@@ -44,7 +44,7 @@
                         </div>
                         <x-ui.button size="md" variant="primary" type="submit"
                             class="h-11 px-5 shadow-sm hover:shadow-md transition-all duration-200 active:scale-95"
-                            style="background-color: #C43B25; border-color: #C43B25;">
+                            style="background-color: #0A2E1F; border-color: #0A2E1F;">
                             <i class="ri-search-line text-gray-100"></i>
                             <span class="font-medium text-gray-100">Buscar</span>
                         </x-ui.button>
@@ -57,7 +57,7 @@
                         <i class="ri-file-excel-2-line"></i>
                         <span>Excel</span>
                     </x-ui.link-button>
-                    <x-ui.link-button size="md" style="background-color: #C43B25; border-color: #C43B25;" variant="primary"
+                    <x-ui.link-button size="md" style="background-color: #0A2E1F; border-color: #0A2E1F;" variant="primary"
                         type="button" onclick="exportarPDF()">
                         <i class="ri-file-pdf-line"></i>
                         <span>PDF</span>
@@ -281,7 +281,7 @@
                                 datasets: [{
                                     data: @json($chartData ?? []),
                                     backgroundColor: [
-                                        '#C43B25', '#F97316', '#FBBF24', '#10B981', '#3B82F6', '#6366F1', '#8B5CF6',
+                                        '#0A2E1F', '#F97316', '#FBBF24', '#10B981', '#3B82F6', '#6366F1', '#8B5CF6',
                                         '#EC4899', '#06B6D4', '#F43F5E', '#14B8A6', '#94A3B8'
                                     ],
                                     hoverOffset: 15,

@@ -10,7 +10,7 @@
 
     <div class="mb-6">
         <h3 class="text-lg font-bold text-gray-800 dark:text-white flex items-center gap-2">
-            <span class="flex h-9 w-9 items-center justify-center rounded-xl bg-[#FF4622]/10 text-[#FF4622]">
+            <span class="flex h-9 w-9 items-center justify-center rounded-xl bg-[#124731]/10 text-[#124731]">
                 <i class="ri-bar-chart-2-line text-xl"></i>
             </span>
             Tendencia Diaria

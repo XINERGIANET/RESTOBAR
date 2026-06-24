@@ -101,12 +101,12 @@
                                     <i class="ri-search-line"></i>
                                 </span>
                                 <input type="text" name="search" value="{{ $search ?? '' }}" placeholder="Buscar por proveedor, serie, documento..."
-                                    class="dark:bg-dark-900 shadow-theme-xs focus:border-[#FF4622] focus:ring-[#FF4622]/10 dark:focus:border-[#FF4622] h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 pl-12 text-sm text-gray-800 placeholder:text-gray-400 focus:ring-3 focus:outline-hidden dark:border-gray-700 dark:bg-gray-900 dark:text-white/90" />
+                                    class="dark:bg-dark-900 shadow-theme-xs focus:border-[#124731] focus:ring-[#124731]/10 dark:focus:border-[#124731] h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 pl-12 text-sm text-gray-800 placeholder:text-gray-400 focus:ring-3 focus:outline-hidden dark:border-gray-700 dark:bg-gray-900 dark:text-white/90" />
                             </div>
                             <div class="flex gap-2">
                                 <x-ui.button size="md" variant="primary" type="submit"
                                     class="h-11 px-6 shadow-sm hover:shadow-md transition-all duration-200 active:scale-95"
-                                    style="background-color: #C43B25; border-color: #C43B25;">
+                                    style="background-color: #0A2E1F; border-color: #0A2E1F;">
                                     <i class="ri-search-line text-gray-100"></i>
                                     <span class="font-medium text-gray-100 hidden sm:inline">Buscar</span>
                                 </x-ui.button>
@@ -138,7 +138,7 @@
 
                             {{-- Fallback si no hay permisos configurados pero es admin --}}
                             @if ($topOperations->isEmpty())
-                                <a href="{{ route('purchase.create', ['view_id' => $viewId]) }}" class="h-11 inline-flex items-center gap-2 px-4 py-2 rounded-lg font-medium shadow-sm hover:shadow-md transition-all duration-200" style="background-color: #FF4622; color: #FFFFFF;">
+                                <a href="{{ route('purchase.create', ['view_id' => $viewId]) }}" class="h-11 inline-flex items-center gap-2 px-4 py-2 rounded-lg font-medium shadow-sm hover:shadow-md transition-all duration-200" style="background-color: #124731; color: #FFFFFF;">
                                     <i class="ri-add-line"></i>
                                     <span>Nueva Compra</span>
                                 </a>
@@ -156,7 +156,7 @@
                         <div class="w-[170px] shrink-0">
                             <label class="mb-1.5 block text-xs font-medium text-gray-600 dark:text-gray-400">Método de pago</label>
                             <select name="payment_method_id"
-                                class="h-11 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 shadow-theme-xs focus:border-[#FF4622] focus:outline-hidden focus:ring-2 focus:ring-[#FF4622]/10 dark:border-gray-600 dark:bg-gray-900 dark:text-white/90 dark:focus:border-[#FF4622]">
+                                class="h-11 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 shadow-theme-xs focus:border-[#124731] focus:outline-hidden focus:ring-2 focus:ring-[#124731]/10 dark:border-gray-600 dark:bg-gray-900 dark:text-white/90 dark:focus:border-[#124731]">
                                 <option value="">Todos</option>
                                 @foreach ($paymentMethods ?? [] as $pm)
                                     <option value="{{ $pm->id }}" @selected(($paymentMethodId ?? '') == $pm->id)>
@@ -168,7 +168,7 @@
                         <div class="w-[170px] shrink-0">
                             <label class="mb-1.5 block text-xs font-medium text-gray-600 dark:text-gray-400">Tipo de documento</label>
                             <select name="document_type_id"
-                                class="h-11 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 shadow-theme-xs focus:border-[#FF4622] focus:outline-hidden focus:ring-2 focus:ring-[#FF4622]/10 dark:border-gray-600 dark:bg-gray-900 dark:text-white/90 dark:focus:border-[#FF4622]">
+                                class="h-11 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 shadow-theme-xs focus:border-[#124731] focus:outline-hidden focus:ring-2 focus:ring-[#124731]/10 dark:border-gray-600 dark:bg-gray-900 dark:text-white/90 dark:focus:border-[#124731]">
                                 <option value="">Todos</option>
                                 @foreach ($documentTypes ?? [] as $dt)
                                     <option value="{{ $dt->id }}" @selected(($documentTypeId ?? '') == $dt->id)>
@@ -180,7 +180,7 @@
                         <div class="w-[130px] shrink-0">
                             <label class="mb-1.5 block text-xs font-medium text-gray-600 dark:text-gray-400">Caja</label>
                             <select name="cash_register_id"
-                                class="h-11 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 shadow-theme-xs focus:border-[#FF4622] focus:outline-hidden focus:ring-2 focus:ring-[#FF4622]/10 dark:border-gray-600 dark:bg-gray-900 dark:text-white/90 dark:focus:border-[#FF4622]">
+                                class="h-11 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 shadow-theme-xs focus:border-[#124731] focus:outline-hidden focus:ring-2 focus:ring-[#124731]/10 dark:border-gray-600 dark:bg-gray-900 dark:text-white/90 dark:focus:border-[#124731]">
                                 <option value="">Todas</option>
                                 @foreach ($cashRegisters ?? [] as $cr)
                                     <option value="{{ $cr->id }}" @selected(($cashRegisterId ?? '') == $cr->id)>
@@ -197,7 +197,7 @@
             <div class="table-responsive mt-4 rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03]">
                 <table class="w-full min-w-[1100px]">
                     <thead>
-                        <tr class="text-white" style="background-color: #FF4622; color: #FFFFFF;">
+                        <tr class="text-white" style="background-color: #124731; color: #FFFFFF;">
                             <th class="px-5 py-3 text-center sm:px-6 first:rounded-tl-xl sticky-left-header">
                                 <p class="font-semibold text-white text-theme-xs uppercase">#</p>
                             </th>
@@ -238,7 +238,7 @@
                                 <td class="px-4 text-center justify-center py-4 sm:px-6 sticky-left">
                                     <div class="flex items-center justify-center gap-2">
                                         <button type="button"
-                                            class="h-6 w-6 flex items-center justify-center rounded-full bg-[#FF4622] text-white hover:bg-[#C43B25] transition"
+                                            class="h-6 w-6 flex items-center justify-center rounded-full bg-[#124731] text-white hover:bg-[#0A2E1F] transition"
                                             @click="openRow === {{ $purchase->id }} ? openRow = null : openRow = {{ $purchase->id }}">
                                             <i class="ri-add-line" x-show="openRow !== {{ $purchase->id }}"></i>
                                             <i class="ri-subtract-line" x-show="openRow === {{ $purchase->id }}" x-cloak></i>
@@ -254,12 +254,12 @@
                                 <td class="px-5 py-4 sm:px-6 text-gray-600 dark:text-gray-400">S/ {{ number_format($purchase->subtotal, 2) }}</td>
                                 <td class="px-5 text-center py-4 sm:px-6 text-gray-600 dark:text-gray-400">S/ {{ number_format($purchase->igv, 2) }}</td>
                                 <td class="px-5 text-center py-4 sm:px-6">
-                                    <p class="font-bold text-[#FF4622] dark:text-[#FF4622]">S/ {{ number_format($purchase->total, 2) }}</p>
+                                    <p class="font-bold text-[#124731] dark:text-[#124731]">S/ {{ number_format($purchase->total, 2) }}</p>
                                 </td>
                                 <td class="px-5 py-4 text-center justify-center sm:px-6">
                                     <p class="text-gray-800 text-center text-theme-sm dark:text-white/90 truncate max-w-[150px]" title="{{ $nombreProveedor }}">{{ $nombreProveedor }}</p>
                                 </td>
-                                <td class="px-5 py-4 text-center sm:px-6 text-gray-600 dark:text-gray-400"><span class="font-bold text-[#FF4622] dark:text-[#FF4622]">{{ $purchase->tipo_pago}}</span></td>
+                                <td class="px-5 py-4 text-center sm:px-6 text-gray-600 dark:text-gray-400"><span class="font-bold text-[#124731] dark:text-[#124731]">{{ $purchase->tipo_pago}}</span></td>
                                 <td class="px-5 py-4 text-center sm:px-6 text-gray-600 dark:text-gray-400">{{ $purchase->created_at->format('d/m/Y H:i') }}</td>
                                 
                                 {{-- 2. BOTONES DE ACCIÓN DINÁMICOS DE LA FILA (Tipo 'R') --}}
@@ -272,7 +272,7 @@
                                                     $isDelete = str_contains($rawAction, 'destroy');
                                                     $actionUrl = $resolveActionUrl($rawAction, $purchase, $operation);
                                                     $textColor = $resolveTextColor($operation);
-                                                    $buttonColor = $operation->color ?: '#FF4622';
+                                                    $buttonColor = $operation->color ?: '#124731';
                                                     $buttonStyle = "background-color: {$buttonColor}; color: {$textColor};";
                                                     $variant = $isDelete ? 'eliminate' : (str_contains($rawAction, 'edit') ? 'edit' : 'primary');
                                                 @endphp
@@ -309,7 +309,7 @@
                                 <td colspan="9" class="px-6 py-5">
                                     <div class="rounded-xl border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-900 overflow-hidden shadow-sm">
                                         <div class="px-4 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/80 flex items-center gap-2">
-                                            <i class="ri-shopping-bag-3-line text-[#FF4622]"></i>
+                                            <i class="ri-shopping-bag-3-line text-[#124731]"></i>
                                             <h4 class="text-sm font-bold text-gray-700 dark:text-gray-200">Productos de la compra #{{ $purchase->id }}</h4>
                                         </div>
                                         
@@ -362,7 +362,7 @@
                                                             <td class="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase">
                                                                 Total Documento:
                                                             </td>
-                                                            <td class="px-4 py-3 text-right font-bold text-[#FF4622] dark:text-[#FF4622]">
+                                                            <td class="px-4 py-3 text-right font-bold text-[#124731] dark:text-[#124731]">
                                                                 S/ {{ number_format($purchase->total, 2) }}
                                                             </td>
                                                         </tr>

@@ -6,14 +6,14 @@
     <style>
         body { font-family: sans-serif; font-size: 11px; color: #333; }
         .header { text-align: center; margin-bottom: 20px; }
-        .header h1 { margin: 0; font-size: 18px; color: #C43B25; }
+        .header h1 { margin: 0; font-size: 18px; color: #0A2E1F; }
         .info { margin-bottom: 15px; }
         table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
         th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
         th { background-color: #f2f2f2; font-weight: bold; }
         .text-right { text-align: right; }
         .footer { position: fixed; bottom: 0; width: 100%; text-align: center; font-size: 9px; color: #999; }
-        .totals-box { margin-bottom: 20px; border: 1px solid #C43B25; padding: 10px; }
+        .totals-box { margin-bottom: 20px; border: 1px solid #0A2E1F; padding: 10px; }
         .totals-box p { margin: 5px 0; }
         .font-bold { font-weight: bold; }
     </style>

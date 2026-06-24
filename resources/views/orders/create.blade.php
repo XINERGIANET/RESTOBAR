@@ -248,7 +248,7 @@
                                         value="{{ old('client_name', $pendingClientName ?? 'CLIENTES VARIOS') }}"
                                         placeholder="Escribir nombre del comensal..."
                                         oninput="updateHeaderClientName(this.value)"
-                                        class="w-full h-11 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 pr-10 text-sm text-gray-800 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-[#FF4622]/30 focus:border-[#FF4622] outline-none transition-all">
+                                        class="w-full h-11 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 pr-10 text-sm text-gray-800 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-[#124731]/30 focus:border-[#124731] outline-none transition-all">
                                     <button type="button" onclick="clearHeaderClientName()"
                                         class="absolute right-2 top-1/2 -translate-y-1/2 flex h-7 w-7 items-center justify-center rounded-md text-gray-400 hover:bg-gray-100 hover:text-red-500 dark:hover:bg-gray-700 dark:hover:text-red-400 transition-colors"
                                         title="Limpiar comensal">
@@ -268,7 +268,7 @@
                             <p class="text-[10px] font-bold text-gray-500 uppercase tracking-wider leading-none mb-1">
                                 Nro Personas</p>
                             <input type="number" id="diners-input" min="1" max="50" value="1"
-                                class="w-11 h-8 text-center text-sm font-semibold rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#FF4622]/20 focus:border-[#FF4622] outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                class="w-11 h-8 text-center text-sm font-semibold rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#124731]/20 focus:border-[#124731] outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                                 onchange="currentTable.people_count = parseInt(this.value, 10) || 1; this.value = currentTable.people_count; saveDB();">
                         </div>
                     </div>
@@ -290,7 +290,7 @@
                             <div class="relative flex-1 max-w-md">
                                 <i class="ri-search-line absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
                                 <input type="text" id="search-products"
-                                    class="w-full pl-10 pr-10 py-2 text-sm bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-gray-800 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-[#FF4622]/30 focus:border-[#FF4622] outline-none transition-all"
+                                    class="w-full pl-10 pr-10 py-2 text-sm bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-gray-800 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-[#124731]/30 focus:border-[#124731] outline-none transition-all"
                                     placeholder="Buscar por nombre o código interno (lector)...">
                                 <button type="button" id="search-products-clear" onclick="clearProductSearch()"
                                     class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 hidden">
@@ -311,12 +311,12 @@
                     <div class="w-full shrink-0 px-3 pt-3">
                         <div class="grid gap-3 {{ $canCharge ?? true ? 'grid-cols-2' : 'grid-cols-1' }}">
                             <button type="button" id="tab-resumen" onclick="window.switchAsideTab?.('resumen')"
-                                class="py-3 px-4 text-sm font-bold transition-all rounded-full bg-[#FF4622] text-white shadow-sm border border-[#FF4622] {{ !($canCharge ?? true) ? 'w-full' : '' }}">
+                                class="py-3 px-4 text-sm font-bold transition-all rounded-full bg-[#124731] text-white shadow-sm border border-[#124731] {{ !($canCharge ?? true) ? 'w-full' : '' }}">
                                 Resumen
                             </button>
                             @if ($canCharge ?? true)
                                 <button type="button" id="tab-cobro" onclick="window.switchAsideTab?.('cobro')"
-                                    class="py-3 px-4 text-sm font-bold transition-all rounded-full bg-white dark:bg-gray-900 text-gray-500 dark:text-gray-400 border border-gray-200 dark:border-gray-700 hover:border-[#FF4622]/30 hover:text-[#FF4622] dark:hover:text-[#FF4622]">
+                                    class="py-3 px-4 text-sm font-bold transition-all rounded-full bg-white dark:bg-gray-900 text-gray-500 dark:text-gray-400 border border-gray-200 dark:border-gray-700 hover:border-[#124731]/30 hover:text-[#124731] dark:hover:text-[#124731]">
                                     Cobro
                                 </button>
                             @endif
@@ -327,32 +327,32 @@
                     <div id="aside-resumen" class="mt-3 flex flex-col flex-1 min-h-0 overflow-hidden">
                         {{-- Datos Delivery --}}
                         <div id="delivery-info-container"
-                            class="hidden p-3 bg-[#FF4622]/5 dark:bg-[#FF4622]/10 border-b border-[#FF4622]/20 dark:border-[#FF4622]/30 space-y-2 overflow-hidden">
+                            class="hidden p-3 bg-[#124731]/5 dark:bg-[#124731]/10 border-b border-[#124731]/20 dark:border-[#124731]/30 space-y-2 overflow-hidden">
                             <div class="flex flex-col gap-2">
                                 <div class="flex-1 min-w-0">
                                     <label
-                                        class="block text-[10px] font-bold uppercase text-[#FF4622] dark:text-[#FF4622] mb-1">Dirección
+                                        class="block text-[10px] font-bold uppercase text-[#124731] dark:text-[#124731] mb-1">Dirección
                                         de Entrega</label>
                                     <input type="text" id="delivery-address" oninput="updateDeliveryInfo()"
                                         placeholder="Av. Siempre Viva 123"
-                                        class="w-full py-1.5 px-2 text-xs rounded border border-[#FF4622]/30 focus:ring-1 focus:ring-[#FF4622] outline-none">
+                                        class="w-full py-1.5 px-2 text-xs rounded border border-[#124731]/30 focus:ring-1 focus:ring-[#124731] outline-none">
                                 </div>
                                 <div class="flex gap-2">
                                     <div class="flex-1 min-w-0">
                                         <label
-                                            class="block text-[10px] font-bold uppercase text-[#FF4622] dark:text-[#FF4622] mb-1">Teléfono
+                                            class="block text-[10px] font-bold uppercase text-[#124731] dark:text-[#124731] mb-1">Teléfono
                                             Contacto</label>
                                         <input type="text" id="delivery-phone" oninput="updateDeliveryInfo()"
                                             placeholder="999..."
-                                            class="w-full py-1.5 px-2 text-xs rounded border border-[#FF4622]/30 focus:ring-1 focus:ring-[#FF4622] outline-none">
+                                            class="w-full py-1.5 px-2 text-xs rounded border border-[#124731]/30 focus:ring-1 focus:ring-[#124731] outline-none">
                                     </div>
                                     <div class="w-24">
                                         <label
-                                            class="block text-[10px] font-bold uppercase text-[#FF4622] dark:text-[#FF4622] mb-1">Costo
+                                            class="block text-[10px] font-bold uppercase text-[#124731] dark:text-[#124731] mb-1">Costo
                                             Delivery</label>
                                         <input type="number" step="0.5" id="delivery-amount"
                                             oninput="updateDeliveryInfo()" placeholder="0.00"
-                                            class="w-full py-1.5 px-2 text-xs rounded border border-[#FF4622]/30 focus:ring-1 focus:ring-[#FF4622] outline-none">
+                                            class="w-full py-1.5 px-2 text-xs rounded border border-[#124731]/30 focus:ring-1 focus:ring-[#124731] outline-none">
                                     </div>
                                 </div>
                             </div>
@@ -456,7 +456,7 @@
                                     <span id="ticket-total-label"
                                         class="text-base sm:text-lg font-bold text-slate-800 dark:text-white">Total a
                                         Pagar</span>
-                                    <span class="text-xl sm:text-2xl font-black text-[#FF4622] dark:text-[#FF4622]"
+                                    <span class="text-xl sm:text-2xl font-black text-[#124731] dark:text-[#124731]"
                                         id="ticket-total">$0.00</span>
                                 </div>
                             </div>
@@ -496,7 +496,7 @@
                                             :clearable="true" />
                                     </div>
                                     <button type="button"
-                                        class="inline-flex shrink-0 items-center justify-center h-9 w-9 rounded-lg bg-white border border-gray-200 text-gray-400 hover:bg-[#FF4622]/10 hover:text-[#C43B25] hover:border-[#FF4622]/30 shadow-sm transition-colors"
+                                        class="inline-flex shrink-0 items-center justify-center h-9 w-9 rounded-lg bg-white border border-gray-200 text-gray-400 hover:bg-[#124731]/10 hover:text-[#0A2E1F] hover:border-[#124731]/30 shadow-sm transition-colors"
                                         @click="$dispatch('open-person-modal')" title="Nuevo cliente">
                                         <i class="ri-user-add-line text-base"></i>
                                     </button>
@@ -573,7 +573,7 @@
                                     <div class="flex flex-wrap items-center gap-2 mb-3">
                                         <button type="button" onclick="openSplitAccountModal()"
                                             class="inline-flex items-center gap-2 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-800/80 px-3 py-2 text-sm font-semibold text-slate-800 dark:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors shadow-sm">
-                                            <i class="ri-scissors-cut-line text-lg text-[#FF4622]"></i>
+                                            <i class="ri-scissors-cut-line text-lg text-[#124731]"></i>
                                             <span>Dividir cuenta</span>
                                         </button>
                                         <span id="split-inline-status"
@@ -589,7 +589,7 @@
                                             de pago</label>
                                         <button type="button" id="cobro-btn-add-payment-method"
                                             onclick="addCobroPaymentMethod()"
-                                            class="inline-flex items-center gap-1.5 rounded-lg bg-[#FF4622] px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-[#C43B25] active:scale-95 transition-colors shrink-0">
+                                            class="inline-flex items-center gap-1.5 rounded-lg bg-[#124731] px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-[#0A2E1F] active:scale-95 transition-colors shrink-0">
                                             <i class="ri-add-line text-sm"></i> Agregar
                                         </button>
                                     </div>
@@ -648,7 +648,7 @@
                                     class="hidden max-w-[18rem] text-right text-[10px] text-slate-500 dark:text-slate-400 leading-tight">
                                     Si queda saldo pendiente en el pedido, la mesa sigue ocupada hasta el cobro final.</p>
                                 <button type="button" onclick="processOrderPayment()"
-                                    class="py-2.5 px-4 rounded-xl bg-[#FF4622] text-white font-bold text-xs sm:text-sm shadow-lg hover:bg-[#C43B25] active:scale-95 transition-all flex justify-center items-center gap-2">
+                                    class="py-2.5 px-4 rounded-xl bg-[#124731] text-white font-bold text-xs sm:text-sm shadow-lg hover:bg-[#0A2E1F] active:scale-95 transition-all flex justify-center items-center gap-2">
                                     <i class="ri-bank-card-line text-base"></i>
                                     <span id="footer-cobro-btn-label">Cobrar</span>
                                 </button>
@@ -670,7 +670,7 @@
                             class="flex items-center justify-between gap-3 px-4 py-3 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shrink-0">
                             <div class="flex items-center gap-2 min-w-0">
                                 <div
-                                    class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#FF4622]/10 text-[#FF4622] dark:bg-[#FF4622]/20">
+                                    class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#124731]/10 text-[#124731] dark:bg-[#124731]/20">
                                     <i class="ri-scissors-cut-line text-xl"></i>
                                 </div>
                                 <h2 id="split-modal-title"
@@ -743,7 +743,7 @@
                             <button type="button" onclick="closeSplitAccountModal()"
                                 class="px-4 py-2 rounded-xl text-sm font-semibold border border-gray-300 dark:border-gray-600 text-slate-700 dark:text-slate-200 hover:bg-gray-100 dark:hover:bg-gray-800">Cancelar</button>
                             <button type="button" onclick="applySplitAccountModal()"
-                                class="px-4 py-2 rounded-xl text-sm font-bold bg-[#FF4622] text-white hover:bg-[#C43B25] shadow">Aplicar</button>
+                                class="px-4 py-2 rounded-xl text-sm font-bold bg-[#124731] text-white hover:bg-[#0A2E1F] shadow">Aplicar</button>
                         </div>
                     </div>
                 </div>
@@ -761,7 +761,7 @@
                     <div class="mb-6 flex items-center justify-between gap-4 pr-12">
                         <div class="flex items-center gap-3 min-w-0">
                             <div
-                                class="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-[#FF4622]/10 text-[#FF4622] dark:bg-[#FF4622]/20 dark:text-[#FF4622] shadow-sm">
+                                class="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-[#124731]/10 text-[#124731] dark:bg-[#124731]/20 dark:text-[#124731] shadow-sm">
                                 <i class="ri-user-add-line text-2xl"></i>
                             </div>
                             <h3
@@ -785,7 +785,7 @@
                                 Cancelar
                             </button>
                             <button type="submit"
-                                class="px-5 py-2.5 rounded-xl bg-[#FF4622] text-white font-semibold hover:bg-[#C43B25] shadow-lg shadow-[#FF4622]/30 transition-all">
+                                class="px-5 py-2.5 rounded-xl bg-[#124731] text-white font-semibold hover:bg-[#0A2E1F] shadow-lg shadow-[#124731]/30 transition-all">
                                 <i class="ri-save-line mr-1"></i> Guardar Cliente
                             </button>
                         </div>
@@ -3174,8 +3174,8 @@
                             'inline-flex items-center gap-2 px-2.5 py-1.5 rounded-full text-xs sm:text-sm font-semibold',
                             'border transition-all duration-150 whitespace-nowrap cursor-pointer shrink-0',
                             selectedCategoryId === CATEGORY_FAVORITES_ID ?
-                            'bg-[#FF4622] text-white border-[#FF4622] shadow-sm' :
-                            'bg-white dark:bg-slate-800 text-gray-700 border-gray-300 dark:border-slate-600 hover:border-[#FF4622] hover:text-[#FF4622] dark:hover:text-[#FF4622]'
+                            'bg-[#124731] text-white border-[#124731] shadow-sm' :
+                            'bg-white dark:bg-slate-800 text-gray-700 border-gray-300 dark:border-slate-600 hover:border-[#124731] hover:text-[#124731] dark:hover:text-[#124731]'
                         ].join(' ');
                         favBtn.onclick = function(e) {
                             e.preventDefault();
@@ -3192,8 +3192,8 @@
                             'inline-flex items-center gap-2 px-2.5 py-1.5 rounded-full text-xs sm:text-sm font-semibold',
                             'border transition-all duration-150 whitespace-nowrap cursor-pointer shrink-0',
                             selectedCategoryId === CATEGORY_ALL_ID ?
-                            'bg-[#FF4622] text-white border-[#FF4622] shadow-sm' :
-                            'bg-white dark:bg-slate-800 text-gray-700 border-gray-300 dark:border-slate-600 hover:border-[#FF4622] hover:text-[#FF4622] dark:hover:text-[#FF4622]'
+                            'bg-[#124731] text-white border-[#124731] shadow-sm' :
+                            'bg-white dark:bg-slate-800 text-gray-700 border-gray-300 dark:border-slate-600 hover:border-[#124731] hover:text-[#124731] dark:hover:text-[#124731]'
                         ].join(' ');
                         allBtn.onclick = function(e) {
                             e.preventDefault();
@@ -3224,8 +3224,8 @@
                             'inline-flex items-center gap-2 px-2.5 py-1.5 rounded-full text-xs sm:text-sm font-semibold',
                             'border transition-all duration-150 whitespace-nowrap cursor-pointer shrink-0',
                             isFavActive ?
-                            'bg-[#FF4622] text-white border-[#FF4622] shadow-sm' :
-                            'bg-white dark:bg-slate-800 text-gray-700 border-gray-300 dark:border-slate-600 hover:border-[#FF4622] hover:text-[#FF4622] dark:hover:text-[#FF4622]'
+                            'bg-[#124731] text-white border-[#124731] shadow-sm' :
+                            'bg-white dark:bg-slate-800 text-gray-700 border-gray-300 dark:border-slate-600 hover:border-[#124731] hover:text-[#124731] dark:hover:text-[#124731]'
                         ].join(' ');
                         favBtn.onclick = function(e) {
                             e.preventDefault();
@@ -3244,8 +3244,8 @@
                             'inline-flex items-center gap-2 px-2.5 py-1.5 rounded-full text-xs sm:text-sm font-semibold',
                             'border transition-all duration-150 whitespace-nowrap cursor-pointer shrink-0',
                             isAllActive ?
-                            'bg-[#FF4622] text-white border-[#FF4622] shadow-sm' :
-                            'bg-white dark:bg-slate-800 text-gray-700 border-gray-300 dark:border-slate-600 hover:border-[#FF4622] hover:text-[#FF4622] dark:hover:text-[#FF4622]'
+                            'bg-[#124731] text-white border-[#124731] shadow-sm' :
+                            'bg-white dark:bg-slate-800 text-gray-700 border-gray-300 dark:border-slate-600 hover:border-[#124731] hover:text-[#124731] dark:hover:text-[#124731]'
                         ].join(' ');
                         allBtn.onclick = function(e) {
                             e.preventDefault();
@@ -3273,8 +3273,8 @@
                                 'inline-flex items-center gap-2 px-2.5 py-1.5 rounded-full text-xs sm:text-sm font-semibold',
                                 'border transition-all duration-150 whitespace-nowrap cursor-pointer shrink-0',
                                 isActive ?
-                                'bg-[#FF4622] text-white border-[#FF4622] shadow-sm' :
-                                'bg-white dark:bg-slate-800 text-gray-700 dark:text-gray-200 border-gray-300 dark:border-slate-600 hover:border-[#FF4622] hover:text-[#FF4622] dark:hover:text-[#FF4622]'
+                                'bg-[#124731] text-white border-[#124731] shadow-sm' :
+                                'bg-white dark:bg-slate-800 text-gray-700 dark:text-gray-200 border-gray-300 dark:border-slate-600 hover:border-[#124731] hover:text-[#124731] dark:hover:text-[#124731]'
                             ].join(' ');
 
                             el.onclick = function(e) {
@@ -3287,7 +3287,7 @@
                             el.innerHTML =
                                 `
                                                                                                                                                                                                     <img src="${imageUrl}" alt="${categoryName}"
-                                                                                                                                                                                                        class="w-6 h-6 rounded-full object-cover shrink-0 border ${isActive ? 'border-[#FF4622]/30' : 'border-gray-200 dark:border-slate-600'}"
+                                                                                                                                                                                                        class="w-6 h-6 rounded-full object-cover shrink-0 border ${isActive ? 'border-[#124731]/30' : 'border-gray-200 dark:border-slate-600'}"
                                                                                                                                                                                                         onerror="this.onerror=null; this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22200%22 height=%22200%22%3E%3Crect fill=%22%23e5e7eb%22 width=%22200%22 height=%22200%22/%3E%3C/svg%3E'">
                                                                                                                                                                                                     <span>${categoryName}</span>
                                                                                                                                                                                                 `;
@@ -3447,8 +3447,8 @@
 
                             el.innerHTML =
                                 `
-                                                                                                                                                                                                    <div class="rounded-2xl overflow-hidden p-4 sm:p-5 bg-white dark:bg-slate-800/60 border-2 border-[#FF4622]/20 dark:border-[#FF4622]/40 hover:border-[#FF4622] dark:hover:border-[#FF4622] transition-all duration-200 hover:-translate-y-0.5 flex flex-col items-center text-center h-full w-full">
-                                        <div class="hidden sm:flex w-20 h-20 rounded-full bg-[#FF4622] items-center justify-center shrink-0 overflow-hidden mb-3">
+                                                                                                                                                                                                    <div class="rounded-2xl overflow-hidden p-4 sm:p-5 bg-white dark:bg-slate-800/60 border-2 border-[#124731]/20 dark:border-[#124731]/40 hover:border-[#124731] dark:hover:border-[#124731] transition-all duration-200 hover:-translate-y-0.5 flex flex-col items-center text-center h-full w-full">
+                                        <div class="hidden sm:flex w-20 h-20 rounded-full bg-[#124731] items-center justify-center shrink-0 overflow-hidden mb-3">
                                             ${hasImg
                                     ? `<img src="${imageUrl}" alt="${productName}" class="w-full h-full object-contain rounded-full object-cover object-center" loading="lazy" onerror="this.parentElement.innerHTML='<i class=\\'ri-restaurant-2-line text-2xl sm:text-3xl text-white\\'></i>'">`
                                     : `<i class="ri-restaurant-2-line text-2xl sm:text-3xl text-white"></i>`
@@ -3457,7 +3457,7 @@
                                                                                                                                                                                                         <h4 class="font-semibold text-gray-900 dark:text-white text-sm sm:text-base line-clamp-2 leading-tight mb-1 min-h-[2.5rem]">
                                                                                                                                                                                                             ${productName}
                                                                                                                                                                                                         </h4>
-                                                                                                                                                                                                        <span class="text-base sm:text-lg font-bold text-[#FF4622] dark:text-[#FF4622]">
+                                                                                                                                                                                                        <span class="text-base sm:text-lg font-bold text-[#124731] dark:text-[#124731]">
                                                                                                                                                                                                             ${priceFormatted}
                                                                                                                                                                                                         </span>
                                                                                                                                                                                                         <span data-product-stock-label="${Number(prod.id)}" class="mt-1 text-xs font-medium ` +
@@ -3988,7 +3988,7 @@
                             const isTakeAway = st === 'TAKE_AWAY';
 
                             let serviceLabel = '🏠 En Mesa';
-                            let serviceColor = 'bg-[#FF4622]/5 text-[#FF4622] border-[#FF4622]/20';
+                            let serviceColor = 'bg-[#124731]/5 text-[#124731] border-[#124731]/20';
                             if (isTakeAway) {
                                 serviceLabel = '🥡 Para Llevar';
                                 serviceColor = 'bg-orange-100 text-orange-700 border-orange-200';
@@ -4052,13 +4052,13 @@
                                     'bg-emerald-500/20 text-emerald-600 border border-emerald-500/35 dark:text-emerald-400 dark:border-emerald-500/40' :
                                     (itemIsComandado ? (pendingQty > 0 ?
                                             'bg-amber-500/15 text-amber-700 border border-amber-500/35 dark:text-amber-300 dark:border-amber-500/40' :
-                                            'bg-[#FF4622]/15 text-[#C43B25] border border-[#FF4622]/35 dark:text-[#FF4622] dark:border-[#FF4622]/40'
+                                            'bg-[#124731]/15 text-[#0A2E1F] border border-[#124731]/35 dark:text-[#124731] dark:border-[#124731]/40'
                                             ) :
                                         'bg-zinc-200/90 text-zinc-600 border border-zinc-300 dark:bg-zinc-700/60 dark:text-zinc-300 dark:border-zinc-600'
                                         );
                                 const commandSummary = itemIsComandado ?
                                     `<div class="mt-1 flex flex-wrap items-center gap-1.5">
-                                                    <span class="inline-flex items-center gap-1 rounded-full bg-[#FF4622]/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-[#C43B25] dark:bg-[#FF4622]/15 dark:text-[#FF4622]">
+                                                    <span class="inline-flex items-center gap-1 rounded-full bg-[#124731]/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-[#0A2E1F] dark:bg-[#124731]/15 dark:text-[#124731]">
                                                         <i class="ri-printer-line"></i> Comandado x${commandedQty}
                                                     </span>
                                                     ${pendingQty > 0 ? `<span class="inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-700 dark:bg-amber-500/15 dark:text-amber-300"><i class="ri-time-line"></i> Nuevo x${pendingQty}</span>` : ''}
@@ -4170,11 +4170,11 @@
                                                                                                                                                                                                             </div>
 
                                                                                                                                                                                                             <div class="flex flex-wrap items-center gap-x-2 gap-y-1.5 border-t border-slate-200 pt-2.5 dark:border-zinc-700/60">
-                                                                                                                                                                                                                <button type="button" onclick="toggleDelivered(${index})" class="inline-flex shrink-0 items-center gap-1.5 text-sm font-medium text-[#FF4622] hover:text-[#C43B25] dark:text-[#FF4622] dark:hover:text-[#FF4622]/80 transition-colors">
+                                                                                                                                                                                                                <button type="button" onclick="toggleDelivered(${index})" class="inline-flex shrink-0 items-center gap-1.5 text-sm font-medium text-[#124731] hover:text-[#0A2E1F] dark:text-[#124731] dark:hover:text-[#124731]/80 transition-colors">
                                                                                                                                                                                                                     <i class="${isDelivered ? 'ri-check-double-line' : 'ri-checkbox-blank-circle-line'}"></i>
                                                                                                                                                                                                                     ${isDelivered ? 'Entregado' : 'Pendiente'}
                                                                                                                                                                                                                 </button>
-                                                                                                                                                                                                                <button type="button" onclick="toggleNoteInput(${index})" class="inline-flex shrink-0 items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium transition-colors ${noteBtnActive ? 'bg-[#FF4622]/10 text-[#C43B25] dark:bg-[#FF4622]/15 dark:text-[#FF4622]' : 'text-slate-500 hover:bg-slate-100 hover:text-[#FF4622] dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-[#FF4622]'}">
+                                                                                                                                                                                                                <button type="button" onclick="toggleNoteInput(${index})" class="inline-flex shrink-0 items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium transition-colors ${noteBtnActive ? 'bg-[#124731]/10 text-[#0A2E1F] dark:bg-[#124731]/15 dark:text-[#124731]' : 'text-slate-500 hover:bg-slate-100 hover:text-[#124731] dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-[#124731]'}">
                                                                                                                                                                                                                     <i class="${hasNote ? 'ri-chat-1-fill' : 'ri-chat-1-line'}"></i> ${hasNote ? 'Editar nota' : 'Nota'}
                                                                                                                                                                                                                 </button>
                                                                                                                                                                                                                 <button type="button" onclick="toggleCourtesyInput(${index})" class="inline-flex shrink-0 items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium transition-colors ${courtesyBtnActive ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-500/15 dark:text-emerald-300' : 'text-slate-500 hover:bg-slate-100 hover:text-emerald-600 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-emerald-400'}">
@@ -4186,7 +4186,7 @@
                                                                                                                                                                                                             </div>
 
                                                                                                                                                                                                             <div id="note-box-${index}" class="${showNoteBox ? '' : 'hidden'}">
-                                                                                                                                                                                                                <textarea rows="2" onblur="saveNote(${index}, this.value)" placeholder="Ej: Sin cebolla, término medio..." class="w-full min-h-[3.25rem] resize-y rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-800 placeholder:text-slate-400 focus:border-[#FF4622] focus:outline-none focus:ring-2 focus:ring-[#FF4622]/20 dark:border-zinc-600 dark:bg-zinc-900/80 dark:text-zinc-100 dark:placeholder:text-zinc-500 dark:focus:border-[#FF4622]">${itemNote}</textarea>
+                                                                                                                                                                                                                <textarea rows="2" onblur="saveNote(${index}, this.value)" placeholder="Ej: Sin cebolla, término medio..." class="w-full min-h-[3.25rem] resize-y rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-800 placeholder:text-slate-400 focus:border-[#124731] focus:outline-none focus:ring-2 focus:ring-[#124731]/20 dark:border-zinc-600 dark:bg-zinc-900/80 dark:text-zinc-100 dark:placeholder:text-zinc-500 dark:focus:border-[#124731]">${itemNote}</textarea>
                                                                                                                                                                                                             </div>
 
                                                                                                                                                                                                             <div id="courtesy-box-${index}" class="${showCourtesyBox ? '' : 'hidden'}">
@@ -5391,7 +5391,7 @@
                         const tp = document.getElementById('split-mode-tab-products');
                         const ta = document.getElementById('split-mode-tab-amount');
                         const active =
-                            'bg-white dark:bg-gray-700 text-[#FF4622] shadow-sm ring-1 ring-slate-200 dark:ring-slate-600';
+                            'bg-white dark:bg-gray-700 text-[#124731] shadow-sm ring-1 ring-slate-200 dark:ring-slate-600';
                         const inactive = 'text-slate-600 dark:text-slate-300 hover:bg-white/70 dark:hover:bg-gray-700/50';
                         if (tp) {
                             tp.className =
@@ -5801,7 +5801,7 @@
                                 text: `Total a cobrar: S/ ${cobroTotal.toFixed(2)}. ¿Deseas proceder?`,
                                 icon: 'question',
                                 showCancelButton: true,
-                                confirmButtonColor: '#FF4622',
+                                confirmButtonColor: '#124731',
                                 cancelButtonColor: '#d33',
                                 confirmButtonText: 'Sí, cobrar',
                                 cancelButtonText: 'Cancelar'
@@ -6175,12 +6175,12 @@
                             cobro?.classList.add('flex');
                             footerResumen?.classList.add('hidden');
                             footerCobro?.classList.remove('hidden');
-                            btnResumen?.classList.remove('bg-[#FF4622]', 'text-white', 'border-[#FF4622]');
+                            btnResumen?.classList.remove('bg-[#124731]', 'text-white', 'border-[#124731]');
                             btnResumen?.classList.add('bg-white', 'dark:bg-gray-900', 'text-gray-500', 'dark:text-gray-400',
                                 'border-gray-200', 'dark:border-gray-700');
                             btnCobro?.classList.remove('bg-white', 'dark:bg-gray-900', 'text-gray-500', 'dark:text-gray-400',
                                 'border-gray-200', 'dark:border-gray-700');
-                            btnCobro?.classList.add('bg-[#FF4622]', 'text-white', 'border-[#FF4622]');
+                            btnCobro?.classList.add('bg-[#124731]', 'text-white', 'border-[#124731]');
                             // Deshabilitar agregar/modificar productos mientras se está en Cobro
                             if (productsGrid) {
                                 productsGrid.classList.add('pointer-events-none', 'opacity-60');
@@ -6204,12 +6204,12 @@
                             resumen?.classList.remove('hidden');
                             footerCobro?.classList.add('hidden');
                             footerResumen?.classList.remove('hidden');
-                            btnCobro?.classList.remove('bg-[#FF4622]', 'text-white', 'border-[#FF4622]');
+                            btnCobro?.classList.remove('bg-[#124731]', 'text-white', 'border-[#124731]');
                             btnCobro?.classList.add('bg-white', 'dark:bg-gray-900', 'text-gray-500', 'dark:text-gray-400',
                                 'border-gray-200', 'dark:border-gray-700');
                             btnResumen?.classList.remove('bg-white', 'dark:bg-gray-900', 'text-gray-500', 'dark:text-gray-400',
                                 'border-gray-200', 'dark:border-gray-700');
-                            btnResumen?.classList.add('bg-[#FF4622]', 'text-white', 'border-[#FF4622]');
+                            btnResumen?.classList.add('bg-[#124731]', 'text-white', 'border-[#124731]');
                             // Volver a habilitar productos al regresar a Resumen
                             if (productsGrid) {
                                 productsGrid.classList.remove('pointer-events-none', 'opacity-60');

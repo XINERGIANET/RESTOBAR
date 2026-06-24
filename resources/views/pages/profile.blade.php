@@ -65,7 +65,7 @@
                         <label for="name" class="mb-2 block text-xs font-medium text-gray-500 dark:text-gray-400">Nombre
                             en el sistema</label>
                         <input type="text" name="name" id="name" value="{{ old('name', $user->name) }}" required
-                            class="h-11 w-full rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-800 placeholder:text-gray-400 focus:border-[#FF4622] focus:ring-1 focus:ring-brand-500 dark:border-gray-700 dark:bg-dark-900 dark:text-white/90 transition-all @error('name') border-red-500 @enderror" />
+                            class="h-11 w-full rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-800 placeholder:text-gray-400 focus:border-[#124731] focus:ring-1 focus:ring-brand-500 dark:border-gray-700 dark:bg-dark-900 dark:text-white/90 transition-all @error('name') border-red-500 @enderror" />
                         @error('name')
                             <p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ $message }}</p>
                         @enderror
@@ -75,7 +75,7 @@
                             de acceso</label>
                         <input type="email" name="email" id="email" value="{{ old('email', $user->email) }}" required
                             autocomplete="username"
-                            class="h-11 w-full rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-800 placeholder:text-gray-400 focus:border-[#FF4622] focus:ring-1 focus:ring-brand-500 dark:border-gray-700 dark:bg-dark-900 dark:text-white/90 transition-all @error('email') border-red-500 @enderror" />
+                            class="h-11 w-full rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-800 placeholder:text-gray-400 focus:border-[#124731] focus:ring-1 focus:ring-brand-500 dark:border-gray-700 dark:bg-dark-900 dark:text-white/90 transition-all @error('email') border-red-500 @enderror" />
                         @error('email')
                             <p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ $message }}</p>
                         @enderror
@@ -90,7 +90,7 @@
                                 class="mb-2 block text-xs font-medium text-gray-500 dark:text-gray-400">Nombre</label>
                             <input type="text" name="first_name" id="first_name"
                                 value="{{ old('first_name', $person->first_name) }}"
-                                class="h-11 w-full rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-800 focus:border-[#FF4622] focus:ring-1 focus:ring-brand-500 dark:border-gray-700 dark:bg-dark-900 dark:text-white/90 transition-all @error('first_name') border-red-500 @enderror" />
+                                class="h-11 w-full rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-800 focus:border-[#124731] focus:ring-1 focus:ring-brand-500 dark:border-gray-700 dark:bg-dark-900 dark:text-white/90 transition-all @error('first_name') border-red-500 @enderror" />
                             @error('first_name')
                                 <p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ $message }}</p>
                             @enderror
@@ -100,7 +100,7 @@
                                 class="mb-2 block text-xs font-medium text-gray-500 dark:text-gray-400">Apellido</label>
                             <input type="text" name="last_name" id="last_name"
                                 value="{{ old('last_name', $person->last_name) }}"
-                                class="h-11 w-full rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-800 focus:border-[#FF4622] focus:ring-1 focus:ring-brand-500 dark:border-gray-700 dark:bg-dark-900 dark:text-white/90 transition-all @error('last_name') border-red-500 @enderror" />
+                                class="h-11 w-full rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-800 focus:border-[#124731] focus:ring-1 focus:ring-brand-500 dark:border-gray-700 dark:bg-dark-900 dark:text-white/90 transition-all @error('last_name') border-red-500 @enderror" />
                             @error('last_name')
                                 <p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ $message }}</p>
                             @enderror
@@ -111,7 +111,7 @@
                                 contacto</label>
                             <input type="email" name="person_email" id="person_email"
                                 value="{{ old('person_email', $person->email) }}"
-                                class="h-11 w-full rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-800 focus:border-[#FF4622] focus:ring-1 focus:ring-brand-500 dark:border-gray-700 dark:bg-dark-900 dark:text-white/90 transition-all @error('person_email') border-red-500 @enderror" />
+                                class="h-11 w-full rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-800 focus:border-[#124731] focus:ring-1 focus:ring-brand-500 dark:border-gray-700 dark:bg-dark-900 dark:text-white/90 transition-all @error('person_email') border-red-500 @enderror" />
                             @error('person_email')
                                 <p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ $message }}</p>
                             @enderror
@@ -120,7 +120,7 @@
                             <label for="phone"
                                 class="mb-2 block text-xs font-medium text-gray-500 dark:text-gray-400">Teléfono</label>
                             <input type="text" name="phone" id="phone" value="{{ old('phone', $person->phone) }}"
-                                class="h-11 w-full rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-800 focus:border-[#FF4622] focus:ring-1 focus:ring-brand-500 dark:border-gray-700 dark:bg-dark-900 dark:text-white/90 transition-all @error('phone') border-red-500 @enderror" />
+                                class="h-11 w-full rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-800 focus:border-[#124731] focus:ring-1 focus:ring-brand-500 dark:border-gray-700 dark:bg-dark-900 dark:text-white/90 transition-all @error('phone') border-red-500 @enderror" />
                             @error('phone')
                                 <p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ $message }}</p>
                             @enderror
@@ -130,7 +130,7 @@
                                 class="mb-2 block text-xs font-medium text-gray-500 dark:text-gray-400">Documento</label>
                             <input type="text" name="document_number" id="document_number"
                                 value="{{ old('document_number', $person->document_number) }}"
-                                class="h-11 w-full rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-800 focus:border-[#FF4622] focus:ring-1 focus:ring-brand-500 dark:border-gray-700 dark:bg-dark-900 dark:text-white/90 transition-all @error('document_number') border-red-500 @enderror" />
+                                class="h-11 w-full rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-800 focus:border-[#124731] focus:ring-1 focus:ring-brand-500 dark:border-gray-700 dark:bg-dark-900 dark:text-white/90 transition-all @error('document_number') border-red-500 @enderror" />
                             @error('document_number')
                                 <p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ $message }}</p>
                             @enderror
@@ -139,7 +139,7 @@
                             <label for="address"
                                 class="mb-2 block text-xs font-medium text-gray-500 dark:text-gray-400">Dirección</label>
                             <textarea name="address" id="address" rows="2"
-                                class="w-full rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-800 focus:border-[#FF4622] focus:ring-1 focus:ring-brand-500 dark:border-gray-700 dark:bg-dark-900 dark:text-white/90 transition-all @error('address') border-red-500 @enderror">{{ old('address', $person->address) }}</textarea>
+                                class="w-full rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-800 focus:border-[#124731] focus:ring-1 focus:ring-brand-500 dark:border-gray-700 dark:bg-dark-900 dark:text-white/90 transition-all @error('address') border-red-500 @enderror">{{ old('address', $person->address) }}</textarea>
                             @error('address')
                                 <p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ $message }}</p>
                             @enderror
@@ -152,7 +152,7 @@
 
                 <div class="mt-6 flex justify-end">
                     <button type="submit"
-                        class="inline-flex items-center justify-center rounded-lg bg-[#FF4622] px-5 py-2.5 text-sm font-medium text-white shadow-theme-xs hover:bg-[#C43B25]">
+                        class="inline-flex items-center justify-center rounded-lg bg-[#124731] px-5 py-2.5 text-sm font-medium text-white shadow-theme-xs hover:bg-[#0A2E1F]">
                         Guardar datos
                     </button>
                 </div>

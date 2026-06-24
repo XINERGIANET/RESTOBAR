@@ -20,7 +20,7 @@
                         <div class="w-full">
                             <label class="mb-1 block text-xs font-medium text-gray-700 dark:text-gray-400">Producto</label>
                             <select name="product_id" required
-                                class="dark:bg-dark-900 shadow-theme-xs focus:border-[#FF4622] focus:ring-[#FF4622]/10 dark:focus:border-[#FF4622] h-10 w-full rounded-lg border border-gray-300 bg-transparent px-3 py-2 text-sm text-gray-800 focus:ring-3 focus:outline-hidden dark:border-gray-700 dark:bg-gray-900 dark:text-white/90">
+                                class="dark:bg-dark-900 shadow-theme-xs focus:border-[#124731] focus:ring-[#124731]/10 dark:focus:border-[#124731] h-10 w-full rounded-lg border border-gray-300 bg-transparent px-3 py-2 text-sm text-gray-800 focus:ring-3 focus:outline-hidden dark:border-gray-700 dark:bg-gray-900 dark:text-white/90">
                                 <option value="all" @selected($productId == 'all')>Todos</option>
                                 @foreach ($products as $p)
                                     <option value="{{ $p->id }}" @selected($productId == $p->id)>
@@ -34,7 +34,7 @@
                         <div class="w-full">
                             <label class="mb-1 block text-xs font-medium text-gray-700 dark:text-gray-400">Fuente</label>
                             <select name="source"
-                                class="dark:bg-dark-900 shadow-theme-xs focus:border-[#FF4622] focus:ring-[#FF4622]/10 dark:focus:border-[#FF4622] h-10 w-full rounded-lg border border-gray-300 bg-transparent px-3 py-2 text-sm text-gray-800 focus:ring-3 focus:outline-hidden dark:border-gray-700 dark:bg-gray-900 dark:text-white/90">
+                                class="dark:bg-dark-900 shadow-theme-xs focus:border-[#124731] focus:ring-[#124731]/10 dark:focus:border-[#124731] h-10 w-full rounded-lg border border-gray-300 bg-transparent px-3 py-2 text-sm text-gray-800 focus:ring-3 focus:outline-hidden dark:border-gray-700 dark:bg-gray-900 dark:text-white/90">
                                 <option value="all" @selected($sourceFilter == 'all')>Todas</option>
                                 <option value="warehouse" @selected($sourceFilter == 'warehouse')>Almacén</option>
                                 <option value="sales" @selected($sourceFilter == 'sales')>Ventas</option>
@@ -45,7 +45,7 @@
                         <div class="w-full">
                             <label class="mb-1 block text-xs font-medium text-gray-700 dark:text-gray-400">Tipo</label>
                             <select name="movement_type"
-                                class="dark:bg-dark-900 shadow-theme-xs focus:border-[#FF4622] focus:ring-[#FF4622]/10 dark:focus:border-[#FF4622] h-10 w-full rounded-lg border border-gray-300 bg-transparent px-3 py-2 text-sm text-gray-800 focus:ring-3 focus:outline-hidden dark:border-gray-700 dark:bg-gray-900 dark:text-white/90">
+                                class="dark:bg-dark-900 shadow-theme-xs focus:border-[#124731] focus:ring-[#124731]/10 dark:focus:border-[#124731] h-10 w-full rounded-lg border border-gray-300 bg-transparent px-3 py-2 text-sm text-gray-800 focus:ring-3 focus:outline-hidden dark:border-gray-700 dark:bg-gray-900 dark:text-white/90">
                                 <option value="all" @selected($typeFilter == 'all')>Todos</option>
                                 @foreach ($availableTypes as $type)
                                     <option value="{{ $type }}" @selected($typeFilter == $type)>
@@ -69,7 +69,7 @@
                         {{-- 6. Botones: Buscar, Limpiar y Exportar PDF en una sola fila --}}
                         <div class="flex flex-nowrap items-center gap-2 shrink-0">
                             <x-ui.button type="submit" size="sm" variant="primary"
-                                style="background-color: #FF4622; border-color: #FF4622;">
+                                style="background-color: #124731; border-color: #124731;">
                                 <i class="ri-search-line"></i>
                                 Buscar
                             </x-ui.button>
@@ -136,7 +136,7 @@
                 class="table-responsive mt-4 rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03] overflow-x-auto">
                 <table class="w-full min-w-[1100px]">
                     <thead>
-                        <tr class="text-white text-center" style="background-color: #FF4622;">
+                        <tr class="text-white text-center" style="background-color: #124731;">
                             @if ($showAllProducts ?? false)
                                 <th class="px-3 py-3 text-xs font-semibold uppercase sm:px-4 first:rounded-tl-xl">Producto
                                 </th>

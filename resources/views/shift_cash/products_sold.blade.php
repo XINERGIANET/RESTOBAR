@@ -30,7 +30,7 @@
             <x-ui.link-button size="md" variant="outline" href="{{ $backUrl }}">
                 <i class="ri-arrow-left-line"></i> Volver a turnos
             </x-ui.link-button>
-            <x-ui.button size="md" variant="primary" type="button" class="h-11 px-4" style="background-color: #C43B25;" onclick="window.print()">
+            <x-ui.button size="md" variant="primary" type="button" class="h-11 px-4" style="background-color: #0A2E1F;" onclick="window.print()">
                 <i class="ri-printer-line"></i> Imprimir
             </x-ui.button>
         </div>
@@ -50,7 +50,7 @@
 
         <div class="overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-800">
             <table class="w-full min-w-[480px] text-left text-sm">
-                <thead class="bg-[#FF4622] text-white">
+                <thead class="bg-[#124731] text-white">
                     <tr>
                         <th class="px-4 py-3 font-semibold uppercase tracking-wide">#</th>
                         <th class="px-4 py-3 font-semibold uppercase tracking-wide">Producto</th>

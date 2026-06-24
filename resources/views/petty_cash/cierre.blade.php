@@ -7,7 +7,7 @@
         .bg-green-gradient { background: linear-gradient(135deg, #10b981 0%, #047857 100%); }
         .sidebar-item-label { color: #6b7280; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.25rem; }
         .sidebar-item-value { background-color: #f9fafb; border: 1px solid #f3f4f6; border-radius: 0.5rem; padding: 0.5rem 0.75rem; font-size: 0.8125rem; font-weight: 600; color: #1f2937; display: flex; align-items: center; gap: 0.5rem; }
-        .sidebar-item-value i { color: #FF4622; font-size: 1rem; }
+        .sidebar-item-value i { color: #124731; font-size: 1rem; }
     </style>
 
     @php
@@ -41,11 +41,11 @@
             <nav class="flex text-xs text-gray-500" aria-label="Breadcrumb">
                 <ol class="inline-flex items-center space-x-1 md:space-x-2">
                     <li class="inline-flex items-center">
-                        <a href="#" class="hover:text-[#FF4622]">Home</a>
+                        <a href="#" class="hover:text-[#124731]">Home</a>
                     </li>
                     <i class="ri-arrow-right-s-line text-lg"></i>
                     <li class="inline-flex items-center">
-                        <a href="#" class="hover:text-[#FF4622]">Caja chica</a>
+                        <a href="#" class="hover:text-[#124731]">Caja chica</a>
                     </li>
                     <i class="ri-arrow-right-s-line text-lg"></i>
                     <li class="inline-flex items-center">
@@ -80,7 +80,7 @@
                 <div class="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
                     <div class="p-6">
                         <div class="mb-6 flex items-center gap-3 border-b border-gray-50 pb-4 dark:border-gray-800">
-                            <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-[#FF4622]/10 text-[#FF4622]">
+                            <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-[#124731]/10 text-[#124731]">
                                 <i class="ri-information-line text-xl"></i>
                             </div>
                             <h3 class="text-sm font-bold uppercase tracking-wider text-gray-800 dark:text-white">Información de caja</h3>
@@ -90,7 +90,7 @@
                             <div>
                                 <p class="sidebar-item-label">Persona</p>
                                 <div class="sidebar-item-value">
-                                    <i class="ri-user-follow-line text-[#FF4622]"></i>
+                                    <i class="ri-user-follow-line text-[#124731]"></i>
                                     <span>{{ $personName }}</span>
                                 </div>
                             </div>
@@ -129,7 +129,7 @@
                             <div class="pt-2">
                                 <p class="sidebar-item-label">Monto real de cierre (Manual)</p>
                                 <input type="number" step="0.01" x-model="montoReal"
-                                    class="w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm font-bold focus:border-[#FF4622] focus:ring-[#FF4622] dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+                                    class="w-full rounded-xl border-gray-200 bg-gray-50 p-3 text-sm font-bold focus:border-[#124731] focus:ring-[#124731] dark:border-gray-700 dark:bg-gray-800 dark:text-white"
                                     placeholder="0.00">
                             </div>
 
@@ -147,10 +147,10 @@
                             <div class="pt-2">
                                 <p class="sidebar-item-label">Tipo de moneda</p>
                                 <div class="flex gap-2">
-                                    <button @click="currency = 'Dolar'" :class="currency === 'Dolar' ? 'bg-[#FF4622] text-white shadow-[#FF4622]/20' : 'bg-white border-gray-200 text-gray-500'" class="flex-1 rounded-xl border py-2.5 text-xs font-bold transition-all duration-200">
+                                    <button @click="currency = 'Dolar'" :class="currency === 'Dolar' ? 'bg-[#124731] text-white shadow-[#124731]/20' : 'bg-white border-gray-200 text-gray-500'" class="flex-1 rounded-xl border py-2.5 text-xs font-bold transition-all duration-200">
                                         Dólar $
                                     </button>
-                                    <button @click="currency = 'Soles'" :class="currency === 'Soles' ? 'bg-[#FF4622] text-white shadow-[#FF4622]/20' : 'bg-white border-gray-200 text-gray-500'" class="flex-1 rounded-xl border py-2.5 text-xs font-bold transition-all duration-200">
+                                    <button @click="currency = 'Soles'" :class="currency === 'Soles' ? 'bg-[#124731] text-white shadow-[#124731]/20' : 'bg-white border-gray-200 text-gray-500'" class="flex-1 rounded-xl border py-2.5 text-xs font-bold transition-all duration-200">
                                         Soles S/
                                     </button>
                                 </div>
@@ -181,7 +181,7 @@
                             <p class="text-[9px] font-bold uppercase tracking-widest text-gray-400">Apertura en efectivo</p>
                             <p class="mt-1 text-lg font-black text-gray-900 dark:text-white">S/ {{ number_format($aperturaEfectivo, 2) }}</p>
                         </div>
-                        <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-[#FF4622]/10 text-[#FF4622]">
+                        <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-[#124731]/10 text-[#124731]">
                             <i class="ri-coin-line text-xl"></i>
                         </div>
                     </div>
@@ -191,7 +191,7 @@
                             <p class="text-[9px] font-bold uppercase tracking-widest text-gray-400">Ingresos en efectivo</p>
                             <p class="mt-1 text-lg font-black text-gray-900 dark:text-white">S/ {{ number_format($currentTurnSummary['ingresos'], 2) }}</p>
                         </div>
-                        <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-orange-100/50 text-[#FF4622]">
+                        <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-orange-100/50 text-[#124731]">
                             <i class="ri-add-line text-xl"></i>
                         </div>
                     </div>
@@ -246,7 +246,7 @@
 
                     <div class="overflow-x-auto">
                         <table class="w-full text-left">
-                            <thead class="bg-[#C43B25] text-[10px] font-bold uppercase tracking-wider text-white">
+                            <thead class="bg-[#0A2E1F] text-[10px] font-bold uppercase tracking-wider text-white">
                                 <tr>
                                     <th class="px-6 py-4">Flujo</th>
                                     <th class="px-6 py-4">Tipo</th>
@@ -283,7 +283,7 @@
                                             </div>
                                         </td>
                                         <td class="whitespace-nowrap px-6 py-4">
-                                            <span class="rounded-lg {{ $isVenta ? 'bg-[#FF4622]/10 text-[#FF4622]' : 'bg-gray-100 text-gray-600' }} px-2 py-1 text-[10px] font-bold">
+                                            <span class="rounded-lg {{ $isVenta ? 'bg-[#124731]/10 text-[#124731]' : 'bg-gray-100 text-gray-600' }} px-2 py-1 text-[10px] font-bold">
                                                 {{ $isVenta ? 'Pagado' : ($movement->status == '1' ? 'Pagado' : 'Deuda') }}
                                             </span>
                                         </td>
@@ -298,13 +298,13 @@
                                         </td>
                                         <td class="px-6 py-4">
                                             <div class="flex items-center justify-center">
-                                                <span class="inline-block rounded-full bg-[#FF4622] px-3 py-0.5 text-[9px] font-semibold text-white">
+                                                <span class="inline-block rounded-full bg-[#124731] px-3 py-0.5 text-[9px] font-semibold text-white">
                                                    {{ $conceptName }}
                                                 </span>
                                             </div>
                                         </td>
                                         <td class="px-6 py-4 text-center">
-                                            <a href="{{ route('petty-cash.show', ['cash_register_id' => $cash_register_id, 'movement' => $movement->id, 'view_id' => $viewId]) }}" class="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-[#FF4622] text-white shadow-sm transition-transform hover:scale-110 active:scale-95">
+                                            <a href="{{ route('petty-cash.show', ['cash_register_id' => $cash_register_id, 'movement' => $movement->id, 'view_id' => $viewId]) }}" class="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-[#124731] text-white shadow-sm transition-transform hover:scale-110 active:scale-95">
                                                 <i class="ri-eye-line text-sm"></i>
                                             </a>
                                         </td>
@@ -327,7 +327,7 @@
                             </div>
                             <div class="flex flex-col text-center">
                                 <span class="text-[9px] font-bold uppercase tracking-wider text-gray-400">Total de Ingresos</span>
-                                <span class="text-sm font-black text-[#FF4622]">S/ {{ number_format($turnSummary['ingresos'], 2) }}</span>
+                                <span class="text-sm font-black text-[#124731]">S/ {{ number_format($turnSummary['ingresos'], 2) }}</span>
                             </div>
                             <div class="flex flex-col text-right">
                                 <span class="text-[9px] font-bold uppercase tracking-wider text-gray-400">Total de Egresos</span>
@@ -355,7 +355,7 @@
                         <input type="hidden" name="payments[0][payment_method_id]" value="1">
                         <input type="hidden" name="payments[0][payment_method]" value="Efectivo">
 
-                        <x-ui.button type="submit" size="lg" variant="primary" class="h-12 px-8 font-black uppercase tracking-wider shadow-lg shadow-[#FF4622]/20" style="background-color: #FF4622;">
+                        <x-ui.button type="submit" size="lg" variant="primary" class="h-12 px-8 font-black uppercase tracking-wider shadow-lg shadow-[#124731]/20" style="background-color: #124731;">
                             <i class="ri-lock-2-line mr-2"></i> Confirmar y Guardar Cierre
                         </x-ui.button>
                     </form>

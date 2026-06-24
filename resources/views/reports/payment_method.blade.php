@@ -135,7 +135,7 @@
                             datasets: [{
                                 data: @json($chartData),
                                 backgroundColor: [
-                                    '#C43B25', '#F97316', '#FBBF24', '#10B981', '#3B82F6', '#6366F1', '#8B5CF6'
+                                    '#0A2E1F', '#F97316', '#FBBF24', '#10B981', '#3B82F6', '#6366F1', '#8B5CF6'
                                 ],
                                 hoverOffset: 15,
                                 borderWidth: 3,

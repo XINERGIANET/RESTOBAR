@@ -28,7 +28,7 @@
 
                 <div class="flex gap-2">
                     <button type="submit"
-                        class="bg-[#C43B25] hover:bg-[#A3311E] text-white px-6 h-11 rounded-xl font-bold text-sm transition-all flex items-center gap-2 shadow-sm">
+                        class="bg-[#0A2E1F] hover:bg-[#A3311E] text-white px-6 h-11 rounded-xl font-bold text-sm transition-all flex items-center gap-2 shadow-sm">
                         <i class="ri-search-line"></i> Buscar
                     </button>
                     <a href="{{ route('reports.sales_by_customer') }}"
@@ -134,7 +134,7 @@
                                             @php $percentage = $grandTotal > 0 ? ($row->total_amount / $grandTotal) * 100 : 0; @endphp
                                             <div
                                                 class="flex-1 max-w-[100px] h-1.5 bg-gray-100 rounded-full overflow-hidden hidden sm:block">
-                                                <div class="h-full bg-[#FF4622] rounded-full" style="width: {{ $percentage }}%">
+                                                <div class="h-full bg-[#124731] rounded-full" style="width: {{ $percentage }}%">
                                                 </div>
                                             </div>
                                             <span
@@ -223,7 +223,7 @@
                                 datasets: [{
                                     data: @json($chartData ?? []),
                                     backgroundColor: [
-                                        '#C43B25', '#F97316', '#FBBF24', '#10B981', '#3B82F6', '#6366F1', '#8B5CF6',
+                                        '#0A2E1F', '#F97316', '#FBBF24', '#10B981', '#3B82F6', '#6366F1', '#8B5CF6',
                                         '#EC4899', '#06B6D4', '#F43F5E'
                                     ],
                                     hoverOffset: 15,

@@ -64,7 +64,7 @@
                                 params.delete('cash_register_id'); 
                                 window.location.href = baseUrl + (params.toString() ? '?' + params.toString() : '');
                             "
-                            class="dark:bg-dark-900 shadow-theme-xs focus:border-[#FF4622] focus:ring-[#FF4622]/10 h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-white/90">
+                            class="dark:bg-dark-900 shadow-theme-xs focus:border-[#124731] focus:ring-[#124731]/10 h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-white/90">
                             @if (isset($cashRegisters))
                                 @foreach ($cashRegisters as $register)
                                     <option value="{{ $register->id }}" {{ $selectedBoxId == $register->id ? 'selected' : '' }}>
@@ -75,7 +75,7 @@
                         </select>
                     </div>
                     <div class="flex gap-2">
-                        <x-ui.button size="md" variant="primary" type="submit" class="h-11 px-4" style="background-color: #C43B25;">
+                        <x-ui.button size="md" variant="primary" type="submit" class="h-11 px-4" style="background-color: #0A2E1F;">
                             <i class="ri-search-line text-gray-100"></i> <span class="text-gray-100">Buscar</span>
                         </x-ui.button>
                         <x-ui.link-button size="md" variant="outline" href="{{ route('shift-cash.redirect') }}{{ $viewId ? '?view_id=' . urlencode($viewId) : '' }}" class="h-11 px-4">
@@ -101,7 +101,7 @@
             {{-- TABLA PRINCIPAL --}}
             <div class="table-responsive mt-4 overflow-x-auto max-w-full rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03]">
                 <table class="w-full min-w-[1200px]">
-                    <thead style="background-color: #FF4622; color: #FFFFFF;">
+                    <thead style="background-color: #124731; color: #FFFFFF;">
                         <tr class="text-white">
                             <th class="px-5 py-3 text-center sm:px-6 sticky-left-header first:rounded-tl-xl">
                                 <p class="font-medium text-theme-xs uppercase">Orden</p>
@@ -171,7 +171,7 @@
                                 {{-- 0. ORDEN (BOTÓN DESPLEGABLE) --}}
                                 <td class="px-3 py-4 text-center sticky-left">
                                     <button type="button" @click="expanded = !expanded"
-                                        class="inline-flex h-6 w-6 items-center justify-center rounded-full bg-[#FF4622] text-white transition hover:bg-[#C43B25] dark:bg-[#FF4622] dark:text-white">
+                                        class="inline-flex h-6 w-6 items-center justify-center rounded-full bg-[#124731] text-white transition hover:bg-[#0A2E1F] dark:bg-[#124731] dark:text-white">
                                         <i class="ri-add-line" x-show="!expanded"></i>
                                         <i class="ri-subtract-line" x-show="expanded" x-cloak></i>
                                     </button>
@@ -329,7 +329,7 @@
                                         {{-- DATOS APERTURA --}}
                                         @php $movApertura = $shift->cashMovementStart?->movement; @endphp
                                         <div class="mx-auto w-full max-w-xl space-y-1 text-center text-gray-800 dark:text-gray-200">
-                                            <p class="font-bold text-[#FF4622] uppercase text-xs mb-2">Información de Apertura</p>
+                                            <p class="font-bold text-[#124731] uppercase text-xs mb-2">Información de Apertura</p>
                                             <div class="grid grid-cols-2 border-b border-gray-200 py-2 dark:border-gray-700">
                                                 <span class="font-semibold">Persona</span>
                                                 <span>{{ $movApertura?->person_name ?: '-' }}</span>
@@ -416,7 +416,7 @@
                         variant="primary"
                         type="button"
                         class="h-11 px-4"
-                        style="background-color: #C43B25;"
+                        style="background-color: #0A2E1F;"
                         x-bind:disabled="!selectedShiftId"
                         @click="
                             if (!selectedShiftId) return;
@@ -433,7 +433,7 @@
                         variant="outline"
                         type="button"
                         class="h-11 px-4"
-                        style="background-color: #FFFFFF; color: #C43B25;"
+                        style="background-color: #FFFFFF; color: #0A2E1F;"
                         @click="$dispatch('close-shift-cash-modal')"
                     >
                         <i class="ri-close-line"></i> <span>Cancelar</span>

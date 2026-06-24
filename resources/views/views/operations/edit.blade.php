@@ -25,7 +25,7 @@
         <div class="p-6 sm:p-8">
             <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div class="flex items-start gap-4">
-                    <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#FF4622]/10 text-[#FF4622] dark:bg-[#FF4622]/20">
+                    <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#124731]/10 text-[#124731] dark:bg-[#124731]/20">
                         <i class="ri-settings-3-line text-2xl"></i>
                     </div>
                     <div>
@@ -74,7 +74,7 @@
                                 required
                                 value="{{ old('name', $operation->name) }}"
                                 placeholder="Ej: Crear Usuario"
-                                class="dark:bg-dark-900 shadow-theme-xs focus:border-[#FF4622] focus:ring-[#FF4622]/10 dark:focus:border-[#FF4622] h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 pl-[62px] text-sm text-gray-800 placeholder:text-gray-400 focus:ring-3 focus:outline-hidden dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30"
+                                class="dark:bg-dark-900 shadow-theme-xs focus:border-[#124731] focus:ring-[#124731]/10 dark:focus:border-[#124731] h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 pl-[62px] text-sm text-gray-800 placeholder:text-gray-400 focus:ring-3 focus:outline-hidden dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30"
                             />
                         </div>
                         @error('name') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
@@ -94,7 +94,7 @@
                                     required
                                     value="{{ old('action', $operation->action) }}"
                                     placeholder="Ej: open-create-modal"
-                                    class="dark:bg-dark-900 shadow-theme-xs focus:border-[#FF4622] focus:ring-[#FF4622]/10 dark:focus:border-[#FF4622] h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 pl-[62px] text-sm text-gray-800 placeholder:text-gray-400 focus:ring-3 focus:outline-hidden dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30"
+                                    class="dark:bg-dark-900 shadow-theme-xs focus:border-[#124731] focus:ring-[#124731]/10 dark:focus:border-[#124731] h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 pl-[62px] text-sm text-gray-800 placeholder:text-gray-400 focus:ring-3 focus:outline-hidden dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30"
                                 />
                             </div>
                             @error('action') <span class="text-xs text-red-500">{{ $message }}</span> @enderror
@@ -116,7 +116,7 @@
                                     placeholder="Busca o escribe un icono..."
                                     autocomplete="off"
                                     spellcheck="false"
-                                    class="dark:bg-dark-900 shadow-theme-xs focus:border-[#FF4622] focus:ring-[#FF4622]/10 dark:focus:border-[#FF4622] h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 pl-[62px] text-sm text-gray-800 placeholder:text-gray-400 focus:ring-3 focus:outline-hidden dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30"
+                                    class="dark:bg-dark-900 shadow-theme-xs focus:border-[#124731] focus:ring-[#124731]/10 dark:focus:border-[#124731] h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 pl-[62px] text-sm text-gray-800 placeholder:text-gray-400 focus:ring-3 focus:outline-hidden dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30"
                                     @focus="openDropdown()"
                                     @input="openDropdown()"
                                     @keydown.escape.stop="closeDropdown()"
@@ -139,11 +139,11 @@
                             >
                                 <div class="mb-2 flex items-center justify-between text-xs text-gray-500">
                                     <span x-text="loading ? 'Cargando iconos...' : `${filteredIcons.length} iconos`"></span>
-                                    <button type="button" class="text-[#FF4622] hover:text-[#C43B25]" @click="clear()">Limpiar</button>
+                                    <button type="button" class="text-[#124731] hover:text-[#0A2E1F]" @click="clear()">Limpiar</button>
                                 </div>
                                 <template x-if="loading">
                                     <div class="flex items-center gap-3 text-sm text-gray-500">
-                                        <div class="h-5 w-5 animate-spin rounded-full border-2 border-[#FF4622] border-t-transparent"></div>
+                                        <div class="h-5 w-5 animate-spin rounded-full border-2 border-[#124731] border-t-transparent"></div>
                                         <span>Cargando iconos...</span>
                                     </div>
                                 </template>
@@ -165,7 +165,7 @@
                                         <template x-for="icon in displayedIcons" :key="icon">
                                             <button
                                                 type="button"
-                                                class="flex items-center justify-center rounded-lg border border-gray-200 bg-white px-2 py-3 text-gray-600 transition hover:border-brand-300 hover:text-[#C43B25] dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300"
+                                                class="flex items-center justify-center rounded-lg border border-gray-200 bg-white px-2 py-3 text-gray-600 transition hover:border-brand-300 hover:text-[#0A2E1F] dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300"
                                                 @click="select(icon)"
                                             >
                                                 <span class="text-xl"><i :class="icon"></i></span>
@@ -191,7 +191,7 @@
                                 </span>
                                 <select
                                     name="view_id_action"
-                                    class="dark:bg-dark-900 shadow-theme-xs focus:border-[#FF4622] focus:ring-[#FF4622]/10 dark:focus:border-[#FF4622] h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 pl-[62px] text-sm text-gray-800 placeholder:text-gray-400 focus:ring-3 focus:outline-hidden dark:border-gray-700 dark:bg-gray-900 dark:text-white/90"
+                                    class="dark:bg-dark-900 shadow-theme-xs focus:border-[#124731] focus:ring-[#124731]/10 dark:focus:border-[#124731] h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 pl-[62px] text-sm text-gray-800 placeholder:text-gray-400 focus:ring-3 focus:outline-hidden dark:border-gray-700 dark:bg-gray-900 dark:text-white/90"
                                 >
                                     <option value="">Sin vista</option>
                                     @foreach (($viewsList ?? []) as $viewItem)
@@ -218,7 +218,7 @@
                                     value="{{ old('color', $operation->color) }}"
                                     placeholder="#000000"
                                     data-color-input
-                                    class="dark:bg-dark-900 shadow-theme-xs focus:border-[#FF4622] focus:ring-[#FF4622]/10 dark:focus:border-[#FF4622] h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 pl-[62px] pr-12 text-sm text-gray-800 placeholder:text-gray-400 focus:ring-3 focus:outline-hidden dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30"
+                                    class="dark:bg-dark-900 shadow-theme-xs focus:border-[#124731] focus:ring-[#124731]/10 dark:focus:border-[#124731] h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 pl-[62px] pr-12 text-sm text-gray-800 placeholder:text-gray-400 focus:ring-3 focus:outline-hidden dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30"
                                 />
                                 {{-- Selector de Color --}}
                                 <input 
@@ -259,7 +259,7 @@
                                 </span>
                                 <select
                                     name="type"
-                                    class="dark:bg-dark-900 shadow-theme-xs focus:border-[#FF4622] focus:ring-[#FF4622]/10 dark:focus:border-[#FF4622] h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 pl-[62px] text-sm text-gray-800 placeholder:text-gray-400 focus:ring-3 focus:outline-hidden dark:border-gray-700 dark:bg-gray-900 dark:text-white/90"
+                                    class="dark:bg-dark-900 shadow-theme-xs focus:border-[#124731] focus:ring-[#124731]/10 dark:focus:border-[#124731] h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 pl-[62px] text-sm text-gray-800 placeholder:text-gray-400 focus:ring-3 focus:outline-hidden dark:border-gray-700 dark:bg-gray-900 dark:text-white/90"
                                 >
                                     <option value="R" {{ old('type', $operation->type) === 'R' ? 'selected' : '' }}>Registro</option>
                                     <option value="T" {{ old('type', $operation->type) === 'T' ? 'selected' : '' }}>Tabla</option>
@@ -279,7 +279,7 @@
                                 </span>
                                 <select
                                     name="status"
-                                    class="dark:bg-dark-900 shadow-theme-xs focus:border-[#FF4622] focus:ring-[#FF4622]/10 dark:focus:border-[#FF4622] h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 pl-[62px] text-sm text-gray-800 placeholder:text-gray-400 focus:ring-3 focus:outline-hidden dark:border-gray-700 dark:bg-gray-900 dark:text-white/90"
+                                    class="dark:bg-dark-900 shadow-theme-xs focus:border-[#124731] focus:ring-[#124731]/10 dark:focus:border-[#124731] h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 pl-[62px] text-sm text-gray-800 placeholder:text-gray-400 focus:ring-3 focus:outline-hidden dark:border-gray-700 dark:bg-gray-900 dark:text-white/90"
                                 >
                                     <option value="1" {{ old('status', $operation->status) == 1 ? 'selected' : '' }}>Activo</option>
                                     <option value="0" {{ old('status', $operation->status) == 0 ? 'selected' : '' }}>Inactivo</option>

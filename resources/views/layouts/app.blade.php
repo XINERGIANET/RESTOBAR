@@ -279,7 +279,7 @@ body.swal2-shown #sidebar { z-index: 1 !important; }
                 <div class="flex items-center justify-center gap-2">
                     <div class="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
                         <span class="font-medium">Derechos de autor &copy; {{ date('Y') }}</span>
-                        <span class="font-bold tracking-tight text-[#FF4622]">Xinergia</span>
+                        <span class="font-bold tracking-tight text-[#124731]">Xinergia</span>
                         <span class="hidden sm:inline opacity-40">&bull;</span>
                         <span class="hidden sm:inline">Todos los derechos reservados.</span>
                     </div>

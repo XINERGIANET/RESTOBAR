@@ -105,7 +105,7 @@
                             <input type="text" name="moved_at" x-ref="movedAtInput"
                                 value="{{ old('moved_at', optional($purchase)->moved_at?->format('Y-m-d H:i') ?? now()->format('Y-m-d H:i')) }}"
                                 placeholder="dd/mm/yyyy hh:mm"
-                                class="h-10 w-full rounded-lg border border-gray-300 px-3 pr-10 text-sm focus:border-[#FF4622] focus:outline-none focus:ring-1 focus:ring-[#FF4622] bg-white"
+                                class="h-10 w-full rounded-lg border border-gray-300 px-3 pr-10 text-sm focus:border-[#124731] focus:outline-none focus:ring-1 focus:ring-[#124731] bg-white"
                                 required />
                             <i
                                 class="ri-calendar-line absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-lg pointer-events-none"></i>
@@ -119,7 +119,7 @@
                                 <label
                                     class="mb-1.5 block text-xs font-semibold uppercase text-gray-500 tracking-wider">DOCUMENTO</label>
                                 <select name="document_type_id"
-                                    class="h-10 w-full rounded-lg border border-gray-300 px-3 text-sm focus:border-[#FF4622] focus:outline-none focus:ring-1 focus:ring-[#FF4622] bg-white"
+                                    class="h-10 w-full rounded-lg border border-gray-300 px-3 text-sm focus:border-[#124731] focus:outline-none focus:ring-1 focus:ring-[#124731] bg-white"
                                     required>
                                     @foreach($documentTypes as $documentType)
                                         <option value="{{ $documentType->id }}" @selected((int) old('document_type_id', $purchase?->document_type_id ?? 0) === (int) $documentType->id)>
@@ -131,7 +131,7 @@
                                 <label
                                     class="mb-1.5 block text-xs font-semibold uppercase text-gray-500 tracking-wider">SERIE</label>
                                 <input type="text" name="series"
-                                    class="h-10 w-full rounded-lg border border-gray-300 px-3 text-sm focus:border-[#FF4622] focus:outline-none focus:ring-1 focus:ring-[#FF4622]"
+                                    class="h-10 w-full rounded-lg border border-gray-300 px-3 text-sm focus:border-[#124731] focus:outline-none focus:ring-1 focus:ring-[#124731]"
                                     value="{{ old('series', $purchaseMovement?->serie ?? '') }}" placeholder="Ej: F001"
                                     required>
                             </div>
@@ -139,7 +139,7 @@
                                 <label
                                     class="mb-1.5 block text-xs font-semibold uppercase text-gray-500 tracking-wider">NUMERO</label>
                                 <input type="text" name="number"
-                                    class="h-10 w-full rounded-lg border border-gray-300 px-3 text-sm focus:border-[#FF4622] focus:outline-none focus:ring-1 focus:ring-[#FF4622]"
+                                    class="h-10 w-full rounded-lg border border-gray-300 px-3 text-sm focus:border-[#124731] focus:outline-none focus:ring-1 focus:ring-[#124731]"
                                     value="{{ old('number', $purchaseMovement?->numero ?? '') }}" placeholder="Ej: 00123"
                                     required>
                             </div>
@@ -156,7 +156,7 @@
                                 placeholder="Buscar proveedor..." icon="ri-user-shared-line"
                                 iconClickEvent="open-modal-proveedor" />
                             <button type="button" @click="openModalCreateProveedor()"
-                                class="px-4 py-2 rounded-lg text-sm font-medium transition-colors bg-[#FF4622] text-white hover:bg-[#C43B25]">
+                                class="px-4 py-2 rounded-lg text-sm font-medium transition-colors bg-[#124731] text-white hover:bg-[#0A2E1F]">
                                 <i class="ri-add-line"></i> Crear proveedor</button>
                             </div>
                         </div>
@@ -176,10 +176,10 @@
                             x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95">
 
                             {{-- Header --}}
-                            <div class="flex items-center justify-between border-b border-gray-200 px-6 py-4 dark:border-gray-700 bg-gradient-to-r from-[#FF4622]/5 to-transparent rounded-t-2xl">
+                            <div class="flex items-center justify-between border-b border-gray-200 px-6 py-4 dark:border-gray-700 bg-gradient-to-r from-[#124731]/5 to-transparent rounded-t-2xl">
                                 <div class="flex items-center gap-3">
-                                    <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-[#FF4622]/10">
-                                        <i class="ri-user-add-line text-[#FF4622] text-lg"></i>
+                                    <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-[#124731]/10">
+                                        <i class="ri-user-add-line text-[#124731] text-lg"></i>
                                     </div>
                                     <div>
                                         <h3 class="text-base font-bold text-gray-800 dark:text-white">Nuevo Proveedor</h3>
@@ -200,7 +200,7 @@
                                     class="rounded-xl bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-600 flex items-center gap-2">
                                 </p>
 
-                                @php $iC = 'h-11 w-full rounded-xl border border-gray-300 bg-white px-4 text-sm text-gray-800 placeholder:text-gray-400 focus:border-[#FF4622] focus:ring-2 focus:ring-[#FF4622]/20 focus:outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-white'; @endphp
+                                @php $iC = 'h-11 w-full rounded-xl border border-gray-300 bg-white px-4 text-sm text-gray-800 placeholder:text-gray-400 focus:border-[#124731] focus:ring-2 focus:ring-[#124731]/20 focus:outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-white'; @endphp
 
                                 {{-- Tipo + Documento + Botón Buscar (una sola fila) --}}
                                 <div>
@@ -210,7 +210,7 @@
                                     </label>
                                     <div class="flex gap-2">
                                         <select x-model="providerForm.person_type" @change="onSupplierTypeChange()"
-                                            class="h-11 w-32 shrink-0 rounded-xl border border-gray-300 bg-white px-3 text-sm text-gray-800 focus:border-[#FF4622] focus:ring-2 focus:ring-[#FF4622]/20 focus:outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-white">
+                                            class="h-11 w-32 shrink-0 rounded-xl border border-gray-300 bg-white px-3 text-sm text-gray-800 focus:border-[#124731] focus:ring-2 focus:ring-[#124731]/20 focus:outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-white">
                                             <option value="DNI">DNI</option>
                                             <option value="RUC">RUC</option>
                                             <option value="CARNET DE EXTRANGERIA">Carné ext.</option>
@@ -316,7 +316,7 @@
                                     Cancelar
                                 </button>
                                 <button type="button" @click="submitProviderModal()" :disabled="providerLoading"
-                                    class="px-5 py-2.5 rounded-xl text-sm font-bold text-white bg-[#FF4622] hover:bg-[#C43B25] disabled:opacity-50 transition-colors inline-flex items-center gap-2">
+                                    class="px-5 py-2.5 rounded-xl text-sm font-bold text-white bg-[#124731] hover:bg-[#0A2E1F] disabled:opacity-50 transition-colors inline-flex items-center gap-2">
                                     <i :class="providerLoading ? 'ri-loader-4-line animate-spin' : 'ri-save-line'"></i>
                                     <span x-text="providerLoading ? 'Guardando...' : 'Guardar proveedor'"></span>
                                 </button>
@@ -330,18 +330,18 @@
                         <div class="relative mb-4">
                             <i class="ri-search-line absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-lg"></i>
                             <input type="text" x-model="catalogSearch" placeholder="Buscar por nombre o categoría"
-                                class="h-10 w-full rounded-lg border border-gray-300 pl-10 pr-3 text-sm focus:border-[#FF4622] focus:outline-none focus:ring-1 focus:ring-[#FF4622]" />
+                                class="h-10 w-full rounded-lg border border-gray-300 pl-10 pr-3 text-sm focus:border-[#124731] focus:outline-none focus:ring-1 focus:ring-[#124731]" />
                         </div>
                         <div class="flex flex-wrap gap-2 mb-4">
                             <button type="button" @click="selectedCategory = null"
                                 class="px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-                                :class="selectedCategory === null ? 'bg-[#FF4622] text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'">
+                                :class="selectedCategory === null ? 'bg-[#124731] text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'">
                                 General
                             </button>
                             <template x-for="cat in categories" :key="cat.id">
                                 <button type="button" @click="selectedCategory = cat.id"
                                     class="px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-                                    :class="selectedCategory === cat.id ? 'bg-[#FF4622] text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'"
+                                    :class="selectedCategory === cat.id ? 'bg-[#124731] text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'"
                                     x-text="cat.name">
                                 </button>
                             </template>
@@ -350,19 +350,19 @@
                             class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 max-h-[400px] overflow-y-auto">
                             <template x-for="product in filteredCatalogProducts" :key="product.id">
                                 <button type="button" @click="addProductToCart(product)"
-                                    class="flex flex-col rounded-xl border border-gray-200 bg-white p-3 text-left hover:border-[#FF4622] hover:shadow-md transition-all group">
+                                    class="flex flex-col rounded-xl border border-gray-200 bg-white p-3 text-left hover:border-[#124731] hover:shadow-md transition-all group">
                                     <div class="relative aspect-square mb-2 rounded-lg bg-gray-100 overflow-hidden">
                                         <img :src="product.image_url || 'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22100%22 height=%22100%22%3E%3Crect fill=%22%23e5e7eb%22 width=%22100%22 height=%22100%22/%3E%3C/svg%3E'"
                                             :alt="product.name"
                                             class="w-full h-full object-cover group-hover:scale-105 transition-transform"
                                             @@error="$el.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22100%22 height=%22100%22%3E%3Crect fill=%22%23e5e7eb%22 width=%22100%22 height=%22100%22/%3E%3C/svg%3E'" />
                                         <span
-                                            class="absolute top-1 right-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-[#FF4622]/90 text-white"
+                                            class="absolute top-1 right-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-[#124731]/90 text-white"
                                             x-text="'Stock: ' + (product.stock ?? 0)"></span>
                                     </div>
                                     <p class="text-xs font-medium text-gray-800 line-clamp-2 mb-1" x-text="product.name">
                                     </p>
-                                    <p class="text-sm font-bold text-[#FF4622]" x-text="money(product.cost)"></p>
+                                    <p class="text-sm font-bold text-[#124731]" x-text="money(product.cost)"></p>
                                 </button>
                             </template>
                         </div>
@@ -377,12 +377,12 @@
                         <div class="flex border-b border-gray-200">
                             <button type="button" @click="activeTab = 'resumen'"
                                 class="flex-1 px-4 py-3 text-sm font-semibold transition-colors"
-                                :class="activeTab === 'resumen' ? 'bg-[#FF4622] text-white' : 'text-gray-600 hover:bg-gray-50'">
+                                :class="activeTab === 'resumen' ? 'bg-[#124731] text-white' : 'text-gray-600 hover:bg-gray-50'">
                                 Resumen
                             </button>
                             <button type="button" @click="activeTab = 'pago'"
                                 class="flex-1 px-4 py-3 text-sm font-semibold transition-colors"
-                                :class="activeTab === 'pago' ? 'bg-[#FF4622] text-white' : 'text-gray-600 hover:bg-gray-50'">
+                                :class="activeTab === 'pago' ? 'bg-[#124731] text-white' : 'text-gray-600 hover:bg-gray-50'">
                                 Pago
                             </button>
                         </div>
@@ -396,7 +396,7 @@
                                             class="mb-1 block text-[11px] font-bold uppercase text-gray-500 tracking-wider">TIPO
                                             DETALLE</label>
                                         <select name="tipo_detalle"
-                                            class="h-9 w-full rounded-lg border border-gray-300 px-2 text-sm focus:border-[#FF4622] focus:ring-1 focus:ring-[#FF4622] bg-white">
+                                            class="h-9 w-full rounded-lg border border-gray-300 px-2 text-sm focus:border-[#124731] focus:ring-1 focus:ring-[#124731] bg-white">
                                             <option value="DETALLADO" @selected(old('tipo_detalle', $purchaseMovement?->tipo_detalle ?? 'DETALLADO') === 'DETALLADO')>DETALLADO
                                             </option>
                                             <option value="GLOSA" @selected(old('tipo_detalle', $purchaseMovement?->tipo_detalle ?? 'DETALLADO') === 'GLOSA')>GLOSA</option>
@@ -407,7 +407,7 @@
                                             class="mb-1 block text-[11px] font-bold uppercase text-gray-500 tracking-wider">AFECTA
                                             KARDEX</label>
                                         <select name="affects_kardex" x-model="affectsKardex"
-                                            class="h-9 w-full rounded-lg border border-gray-300 px-2 text-sm focus:border-[#FF4622] focus:ring-1 focus:ring-[#FF4622] bg-white">
+                                            class="h-9 w-full rounded-lg border border-gray-300 px-2 text-sm focus:border-[#124731] focus:ring-1 focus:ring-[#124731] bg-white">
                                             <option value="S">Si</option>
                                             <option value="N">No</option>
                                         </select>
@@ -417,7 +417,7 @@
                                             class="mb-1 block text-[11px] font-bold uppercase text-gray-500 tracking-wider">INCLUYE
                                             IGV</label>
                                         <select name="includes_tax" x-model="includesTax"
-                                            class="h-9 w-full rounded-lg border border-gray-300 px-2 text-sm focus:border-[#FF4622] focus:ring-1 focus:ring-[#FF4622] bg-white">
+                                            class="h-9 w-full rounded-lg border border-gray-300 px-2 text-sm focus:border-[#124731] focus:ring-1 focus:ring-[#124731] bg-white">
                                             <option value="S">Si</option>
                                             <option value="N">No</option>
                                         </select>
@@ -428,14 +428,14 @@
                                             %</label>
                                         <input type="number" name="tax_rate_percent" x-model.number="taxRate" step="0.01"
                                             min="0" max="100"
-                                            class="h-9 w-full rounded-lg border border-gray-300 px-2 text-sm focus:border-[#FF4622] focus:ring-1 focus:ring-[#FF4622]"
+                                            class="h-9 w-full rounded-lg border border-gray-300 px-2 text-sm focus:border-[#124731] focus:ring-1 focus:ring-[#124731]"
                                             required>
                                     </div>
                                     <div>
                                         <label
                                             class="mb-1 block text-[11px] font-bold uppercase text-gray-500 tracking-wider">MONEDA</label>
                                         <select name="currency" x-model="currency"
-                                            class="h-9 w-full rounded-lg border border-gray-300 px-2 text-sm focus:border-[#FF4622] focus:ring-1 focus:ring-[#FF4622] bg-white"
+                                            class="h-9 w-full rounded-lg border border-gray-300 px-2 text-sm focus:border-[#124731] focus:ring-1 focus:ring-[#124731] bg-white"
                                             required>
                                             <option value="PEN">PEN</option>
                                             <option value="USD">USD</option>
@@ -447,7 +447,7 @@
                                             CAMBIO</label>
                                         <input type="number" name="exchange_rate" x-model.number="exchangeRate" step="0.001"
                                             min="0.001"
-                                            class="h-9 w-full rounded-lg border border-gray-300 px-2 text-sm focus:border-[#FF4622] focus:ring-1 focus:ring-[#FF4622]"
+                                            class="h-9 w-full rounded-lg border border-gray-300 px-2 text-sm focus:border-[#124731] focus:ring-1 focus:ring-[#124731]"
                                             required>
                                     </div>
                                 </div>
@@ -477,13 +477,13 @@
                                                                 x-text="currency === 'USD' ? '$' : 'S/'"></span>
                                                             <input type="number" x-model.number="item.amount" min="0"
                                                                 step="0.01"
-                                                                class="w-full pl-6 pr-2 py-1.5 text-xs font-bold text-gray-700 bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:border-[#FF4622] focus:ring-1 focus:ring-[#FF4622] outline-none transition-colors"
+                                                                class="w-full pl-6 pr-2 py-1.5 text-xs font-bold text-gray-700 bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:border-[#124731] focus:ring-1 focus:ring-[#124731] outline-none transition-colors"
                                                                 @input="item.total_tmp = ((item.quantity || 0) * (item.amount || 0)).toFixed(2)">
                                                         </div>
                                                     </div>
                                                     <div class="w-1/3 flex justify-end items-end pt-3">
                                                         <p class="text-[10px] text-gray-500 text-right"><span
-                                                                class="font-bold text-[#FF4622] block text-xs"
+                                                                class="font-bold text-[#124731] block text-xs"
                                                                 x-text="money((item.quantity || 0) * (item.amount || 0))"></span>Subtotal
                                                         </p>
                                                     </div>
@@ -538,7 +538,7 @@
                                         <span
                                             class="text-base font-bold uppercase tracking-wide text-gray-700 text-left">TOTAL
                                             A PAGAR</span>
-                                        <span class="text-xl font-black text-[#FF4622] text-right"
+                                        <span class="text-xl font-black text-[#124731] text-right"
                                             x-text="money(summary.total)"></span>
                                     </div>
                                     <p x-show="payment_type === 'CONTADO' && totalPaid > 0 && Math.abs(totalPaid - summary.total) > 0.02"
@@ -552,7 +552,7 @@
                                     <label
                                         class="mb-1 block text-[11px] font-bold uppercase text-gray-500 tracking-wider">NOTAS</label>
                                     <textarea name="comment" rows="2"
-                                        class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-[#FF4622] focus:ring-1 focus:ring-[#FF4622]"
+                                        class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-[#124731] focus:ring-1 focus:ring-[#124731]"
                                         placeholder="Comentario opcional...">{{ old('comment', $purchase?->comment ?? '') }}</textarea>
                                 </div>
                             </div>
@@ -564,7 +564,7 @@
                                         class="mb-1 block text-[11px] font-bold uppercase text-gray-500 tracking-wider">TIPO
                                         DE PAGO</label>
                                     <select name="payment_type" x-model="payment_type"
-                                        class="h-10 w-full rounded-lg border border-gray-300 px-3 text-sm focus:border-[#FF4622] focus:ring-1 focus:ring-[#FF4622] bg-white">
+                                        class="h-10 w-full rounded-lg border border-gray-300 px-3 text-sm focus:border-[#124731] focus:ring-1 focus:ring-[#124731] bg-white">
                                         <option value="CONTADO">Contado</option>
                                         <option value="CREDITO">Crédito</option>
                                     </select>
@@ -574,7 +574,7 @@
                                         class="mb-1 block text-[11px] font-bold uppercase text-gray-500 tracking-wider">AFECTA
                                         CAJA</label>
                                     <select name="affects_cash"
-                                        class="h-10 w-full rounded-lg border border-gray-300 px-3 text-sm focus:border-[#FF4622] focus:ring-1 focus:ring-[#FF4622] bg-white">
+                                        class="h-10 w-full rounded-lg border border-gray-300 px-3 text-sm focus:border-[#124731] focus:ring-1 focus:ring-[#124731] bg-white">
                                         <option value="N" @selected(old('affects_cash', $purchaseMovement?->afecta_caja ?? 'N') === 'N')>No</option>
                                         <option value="S" @selected(old('affects_cash', $purchaseMovement?->afecta_caja ?? 'N') === 'S')>Si</option>
                                     </select>
@@ -591,7 +591,7 @@
                                                 DE CREDITO</label>
                                             <input type="number" min="0" step="1" name="credit_days"
                                                 x-model.number="creditDays" @input="recalculateDueDate()"
-                                                class="h-10 w-full rounded-lg border border-orange-300 bg-white px-3 text-sm focus:border-[#FF4622] focus:ring-1 focus:ring-[#FF4622]">
+                                                class="h-10 w-full rounded-lg border border-orange-300 bg-white px-3 text-sm focus:border-[#124731] focus:ring-1 focus:ring-[#124731]">
                                         </div>
                                         <div>
                                             <label
@@ -599,7 +599,7 @@
                                                 VENCIMIENTO</label>
                                             <x-form.date-picker type="date" name="due_date"
                                                 @date-change="onDueDateChange($event)"
-                                                class="h-10 w-full rounded-lg border border-orange-300 bg-white px-3 text-sm focus:border-[#FF4622] focus:ring-1 focus:ring-[#FF4622]"
+                                                class="h-10 w-full rounded-lg border border-orange-300 bg-white px-3 text-sm focus:border-[#124731] focus:ring-1 focus:ring-[#124731]"
                                                 dateFormat="Y-m-d"
                                                 :defaultDate="old('due_date', $purchase?->due_date ? \Carbon\Carbon::parse($purchase->due_date)->format('Y-m-d') : '')"
                                             />
@@ -610,7 +610,7 @@
                                     <div class="flex items-center justify-between">
                                         <h4 class="text-sm font-bold text-gray-700">Métodos de pago</h4>
                                         <button type="button" @click="addPaymentRow()"
-                                            class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-[#FF4622] text-white text-xs font-bold hover:bg-[#C43B25] transition-colors">
+                                            class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-[#124731] text-white text-xs font-bold hover:bg-[#0A2E1F] transition-colors">
                                             <i class="ri-add-line text-sm"></i> Agregar método
                                         </button>
                                     </div>
@@ -764,7 +764,7 @@
                                 <i class="ri-close-line mr-2"></i>Cancelar
                             </a>
                             <button type="submit"
-                                class="inline-flex items-center rounded-lg bg-[#FF4622] px-6 py-2.5 text-sm font-bold text-white shadow-md hover:bg-[#C43B25] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                class="inline-flex items-center rounded-lg bg-[#124731] px-6 py-2.5 text-sm font-bold text-white shadow-md hover:bg-[#0A2E1F] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                 :disabled="!canSubmit || isSubmitting"
                                 :class="isSubmitting ? 'opacity-75 cursor-wait pointer-events-none' : ''"
                                 :title="submitErrorMessage">

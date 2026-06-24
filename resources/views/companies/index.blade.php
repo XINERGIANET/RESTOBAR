@@ -90,7 +90,7 @@
                     <div class="w-auto flex-none">
                         <label class="mb-1.5 block text-xs font-medium text-gray-500 sm:hidden">Por página</label>
                         <select name="per_page"
-                            class="dark:bg-dark-900 shadow-theme-xs focus:border-[#FF4622] focus:ring-[#FF4622]/10 dark:focus:border-[#FF4622] h-11 w-full rounded-lg border border-gray-300 bg-transparent px-3 py-2.5 text-sm text-gray-800 focus:ring-3 focus:outline-hidden dark:border-gray-700 dark:bg-gray-900 dark:text-white/90"
+                            class="dark:bg-dark-900 shadow-theme-xs focus:border-[#124731] focus:ring-[#124731]/10 dark:focus:border-[#124731] h-11 w-full rounded-lg border border-gray-300 bg-transparent px-3 py-2.5 text-sm text-gray-800 focus:ring-3 focus:outline-hidden dark:border-gray-700 dark:bg-gray-900 dark:text-white/90"
                             onchange="this.form.submit()">
                             @foreach ([10, 20, 50, 100] as $size)
                                 <option value="{{ $size }}" @selected($perPage == $size)>{{ $size }} /
@@ -107,11 +107,11 @@
                             name="search"
                             value="{{ $search }}"
                             placeholder="Buscar por razón social, RUC o dirección"
-                            class="dark:bg-dark-900 shadow-theme-xs focus:border-[#FF4622] focus:ring-[#FF4622]/10 dark:focus:border-[#FF4622] h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 pl-10 text-sm text-gray-800 placeholder:text-gray-400 focus:ring-3 focus:outline-hidden dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30"
+                            class="dark:bg-dark-900 shadow-theme-xs focus:border-[#124731] focus:ring-[#124731]/10 dark:focus:border-[#124731] h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 pl-10 text-sm text-gray-800 placeholder:text-gray-400 focus:ring-3 focus:outline-hidden dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30"
                         />
                     </div>
                     <div class="flex flex-none flex-wrap gap-2">
-                        <x-ui.button size="md" variant="primary" type="submit" class="flex-1 sm:flex-none h-11 px-4 shadow-sm hover:shadow-md transition-all duration-200 active:scale-95" style="background-color: #C43B25; border-color: #C43B25;">
+                        <x-ui.button size="md" variant="primary" type="submit" class="flex-1 sm:flex-none h-11 px-4 shadow-sm hover:shadow-md transition-all duration-200 active:scale-95" style="background-color: #0A2E1F; border-color: #0A2E1F;">
                             <i class="ri-search-line text-gray-100"></i>
                             <span class="font-medium text-gray-100">Buscar</span>
                         </x-ui.button>
@@ -126,7 +126,7 @@
                     @foreach ($topOperations as $operation)
                         @php
                             $topTextColor = $resolveTextColor($operation);
-                            $topColor = $operation->color ?: '#FF4622';
+                            $topColor = $operation->color ?: '#124731';
                             $topStyle = "background-color: {$topColor}; color: {$topTextColor};";
                             $topActionUrl = $resolveActionUrl($operation->action ?? '', null, $operation);
                         @endphp
@@ -156,7 +156,7 @@
                 class="table-responsive rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03]">
                 <table class="w-full min-w-max">
                         <thead>
-                            <tr style="background-color: #FF4622;" class="text-white">
+                            <tr style="background-color: #124731;" class="text-white">
                                 <th class="px-3 py-4 text-center whitespace-nowrap first:rounded-tl-xl sticky-left-header w-32 max-w-[128px] sm:w-auto sm:max-w-none">
                                     <p class="font-bold text-gray-100 text-xs uppercase tracking-wider">Razón social</p>
                                 </th>
@@ -202,7 +202,7 @@
                                                     $isDelete = str_contains($action, 'destroy');
                                                     $actionUrl = $resolveActionUrl($action, $company, $operation);
                                                     $textColor = $resolveTextColor($operation);
-                                                    $buttonColor = $operation->color ?: '#FF4622';
+                                                    $buttonColor = $operation->color ?: '#124731';
                                                     $buttonStyle = "background-color: {$buttonColor}; color: {$textColor};";
                                                     $variant = $isDelete ? 'eliminate' : (str_contains($action, 'edit') ? 'edit' : 'primary');
                                                 @endphp
@@ -295,7 +295,7 @@
                 <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between relative">
                     <div class="flex items-center gap-4">
                         <div
-                            class="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#FF4622]/10 text-[#FF4622] dark:bg-[#FF4622]/20">
+                            class="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#124731]/10 text-[#124731] dark:bg-[#124731]/20">
                             <i class="ri-building-line text-2xl"></i>
                         </div>
                         <div>

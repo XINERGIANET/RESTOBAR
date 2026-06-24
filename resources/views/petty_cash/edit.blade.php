@@ -100,7 +100,7 @@
 
             <div>
                 <h3 class="text-base font-medium text-gray-800 dark:text-white mb-4 flex items-center gap-2">
-                    <i class="ri-file-list-3-line text-[#FF4622]"></i> Información del Movimiento
+                    <i class="ri-file-list-3-line text-[#124731]"></i> Información del Movimiento
                 </h3>
                 <div class="bg-gray-50 rounded-xl p-5 border border-gray-100 dark:bg-white/[0.02] dark:border-gray-800 space-y-5">
                     
@@ -141,7 +141,7 @@
             <div>
                 <div class="flex items-end justify-between mb-4">
                     <h3 class="text-base font-medium text-gray-800 dark:text-white flex items-center gap-2">
-                        <i class="ri-wallet-3-line text-[#FF4622]"></i> Desglose de Pagos
+                        <i class="ri-wallet-3-line text-[#124731]"></i> Desglose de Pagos
                     </h3>
                 </div>
 
@@ -212,12 +212,12 @@
                         </div>
                     </template>
                     
-                    <button type="button" @click="addNewRow()" class="mt-2 text-[#C43B25] font-medium text-sm flex items-center gap-1 hover:underline">
+                    <button type="button" @click="addNewRow()" class="mt-2 text-[#0A2E1F] font-medium text-sm flex items-center gap-1 hover:underline">
                         <i class="ri-add-circle-line"></i> Agregar otro método de pago
                     </button>
 
-                   <div class="w-fit ml-auto flex items-center gap-3 bg-[#FF4622]/10 dark:bg-brand-900/20 px-5 py-2 rounded-lg border border-brand-100 dark:border-brand-800 shadow-sm">
-                        <span class="text-xs text-[#C43B25] uppercase font-bold tracking-wider">Total</span>
+                   <div class="w-fit ml-auto flex items-center gap-3 bg-[#124731]/10 dark:bg-brand-900/20 px-5 py-2 rounded-lg border border-brand-100 dark:border-brand-800 shadow-sm">
+                        <span class="text-xs text-[#0A2E1F] uppercase font-bold tracking-wider">Total</span>
                         <span class="text-xl font-black text-gray-900 dark:text-white tracking-tight">
                             S/. <span x-text="totalAmount"></span>
                         </span>

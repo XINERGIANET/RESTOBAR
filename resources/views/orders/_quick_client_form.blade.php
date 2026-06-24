@@ -25,7 +25,7 @@
                 Tipo de persona <span class="text-red-500">*</span>
             </label>
             <select name="person_type" x-model="personType" @change="onPersonTypeChange()"
-                class="h-12 w-full rounded-xl border border-gray-300 bg-white px-4 text-sm text-gray-800 focus:border-[#FF4622] focus:ring-2 focus:ring-[#FF4622]/20 focus:outline-none dark:border-gray-700 dark:bg-gray-900 dark:text-white">
+                class="h-12 w-full rounded-xl border border-gray-300 bg-white px-4 text-sm text-gray-800 focus:border-[#124731] focus:ring-2 focus:ring-[#124731]/20 focus:outline-none dark:border-gray-700 dark:bg-gray-900 dark:text-white">
                 <option value="DNI">DNI</option>
                 <option value="RUC">RUC</option>
             </select>
@@ -43,7 +43,7 @@
                 <input type="text" name="document_number" x-model.trim="documentNumber"
                     @keydown.enter.prevent="searchDocument()" :maxlength="isRuc ? 11 : 8"
                     placeholder="Ej: 12345678 o 20123456789"
-                    class="h-12 w-full rounded-xl border border-gray-300 bg-white px-4 text-sm text-gray-800 placeholder:text-gray-400 focus:border-[#FF4622] focus:ring-2 focus:ring-[#FF4622]/20 focus:outline-none dark:border-gray-700 dark:bg-gray-900 dark:text-white" />
+                    class="h-12 w-full rounded-xl border border-gray-300 bg-white px-4 text-sm text-gray-800 placeholder:text-gray-400 focus:border-[#124731] focus:ring-2 focus:ring-[#124731]/20 focus:outline-none dark:border-gray-700 dark:bg-gray-900 dark:text-white" />
                 <button type="button" @click="searchDocument()" :disabled="loading"
                     class="inline-flex h-12 shrink-0 items-center justify-center gap-2 rounded-xl bg-[#2752FF] px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#1f45dc] disabled:cursor-not-allowed disabled:opacity-60">
                     <i :class="loading ? 'ri-loader-4-line animate-spin' : 'ri-search-line'"></i>
@@ -63,7 +63,7 @@
                     x-text="isRuc ? 'Razón social' : 'Nombres'"></label>
                 <input type="text" name="first_name" x-model="firstName"
                     :placeholder="isRuc ? 'Ingrese la razón social' : 'Ingrese los nombres'" required
-                    class="h-12 w-full rounded-xl border border-gray-300 bg-white px-4 text-sm text-gray-800 placeholder:text-gray-400 focus:border-[#FF4622] focus:ring-2 focus:ring-[#FF4622]/20 focus:outline-none dark:border-gray-700 dark:bg-gray-900 dark:text-white" />
+                    class="h-12 w-full rounded-xl border border-gray-300 bg-white px-4 text-sm text-gray-800 placeholder:text-gray-400 focus:border-[#124731] focus:ring-2 focus:ring-[#124731]/20 focus:outline-none dark:border-gray-700 dark:bg-gray-900 dark:text-white" />
                 @error('first_name')
                     <p class="mt-1 text-xs text-red-500">{{ $message }}</p>
                 @enderror
@@ -75,7 +75,7 @@
                 </label>
                 <input type="text" name="last_name" x-model="lastName" :required="!isRuc"
                     placeholder="Ingrese los apellidos"
-                    class="h-12 w-full rounded-xl border border-gray-300 bg-white px-4 text-sm text-gray-800 placeholder:text-gray-400 focus:border-[#FF4622] focus:ring-2 focus:ring-[#FF4622]/20 focus:outline-none dark:border-gray-700 dark:bg-gray-900 dark:text-white" />
+                    class="h-12 w-full rounded-xl border border-gray-300 bg-white px-4 text-sm text-gray-800 placeholder:text-gray-400 focus:border-[#124731] focus:ring-2 focus:ring-[#124731]/20 focus:outline-none dark:border-gray-700 dark:bg-gray-900 dark:text-white" />
                 @error('last_name')
                     <p class="mt-1 text-xs text-red-500">{{ $message }}</p>
                 @enderror
@@ -87,7 +87,7 @@
                 <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300"
                     x-text="isRuc ? 'Inscripción' : 'Nacimiento'"></label>
                 <input type="date" name="fecha_nacimiento" x-model="birthDate"
-                    class="h-12 w-full rounded-xl border border-gray-300 bg-white px-4 text-sm text-gray-800 focus:border-[#FF4622] focus:ring-2 focus:ring-[#FF4622]/20 focus:outline-none dark:border-gray-700 dark:bg-gray-900 dark:text-white" />
+                    class="h-12 w-full rounded-xl border border-gray-300 bg-white px-4 text-sm text-gray-800 focus:border-[#124731] focus:ring-2 focus:ring-[#124731]/20 focus:outline-none dark:border-gray-700 dark:bg-gray-900 dark:text-white" />
                 @error('fecha_nacimiento')
                     <p class="mt-1 text-xs text-red-500">{{ $message }}</p>
                 @enderror
@@ -96,7 +96,7 @@
             <div x-show="!isRuc" x-cloak>
                 <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">Género</label>
                 <select name="genero" x-model="gender"
-                    class="h-12 w-full rounded-xl border border-gray-300 bg-white px-4 text-sm text-gray-800 focus:border-[#FF4622] focus:ring-2 focus:ring-[#FF4622]/20 focus:outline-none dark:border-gray-700 dark:bg-gray-900 dark:text-white">
+                    class="h-12 w-full rounded-xl border border-gray-300 bg-white px-4 text-sm text-gray-800 focus:border-[#124731] focus:ring-2 focus:ring-[#124731]/20 focus:outline-none dark:border-gray-700 dark:bg-gray-900 dark:text-white">
                     <option value="">Seleccione género</option>
                     <option value="MASCULINO">Masculino</option>
                     <option value="FEMENINO">Femenino</option>
@@ -110,7 +110,7 @@
             <div :class="isRuc ? 'sm:col-span-1 lg:col-span-1' : ''">
                 <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">Teléfono</label>
                 <input type="text" name="phone" x-model="phone" placeholder="Sin guiones"
-                    class="h-12 w-full rounded-xl border border-gray-300 bg-white px-4 text-sm text-gray-800 placeholder:text-gray-400 focus:border-[#FF4622] focus:ring-2 focus:ring-[#FF4622]/20 focus:outline-none dark:border-gray-700 dark:bg-gray-900 dark:text-white" />
+                    class="h-12 w-full rounded-xl border border-gray-300 bg-white px-4 text-sm text-gray-800 placeholder:text-gray-400 focus:border-[#124731] focus:ring-2 focus:ring-[#124731]/20 focus:outline-none dark:border-gray-700 dark:bg-gray-900 dark:text-white" />
                 @error('phone')
                     <p class="mt-1 text-xs text-red-500">{{ $message }}</p>
                 @enderror
@@ -119,7 +119,7 @@
             <div :class="isRuc ? 'sm:col-span-2 lg:col-span-2' : ''">
                 <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">Email</label>
                 <input type="email" name="email" x-model="email" placeholder="ejemplo@correo.com"
-                    class="h-12 w-full rounded-xl border border-gray-300 bg-white px-4 text-sm text-gray-800 placeholder:text-gray-400 focus:border-[#FF4622] focus:ring-2 focus:ring-[#FF4622]/20 focus:outline-none dark:border-gray-700 dark:bg-gray-900 dark:text-white" />
+                    class="h-12 w-full rounded-xl border border-gray-300 bg-white px-4 text-sm text-gray-800 placeholder:text-gray-400 focus:border-[#124731] focus:ring-2 focus:ring-[#124731]/20 focus:outline-none dark:border-gray-700 dark:bg-gray-900 dark:text-white" />
                 @error('email')
                     <p class="mt-1 text-xs text-red-500">{{ $message }}</p>
                 @enderror
@@ -133,7 +133,7 @@
         <div class="mb-5">
             <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">Dirección completa</label>
             <input type="text" name="address" x-model="address" placeholder="Av. Principal 123..."
-                class="h-12 w-full rounded-xl border border-gray-300 bg-white px-4 text-sm text-gray-800 placeholder:text-gray-400 focus:border-[#FF4622] focus:ring-2 focus:ring-[#FF4622]/20 focus:outline-none dark:border-gray-700 dark:bg-gray-900 dark:text-white" />
+                class="h-12 w-full rounded-xl border border-gray-300 bg-white px-4 text-sm text-gray-800 placeholder:text-gray-400 focus:border-[#124731] focus:ring-2 focus:ring-[#124731]/20 focus:outline-none dark:border-gray-700 dark:bg-gray-900 dark:text-white" />
             @error('address')
                 <p class="mt-1 text-xs text-red-500">{{ $message }}</p>
             @enderror
@@ -143,7 +143,7 @@
             <div>
                 <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">Departamento</label>
                 <select name="department_id" :value="departmentId" @change="departmentId = $event.target.value; onDepartmentChange()"
-                    class="h-12 w-full rounded-xl border border-gray-300 bg-white px-4 text-sm text-gray-800 focus:border-[#FF4622] focus:ring-2 focus:ring-[#FF4622]/20 focus:outline-none dark:border-gray-700 dark:bg-gray-900 dark:text-white">
+                    class="h-12 w-full rounded-xl border border-gray-300 bg-white px-4 text-sm text-gray-800 focus:border-[#124731] focus:ring-2 focus:ring-[#124731]/20 focus:outline-none dark:border-gray-700 dark:bg-gray-900 dark:text-white">
                     <option value="">Selección</option>
                     @foreach($departments ?? [] as $dept)
                         <option value="{{ $dept->id }}">{{ $dept->name }}</option>
@@ -154,7 +154,7 @@
             <div>
                 <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">Provincia</label>
                 <select name="province_id" x-model="provinceId" @change="onProvinceChange()"
-                    class="h-12 w-full rounded-xl border border-gray-300 bg-white px-4 text-sm text-gray-800 focus:border-[#FF4622] focus:ring-2 focus:ring-[#FF4622]/20 focus:outline-none dark:border-gray-700 dark:bg-gray-900 dark:text-white">
+                    class="h-12 w-full rounded-xl border border-gray-300 bg-white px-4 text-sm text-gray-800 focus:border-[#124731] focus:ring-2 focus:ring-[#124731]/20 focus:outline-none dark:border-gray-700 dark:bg-gray-900 dark:text-white">
                     <option value="">Selección</option>
                     <template x-for="province in filteredProvinces" :key="province.id">
                         <option :value="String(province.id)" x-text="province.name"></option>
@@ -165,7 +165,7 @@
             <div>
                 <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">Distrito</label>
                 <select name="location_id" x-model="districtId" @change="districtId = $event.target.value"
-                    class="h-12 w-full rounded-xl border border-gray-300 bg-white px-4 text-sm text-gray-800 focus:border-[#FF4622] focus:ring-2 focus:ring-[#FF4622]/20 focus:outline-none dark:border-gray-700 dark:bg-gray-900 dark:text-white">
+                    class="h-12 w-full rounded-xl border border-gray-300 bg-white px-4 text-sm text-gray-800 focus:border-[#124731] focus:ring-2 focus:ring-[#124731]/20 focus:outline-none dark:border-gray-700 dark:bg-gray-900 dark:text-white">
                     <option value="">Selección</option>
                     <template x-for="district in filteredDistricts" :key="district.id">
                         <option :value="String(district.id)" x-text="district.name"></option>

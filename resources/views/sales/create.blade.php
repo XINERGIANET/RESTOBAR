@@ -54,7 +54,7 @@
                                 <div class="relative">
                                     <i class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 fas fa-search"></i>
                                     <input type="text" id="product-search"
-                                        class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FF4622]/30 focus:border-[#FF4622] dark:bg-gray-800 dark:border-gray-700 dark:text-white"
+                                        class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#124731]/30 focus:border-[#124731] dark:bg-gray-800 dark:border-gray-700 dark:text-white"
                                         placeholder="Buscar producto">
                                 </div>
                             </div>
@@ -70,11 +70,11 @@
 es                        style="max-height: 80vh;">
                         <div class="flex w-full shrink-0 border-b border-gray-200 dark:border-gray-700">
                             <button type="button" id="tab-resumen" onclick="window.switchAsideTab?.('resumen')"
-                                class="flex-1 py-3 px-4 text-sm font-bold transition-colors rounded-tl-2xl bg-[#FF4622] text-white">
+                                class="flex-1 py-3 px-4 text-sm font-bold transition-colors rounded-tl-2xl bg-[#124731] text-white">
                                 Resumen
                             </button>
                             <button type="button" id="tab-cobro" onclick="window.switchAsideTab?.('cobro')"
-                                class="flex-1 py-3 px-4 text-sm font-bold transition-colors bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-[#FF4622]/10 dark:hover:bg-[#FF4622]/20 hover:text-[#FF4622] dark:hover:text-[#FF4622]">
+                                class="flex-1 py-3 px-4 text-sm font-bold transition-colors bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-[#124731]/10 dark:hover:bg-[#124731]/20 hover:text-[#124731] dark:hover:text-[#124731]">
                                 Cobro
                             </button>
                         </div>
@@ -86,7 +86,7 @@ es                        style="max-height: 80vh;">
                                 class="block text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-1.5">Tipo
                                 de venta</label>
                             <select id="cobro-sale-type"
-                                class="block w-full rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-900 shadow-sm transition focus:border-[#FF4622] focus:outline-none focus:ring-2 focus:ring-[#FF4622]/20 dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:focus:border-[#FF4622]"
+                                class="block w-full rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-900 shadow-sm transition focus:border-[#124731] focus:outline-none focus:ring-2 focus:ring-[#124731]/20 dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:focus:border-[#124731]"
                                 onchange="toggleCobroSaleMode()">
                                 <option value="CONTADO">Contado</option>
                                 <option value="CREDITO">Crédito / Deuda</option>
@@ -132,7 +132,7 @@ es                        style="max-height: 80vh;">
                                             class="min-w-0 text-base sm:text-lg font-bold text-slate-800 dark:text-white leading-tight">Total
                                             a pagar</span>
                                         <span
-                                            class="shrink-0 text-right text-xl sm:text-2xl font-black tabular-nums text-[#FF4622] dark:text-[#FF4622] whitespace-nowrap"
+                                            class="shrink-0 text-right text-xl sm:text-2xl font-black tabular-nums text-[#124731] dark:text-[#124731] whitespace-nowrap"
                                             id="ticket-total">S/ 0.00</span>
                                     </div>
                                 </div>
@@ -180,7 +180,7 @@ es                        style="max-height: 80vh;">
                                                     class="w-full" />
                                                 @if ($branch ?? null)
                                                     <button type="button"
-                                                        class="inline-flex items-center justify-center h-8 w-8 rounded-lg bg-white border border-gray-200 text-gray-500 hover:bg-[#FF4622]/10 hover:text-[#FF4622] hover:border-[#FF4622]/30 shadow-sm transition-colors dark:bg-gray-900 dark:border-gray-700"
+                                                        class="inline-flex items-center justify-center h-8 w-8 rounded-lg bg-white border border-gray-200 text-gray-500 hover:bg-[#124731]/10 hover:text-[#124731] hover:border-[#124731]/30 shadow-sm transition-colors dark:bg-gray-900 dark:border-gray-700"
                                                         onclick="window.dispatchEvent(new CustomEvent('open-person-modal'))">
                                                         <i class="ri-user-add-line text-sm sm:text-base"></i>
                                                     </button>
@@ -249,7 +249,7 @@ es                        style="max-height: 80vh;">
                                             class="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">Métodos
                                             de pago</label>
                                         <button type="button" onclick="addCobroPaymentMethod()"
-                                            class="inline-flex items-center gap-1.5 rounded-lg bg-[#FF4622] px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-[#C43B25] active:scale-95 transition-colors shrink-0">
+                                            class="inline-flex items-center gap-1.5 rounded-lg bg-[#124731] px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-[#0A2E1F] active:scale-95 transition-colors shrink-0">
                                             <i class="ri-add-line text-sm"></i> Agregar
                                         </button>
                                     </div>
@@ -280,7 +280,7 @@ es                        style="max-height: 80vh;">
                             </div>
                             <div id="footer-cobro" class="hidden flex justify-end">
                                 <button type="button" id="checkout-button" onclick="processSale()"
-                                    class="py-2.5 px-4 rounded-xl bg-[#FF4622] text-white font-bold text-xs sm:text-sm shadow-lg hover:bg-[#C43B25] active:scale-95 transition-all flex justify-center items-center gap-2">
+                                    class="py-2.5 px-4 rounded-xl bg-[#124731] text-white font-bold text-xs sm:text-sm shadow-lg hover:bg-[#0A2E1F] active:scale-95 transition-all flex justify-center items-center gap-2">
                                     <i class="ri-bank-card-line text-base"></i>
                                     <span>Cobrar</span>
                                 </button>
@@ -298,7 +298,7 @@ es                        style="max-height: 80vh;">
                     <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                         <div class="flex items-center gap-4">
                             <div
-                                class="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#FF4622]/10 text-[#FF4622] dark:bg-[#FF4622]/20 dark:text-[#FF4622]">
+                                class="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#124731]/10 text-[#124731] dark:bg-[#124731]/20 dark:text-[#124731]">
                                 <i class="ri-user-add-line text-2xl"></i>
                             </div>
                             <div>
@@ -327,7 +327,7 @@ es                        style="max-height: 80vh;">
                                 Cancelar
                             </button>
                             <button type="submit"
-                                class="px-5 py-2.5 rounded-xl bg-[#FF4622] text-white font-semibold hover:bg-[#C43B25] shadow-lg shadow-[#FF4622]/30 transition-all">
+                                class="px-5 py-2.5 rounded-xl bg-[#124731] text-white font-semibold hover:bg-[#0A2E1F] shadow-lg shadow-[#124731]/30 transition-all">
                                 <i class="ri-save-line mr-1"></i> Guardar Cliente
                             </button>
                         </div>
@@ -670,15 +670,15 @@ es                        style="max-height: 80vh;">
 
                     el.innerHTML =
                         `
-                                <div class="rounded-2xl overflow-hidden p-4 sm:p-5 bg-white dark:bg-slate-800/60 border-2 border-[#FF4622]/20 dark:border-[#FF4622]/40 hover:border-[#FF4622] dark:hover:border-[#FF4622] transition-all duration-200 hover:-translate-y-0.5 flex flex-col items-center text-center h-full w-full">
-                                <div class="hidden sm:flex w-20 h-20 rounded-full bg-[#FF4622] items-center justify-center shrink-0 overflow-hidden mb-3">
+                                <div class="rounded-2xl overflow-hidden p-4 sm:p-5 bg-white dark:bg-slate-800/60 border-2 border-[#124731]/20 dark:border-[#124731]/40 hover:border-[#124731] dark:hover:border-[#124731] transition-all duration-200 hover:-translate-y-0.5 flex flex-col items-center text-center h-full w-full">
+                                <div class="hidden sm:flex w-20 h-20 rounded-full bg-[#124731] items-center justify-center shrink-0 overflow-hidden mb-3">
                                 ${hasImg
                             ? `<img src="${imageUrl}" alt="${safeName}" class="w-full h-full object-contain rounded-full object-cover object-center" loading="lazy" onerror="this.parentElement.innerHTML='<i class=\\'ri-restaurant-2-line text-2xl sm:text-3xl text-white\\'></i>'">`
                             : `<i class="ri-restaurant-2-line text-2xl sm:text-3xl text-white"></i>`
                         }
                                 </div>
                                                                                                                                                                                                 <h4 class="font-semibold text-gray-900 dark:text-white text-sm sm:text-base line-clamp-2 leading-tight mb-1 min-h-[2.5rem]">${safeName}</h4>
-                                                                                                                                                                                                <span class="text-base sm:text-lg font-bold text-[#FF4622] dark:text-[#FF4622]">S/ ${safePrice}</span>
+                                                                                                                                                                                                <span class="text-base sm:text-lg font-bold text-[#124731] dark:text-[#124731]">S/ ${safePrice}</span>
                                                                                                                                                                                                 <span class="mt-1 text-xs font-medium text-gray-500 dark:text-gray-400">Stock: ` +
                         stockText + `</span>
                                                                                                                                                                                             </div>
@@ -723,8 +723,8 @@ es                        style="max-height: 80vh;">
                     'inline-flex items-center gap-2 px-2.5 py-1.5 rounded-full text-xs sm:text-sm font-semibold',
                     'border transition-all duration-150 whitespace-nowrap cursor-pointer shrink-0',
                     isFavActive ?
-                        'bg-[#FF4622] text-white border-[#FF4622] shadow-sm' :
-                        'bg-white dark:bg-slate-800 text-gray-700 dark:text-gray-200 border-gray-300 dark:border-slate-600 hover:border-[#FF4622] hover:text-[#FF4622] dark:hover:text-[#FF4622]'
+                        'bg-[#124731] text-white border-[#124731] shadow-sm' :
+                        'bg-white dark:bg-slate-800 text-gray-700 dark:text-gray-200 border-gray-300 dark:border-slate-600 hover:border-[#124731] hover:text-[#124731] dark:hover:text-[#124731]'
                 ].join(' ');
                 favBtn.onclick = function () {
                     selectedCategoryId = CATEGORY_FAVORITES_ID;
@@ -742,8 +742,8 @@ es                        style="max-height: 80vh;">
                     'inline-flex items-center gap-2 px-2.5 py-1.5 rounded-full text-xs sm:text-sm font-semibold',
                     'border transition-all duration-150 whitespace-nowrap cursor-pointer shrink-0',
                     isAllActive ?
-                        'bg-[#FF4622] text-white border-[#FF4622] shadow-sm' :
-                        'bg-white dark:bg-slate-800 text-gray-700 dark:text-gray-200 border-gray-300 dark:border-slate-600 hover:border-[#FF4622] hover:text-[#FF4622] dark:hover:text-[#FF4622]'
+                        'bg-[#124731] text-white border-[#124731] shadow-sm' :
+                        'bg-white dark:bg-slate-800 text-gray-700 dark:text-gray-200 border-gray-300 dark:border-slate-600 hover:border-[#124731] hover:text-[#124731] dark:hover:text-[#124731]'
                 ].join(' ');
                 allBtn.onclick = function () {
                     selectedCategoryId = CATEGORY_ALL_ID;
@@ -768,8 +768,8 @@ es                        style="max-height: 80vh;">
                         'inline-flex items-center gap-2 px-2.5 py-1.5 rounded-full text-xs sm:text-sm font-semibold',
                         'border transition-all duration-150 whitespace-nowrap cursor-pointer shrink-0',
                         isActive ?
-                            'bg-[#FF4622] text-white border-[#FF4622] shadow-sm' :
-                            'bg-white dark:bg-slate-800 text-gray-700 dark:text-gray-200 border-gray-300 dark:border-slate-600 hover:border-[#FF4622] hover:text-[#FF4622] dark:hover:text-[#FF4622]'
+                            'bg-[#124731] text-white border-[#124731] shadow-sm' :
+                            'bg-white dark:bg-slate-800 text-gray-700 dark:text-gray-200 border-gray-300 dark:border-slate-600 hover:border-[#124731] hover:text-[#124731] dark:hover:text-[#124731]'
                     ].join(' ');
                     el.onclick = function () {
                         selectedCategoryId = cat.id;
@@ -778,7 +778,7 @@ es                        style="max-height: 80vh;">
                     };
                     el.innerHTML = `
                                                                                                                                                                                             <img src="${imageUrl}" alt="${categoryName}"
-                                                                                                                                                                                                class="w-6 h-6 rounded-full object-cover shrink-0 border ${isActive ? 'border-[#FF4622]/30' : 'border-gray-200 dark:border-slate-600'}"
+                                                                                                                                                                                                class="w-6 h-6 rounded-full object-cover shrink-0 border ${isActive ? 'border-[#124731]/30' : 'border-gray-200 dark:border-slate-600'}"
                                                                                                                                                                                                 onerror="this.onerror=null; this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22200%22 height=%22200%22%3E%3Crect fill=%22%23e5e7eb%22 width=%22200%22 height=%22200%22/%3E%3C/svg%3E'">
                                                                                                                                                                                             <span>${categoryName}</span>
                                                                                                                                                                                         `;
@@ -818,7 +818,7 @@ es                        style="max-height: 80vh;">
 
                         const statusLabel = 'Venta';
                         const statusClass =
-                            'bg-[#FF4622]/15 text-[#FF4622] border border-[#FF4622]/35 dark:text-[#FF4622]/80 dark:border-[#FF4622]/40';
+                            'bg-[#124731]/15 text-[#124731] border border-[#124731]/35 dark:text-[#124731]/80 dark:border-[#124731]/40';
 
                         const qtyMinusOnclick = `onclick="updateQty(${index}, -1)"`;
                         const qtyMinusClass = ' hover:bg-slate-100 dark:hover:bg-slate-700 font-bold';
@@ -871,10 +871,10 @@ es                        style="max-height: 80vh;">
                                                                                                                                                                                                 </div>
 
                                                                                                                                                                                                 <div class="flex flex-wrap items-center gap-x-2 gap-y-1.5 border-t border-slate-200 pt-2.5 dark:border-zinc-700/60">
-                                                                                                                                                                                                    <button type="button" onclick="toggleNoteInput(${index})" class="flex h-7 items-center justify-center rounded-lg px-2 py-1 text-xs font-medium transition-colors ${noteBtnActive ? 'bg-[#FF4622]/10 text-[#FF4622] dark:bg-[#FF4622]/20 dark:text-[#FF4622]' : 'text-slate-500 hover:bg-slate-100 hover:text-[#FF4622] dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-[#FF4622]'}">
+                                                                                                                                                                                                    <button type="button" onclick="toggleNoteInput(${index})" class="flex h-7 items-center justify-center rounded-lg px-2 py-1 text-xs font-medium transition-colors ${noteBtnActive ? 'bg-[#124731]/10 text-[#124731] dark:bg-[#124731]/20 dark:text-[#124731]' : 'text-slate-500 hover:bg-slate-100 hover:text-[#124731] dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-[#124731]'}">
                                                                                                                                                                                                         <i class="${hasNote ? 'ri-chat-1-fill' : 'ri-chat-1-line'}"></i> ${hasNote ? 'Editar nota' : 'Nota'}
                                                                                                                                                                                                     </button>
-                                                                                                                                                                                                    <button type="button" onclick="toggleCourtesyInput(${index})" class="flex h-7 items-center justify-center rounded-lg px-2 py-1 text-xs font-medium transition-colors ${courtesyBtnActive ? 'bg-[#FF4622]/10 text-[#FF4622] dark:bg-[#FF4622]/20 dark:text-[#FF4622]' : 'text-slate-500 hover:bg-slate-100 hover:text-[#FF4622] dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-[#FF4622]'}">
+                                                                                                                                                                                                    <button type="button" onclick="toggleCourtesyInput(${index})" class="flex h-7 items-center justify-center rounded-lg px-2 py-1 text-xs font-medium transition-colors ${courtesyBtnActive ? 'bg-[#124731]/10 text-[#124731] dark:bg-[#124731]/20 dark:text-[#124731]' : 'text-slate-500 hover:bg-slate-100 hover:text-[#124731] dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-[#124731]'}">
                                                                                                                                                                                                         <i class="${courtesyBtnActive ? 'ri-star-fill' : 'ri-star-line'}"></i> Cortesía
                                                                                                                                                                                                     </button>
                                                                                                                                                                                                     <button type="button" onclick="removeFromCart(${index})" class="ml-auto flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-zinc-400 transition-colors hover:bg-red-500/10 hover:text-red-500 dark:text-zinc-500 dark:hover:text-red-400" title="Eliminar">
@@ -883,7 +883,7 @@ es                        style="max-height: 80vh;">
                                                                                                                                                                                                 </div>
 
                                                                                                                                                                                                 <div id="note-box-${index}" class="${showNoteBox ? '' : 'hidden'}">
-                                                                                                                                                                                                    <textarea rows="2" onblur="saveNote(${index}, this.value)" placeholder="Ej: Sin cebolla, término medio..." class="w-full min-h-[3.25rem] resize-y rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-800 placeholder:text-slate-400 focus:border-[#FF4622] focus:outline-none focus:ring-2 focus:ring-[#FF4622]/20 dark:border-zinc-600 dark:bg-zinc-900/80 dark:text-zinc-100 dark:placeholder:text-zinc-500 dark:focus:border-[#FF4622]">${itemNote}</textarea>
+                                                                                                                                                                                                    <textarea rows="2" onblur="saveNote(${index}, this.value)" placeholder="Ej: Sin cebolla, término medio..." class="w-full min-h-[3.25rem] resize-y rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-800 placeholder:text-slate-400 focus:border-[#124731] focus:outline-none focus:ring-2 focus:ring-[#124731]/20 dark:border-zinc-600 dark:bg-zinc-900/80 dark:text-zinc-100 dark:placeholder:text-zinc-500 dark:focus:border-[#124731]">${itemNote}</textarea>
                                                                                                                                                                                                 </div>
 
                                                                                                                                                                                                 <div id="courtesy-box-${index}" class="${showCourtesyBox ? '' : 'hidden'}">
@@ -1158,11 +1158,11 @@ es                        style="max-height: 80vh;">
                     cobro?.classList.add('flex');
                     footerResumen?.classList.add('hidden');
                     footerCobro?.classList.remove('hidden');
-                    btnResumen?.classList.remove('bg-[#FF4622]', 'text-white');
+                    btnResumen?.classList.remove('bg-[#124731]', 'text-white');
                     btnResumen?.classList.add('bg-gray-200', 'dark:bg-gray-700', 'text-gray-700', 'dark:text-gray-300');
                     btnCobro?.classList.remove('bg-gray-100', 'dark:bg-gray-800', 'text-gray-500',
                         'dark:text-gray-400');
-                    btnCobro?.classList.add('bg-[#FF4622]', 'text-white');
+                    btnCobro?.classList.add('bg-[#124731]', 'text-white');
                     if (productsGrid) {
                         productsGrid.classList.add('pointer-events-none', 'opacity-60');
                     }
@@ -1183,11 +1183,11 @@ es                        style="max-height: 80vh;">
                     footerCobro?.classList.add('hidden');
                     footerCobro?.classList.remove('flex');
                     footerResumen?.classList.remove('hidden');
-                    btnCobro?.classList.remove('bg-[#FF4622]', 'text-white');
+                    btnCobro?.classList.remove('bg-[#124731]', 'text-white');
                     btnCobro?.classList.add('bg-gray-100', 'dark:bg-gray-800', 'text-gray-500', 'dark:text-gray-400');
                     btnResumen?.classList.remove('bg-gray-200', 'dark:bg-gray-700', 'text-gray-700',
                         'dark:text-gray-300');
-                    btnResumen?.classList.add('bg-[#FF4622]', 'text-white');
+                    btnResumen?.classList.add('bg-[#124731]', 'text-white');
                     if (productsGrid) {
                         productsGrid.classList.remove('pointer-events-none', 'opacity-60');
                     }
@@ -1355,12 +1355,12 @@ es                        style="max-height: 80vh;">
                                                                                                                                                                                         <div class="flex gap-2 items-end flex-wrap">
                                                                                                                                                                                             <div class="flex-1 min-w-[120px]">
                                                                                                                                                                                                 <label class="block text-[10px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-1">Método</label>
-                                                                                                                                                                                                <select class="cobro-pm-method w-full py-2 px-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-[#FF4622]/30 focus:border-[#FF4622] outline-none dark:border-gray-600 bg-white dark:bg-gray-800 text-sm" onchange="toggleCobroExtraFields(this.closest('.cobro-pm-row'))">${opts}</select>
+                                                                                                                                                                                                <select class="cobro-pm-method w-full py-2 px-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-[#124731]/30 focus:border-[#124731] outline-none dark:border-gray-600 bg-white dark:bg-gray-800 text-sm" onchange="toggleCobroExtraFields(this.closest('.cobro-pm-row'))">${opts}</select>
                                                                                                                                                                                             </div>
                                                                                                                                                                                             <div class="w-24 shrink-0">
                                                                                                                                                                                                 <label class="block text-[10px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-1">Monto</label>
                                                                                                                                                                                                 <input type="number" step="0.01" min="0" value="${autoAmount > 0 ? autoAmount.toFixed(2) : '0.00'}" placeholder="0.00"
-                                                                                                                                                                                                    class="w-full py-2 px-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-[#FF4622]/30 focus:border-[#FF4622] outline-none dark:border-gray-600 bg-white dark:bg-gray-800 text-sm tabular-nums cobro-pm-amount"
+                                                                                                                                                                                                    class="w-full py-2 px-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-[#124731]/30 focus:border-[#124731] outline-none dark:border-gray-600 bg-white dark:bg-gray-800 text-sm tabular-nums cobro-pm-amount"
                                                                                                                                                                                                     oninput="updateCobroTotalPaid()" onfocus="autocompleteCobroAmount(this)">
                                                                                                                                                                                             </div>
                                                                                                                                                                                             <button type="button" onclick="this.closest('.cobro-pm-row').remove(); updateCobroTotalPaid();" class="p-2 h-9 flex items-center justify-center text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors shrink-0" title="Eliminar">
@@ -1370,23 +1370,23 @@ es                        style="max-height: 80vh;">
                                                                                                                                                                                         <div class="cobro-pm-card-group hidden flex gap-2 items-end flex-wrap">
                                                                                                                                                                                             <div class="flex-1 min-w-[100px]">
                                                                                                                                                                                                 <label class="block text-[10px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-1">Pasarela</label>
-                                                                                                                                                                                                <select class="cobro-pm-gateway w-full py-2 px-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-[#FF4622]/30 focus:border-[#FF4622] outline-none dark:border-gray-600 bg-white dark:bg-gray-800 text-sm">${buildCobroGatewayOptions()}</select>
+                                                                                                                                                                                                <select class="cobro-pm-gateway w-full py-2 px-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-[#124731]/30 focus:border-[#124731] outline-none dark:border-gray-600 bg-white dark:bg-gray-800 text-sm">${buildCobroGatewayOptions()}</select>
                                                                                                                                                                                             </div>
                                                                                                                                                                                             <div class="flex-1 min-w-[100px]">
                                                                                                                                                                                                 <label class="block text-[10px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-1">Tarjeta</label>
-                                                                                                                                                                                                <select class="cobro-pm-card w-full py-2 px-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-[#FF4622]/30 focus:border-[#FF4622] outline-none dark:border-gray-600 bg-white dark:bg-gray-800 text-sm">${buildCobroCardOptions()}</select>
+                                                                                                                                                                                                <select class="cobro-pm-card w-full py-2 px-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-[#124731]/30 focus:border-[#124731] outline-none dark:border-gray-600 bg-white dark:bg-gray-800 text-sm">${buildCobroCardOptions()}</select>
                                                                                                                                                                                             </div>
                                                                                                                                                                                         </div>
                                                                                                                                                                                         <div class="cobro-pm-wallet-group hidden flex gap-2 items-end flex-wrap">
                                                                                                                                                                                             <div class="flex-1 min-w-[120px]">
                                                                                                                                                                                                 <label class="block text-[10px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-1">Billetera</label>
-                                                                                                                                                                                                <select class="cobro-pm-wallet w-full py-2 px-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-[#FF4622]/30 focus:border-[#FF4622] outline-none dark:border-gray-600 bg-white dark:bg-gray-800 text-sm">${buildCobroWalletOptions()}</select>
+                                                                                                                                                                                                <select class="cobro-pm-wallet w-full py-2 px-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-[#124731]/30 focus:border-[#124731] outline-none dark:border-gray-600 bg-white dark:bg-gray-800 text-sm">${buildCobroWalletOptions()}</select>
                                                                                                                                                                                             </div>
                                                                                                                                                                                         </div>
                                                                                                                                                                                         <div class="cobro-pm-bank-group hidden flex gap-2 items-end flex-wrap">
                                                                                                                                                                                             <div class="flex-1 min-w-[120px]">
                                                                                                                                                                                                 <label class="block text-[10px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-1">Banco destino</label>
-                                                                                                                                                                                                <select class="cobro-pm-bank w-full py-2 px-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-[#FF4622]/30 focus:border-[#FF4622] outline-none dark:border-gray-600 bg-white dark:bg-gray-800 text-sm">${buildCobroBankOptions()}</select>
+                                                                                                                                                                                                <select class="cobro-pm-bank w-full py-2 px-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-[#124731]/30 focus:border-[#124731] outline-none dark:border-gray-600 bg-white dark:bg-gray-800 text-sm">${buildCobroBankOptions()}</select>
                                                                                                                                                                                             </div>
                                                                                                                                                                                         </div>
                                                                                                                                                                                     `;
@@ -1720,7 +1720,7 @@ es                        style="max-height: 80vh;">
                         html: `Se emitira: <b>${selectedDocName}</b><br>Total: <b>S/ ${total.toFixed(2)}</b>${creditHint}`,
                         icon: 'warning',
                         showCancelButton: true,
-                        confirmButtonColor: '#FF4622',
+                        confirmButtonColor: '#124731',
                         cancelButtonColor: '#6b7280',
                         confirmButtonText: 'Si, cobrar',
                         cancelButtonText: 'Revisar'

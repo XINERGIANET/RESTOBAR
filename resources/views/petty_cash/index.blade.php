@@ -180,8 +180,8 @@
         <x-common.component-card title="Gestión de Movimientos" desc="Control de ingresos, egresos y traslados de fondos.">
 
             @php
-                $selectFilterClass = 'dark:bg-dark-900 shadow-theme-xs focus:border-[#FF4622] focus:ring-[#FF4622]/10 dark:focus:border-[#FF4622] h-11 w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-800 focus:ring-3 focus:outline-hidden dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 cursor-pointer';
-                $inputFilterClass = 'dark:bg-dark-900 shadow-theme-xs focus:border-[#FF4622] focus:ring-[#FF4622]/10 dark:focus:border-[#FF4622] h-11 w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-800 focus:ring-3 focus:outline-hidden dark:border-gray-700 dark:bg-gray-900 dark:text-white/90';
+                $selectFilterClass = 'dark:bg-dark-900 shadow-theme-xs focus:border-[#124731] focus:ring-[#124731]/10 dark:focus:border-[#124731] h-11 w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-800 focus:ring-3 focus:outline-hidden dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 cursor-pointer';
+                $inputFilterClass = 'dark:bg-dark-900 shadow-theme-xs focus:border-[#124731] focus:ring-[#124731]/10 dark:focus:border-[#124731] h-11 w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-800 focus:ring-3 focus:outline-hidden dark:border-gray-700 dark:bg-gray-900 dark:text-white/90';
                 $labelFilterClass = 'mb-1.5 block text-[11px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400';
                 $pettyCashClearUrl = route('petty-cash.index', array_filter(['cash_register_id' => $selectedBoxId, 'view_id' => $viewId ?? null]));
             @endphp
@@ -282,7 +282,7 @@
                                 <div class="flex flex-col gap-2 md:flex-row md:items-end">
                                     <x-ui.button size="md" variant="primary" type="submit"
                                         class="h-11 w-full md:flex-1 px-4 shadow-sm hover:shadow-md transition-all duration-200 active:scale-95"
-                                        style="background-color: #C43B25; border-color: #C43B25;">
+                                        style="background-color: #0A2E1F; border-color: #0A2E1F;">
                                         <i class="ri-search-line text-gray-100"></i>
                                     </x-ui.button>
                                     <x-ui.link-button size="md" variant="outline" href="{{ $pettyCashClearUrl }}"
@@ -369,7 +369,7 @@
             <div
                 class="mt-4 w-full overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-white/[0.03]">
                 <table class="w-full min-w-0">
-                    <thead class="bg-[#FF4622] text-white shadow-sm">
+                    <thead class="bg-[#124731] text-white shadow-sm">
                         <tr>
                             <th class="w-14 px-3 py-3.5 text-center first:rounded-tl-xl">
                                 <span class="text-xs font-semibold uppercase tracking-wider">Orden</span>
@@ -421,7 +421,7 @@
                                     class="border-b border-gray-100 bg-white dark:border-gray-800 dark:bg-white/[0.03] transition-colors hover:bg-sky-50/50 dark:hover:bg-white/5 align-middle even:bg-gray-50/50 dark:even:bg-white/[0.02]">
                                     <td class="px-3 py-3 text-center">
                                         <button type="button" @click="expanded = !expanded"
-                                            class="inline-flex h-7 w-7 items-center justify-center rounded-full bg-[#FF4622] text-white transition hover:bg-[#C43B25] hover:scale-110 active:scale-95 dark:bg-[#FF4622] dark:text-white">
+                                            class="inline-flex h-7 w-7 items-center justify-center rounded-full bg-[#124731] text-white transition hover:bg-[#0A2E1F] hover:scale-110 active:scale-95 dark:bg-[#124731] dark:text-white">
                                             <i class="ri-add-line text-sm" x-show="!expanded"></i>
                                             <i class="ri-subtract-line text-sm" x-show="expanded"></i>
                                         </button>
@@ -660,7 +660,7 @@
                         </h3>
                     </div>
                     <div class="flex h-12 w-12 items-center justify-center rounded-2xl transition-colors duration-300"
-                        :class="formDocId == ingresoId ? 'bg-[#FF4622]/10 text-[#FF4622]' : 'bg-red-50 text-red-500'">
+                        :class="formDocId == ingresoId ? 'bg-[#124731]/10 text-[#124731]' : 'bg-red-50 text-red-500'">
                         <i class="text-xl" :class="formDocId == ingresoId ? 'ri-add-line' : 'ri-subtract-line'"></i>
                     </div>
                 </div>

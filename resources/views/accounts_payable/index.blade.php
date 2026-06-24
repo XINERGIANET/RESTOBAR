@@ -30,7 +30,7 @@
                     </select>
                 </div>
                 <div class="flex gap-2">
-                    <x-ui.button size="md" variant="primary" type="submit" class="h-11 px-4" style="background-color: #C43B25;">
+                    <x-ui.button size="md" variant="primary" type="submit" class="h-11 px-4" style="background-color: #0A2E1F;">
                         <i class="ri-search-line"></i> Filtrar
                     </x-ui.button>
                     <x-ui.link-button size="md" variant="outline" href="{{ route('accounts-receivable.index', array_filter(['view_id' => request('view_id')])) }}"
@@ -43,7 +43,7 @@
             <div
                 class="table-responsive mt-2 overflow-x-auto max-w-full rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03]">
                 <table class="w-full min-w-[900px]">
-                    <thead style="background-color: #FF4622; color: #FFFFFF;">
+                    <thead style="background-color: #124731; color: #FFFFFF;">
                         <tr>
                             <th class="px-4 py-3 text-left text-xs font-semibold uppercase">Cliente</th>
                             <th class="px-4 py-3 text-left text-xs font-semibold uppercase">Documento</th>
@@ -117,7 +117,7 @@
                                     @if ($puedeCobrar)
                                         <x-ui.link-button size="sm" variant="primary"
                                             href="{{ route('accounts-receivable.collect', array_filter(['account_receivable_payable' => $row->id, 'view_id' => request('view_id')])) }}"
-                                            style="background-color: #C43B25;">
+                                            style="background-color: #0A2E1F;">
                                             Cobrar
                                         </x-ui.link-button>
                                     @else

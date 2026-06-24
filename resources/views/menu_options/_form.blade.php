@@ -61,7 +61,7 @@
                 value="{{ old('name', $menuOption->name ?? '') }}"
                 required
                 placeholder="Ej: Gestionar Usuarios"
-                class="dark:bg-dark-900 shadow-theme-xs focus:border-[#FF4622] focus:ring-[#FF4622]/10 dark:focus:border-[#FF4622] h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 pl-[62px] text-sm text-gray-800 placeholder:text-gray-400 focus:ring-3 focus:outline-hidden dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30"
+                class="dark:bg-dark-900 shadow-theme-xs focus:border-[#124731] focus:ring-[#124731]/10 dark:focus:border-[#124731] h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 pl-[62px] text-sm text-gray-800 placeholder:text-gray-400 focus:ring-3 focus:outline-hidden dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30"
             />
         </div>
         @error('name')
@@ -78,7 +78,7 @@
             <select
                 name="view_id"
                 required
-                class="dark:bg-dark-900 shadow-theme-xs focus:border-[#FF4622] focus:ring-[#FF4622]/10 dark:focus:border-[#FF4622] h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 pl-[62px] text-sm text-gray-800 placeholder:text-gray-400 focus:ring-3 focus:outline-hidden dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30"
+                class="dark:bg-dark-900 shadow-theme-xs focus:border-[#124731] focus:ring-[#124731]/10 dark:focus:border-[#124731] h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 pl-[62px] text-sm text-gray-800 placeholder:text-gray-400 focus:ring-3 focus:outline-hidden dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30"
             >
                 <option value="">Seleccione una vista</option>
                 @foreach ($views as $view)
@@ -105,7 +105,7 @@
                 value="{{ old('action', $menuOption->action ?? '') }}"
                 required
                 placeholder="Ej: admin.users.index"
-                class="dark:bg-dark-900 shadow-theme-xs focus:border-[#FF4622] focus:ring-[#FF4622]/10 dark:focus:border-[#FF4622] h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 pl-[62px] text-sm text-gray-800 placeholder:text-gray-400 focus:ring-3 focus:outline-hidden dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30"
+                class="dark:bg-dark-900 shadow-theme-xs focus:border-[#124731] focus:ring-[#124731]/10 dark:focus:border-[#124731] h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 pl-[62px] text-sm text-gray-800 placeholder:text-gray-400 focus:ring-3 focus:outline-hidden dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30"
             />
         </div>
         @error('action')
@@ -128,7 +128,7 @@
                 placeholder="Busca o escribe un icono..."
                 autocomplete="off"
                 spellcheck="false"
-                class="dark:bg-dark-900 shadow-theme-xs focus:border-[#FF4622] focus:ring-[#FF4622]/10 dark:focus:border-[#FF4622] h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 pl-[62px] text-sm text-gray-800 placeholder:text-gray-400 focus:ring-3 focus:outline-hidden dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30"
+                class="dark:bg-dark-900 shadow-theme-xs focus:border-[#124731] focus:ring-[#124731]/10 dark:focus:border-[#124731] h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 pl-[62px] text-sm text-gray-800 placeholder:text-gray-400 focus:ring-3 focus:outline-hidden dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30"
                 @focus="openDropdown()"
                 @input="openDropdown()"
                 @keydown.escape.stop="closeDropdown()"
@@ -149,11 +149,11 @@
         >
             <div class="mb-2 flex items-center justify-between text-xs text-gray-500">
                 <span x-text="loading ? 'Cargando iconos...' : `${filteredIcons.length} iconos`"></span>
-                <button type="button" class="text-[#FF4622] hover:text-[#C43B25]" @click="clear()">Limpiar</button>
+                <button type="button" class="text-[#124731] hover:text-[#0A2E1F]" @click="clear()">Limpiar</button>
             </div>
             <template x-if="loading">
                 <div class="flex items-center gap-3 text-sm text-gray-500">
-                    <div class="h-5 w-5 animate-spin rounded-full border-2 border-[#FF4622] border-t-transparent"></div>
+                    <div class="h-5 w-5 animate-spin rounded-full border-2 border-[#124731] border-t-transparent"></div>
                     <span>Cargando iconos...</span>
                 </div>
             </template>
@@ -175,7 +175,7 @@
                     <template x-for="icon in displayedIcons" :key="icon">
                         <button
                             type="button"
-                            class="flex items-center justify-center rounded-lg border border-gray-200 bg-white px-2 py-3 text-gray-600 transition hover:border-brand-300 hover:text-[#C43B25] dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300"
+                            class="flex items-center justify-center rounded-lg border border-gray-200 bg-white px-2 py-3 text-gray-600 transition hover:border-brand-300 hover:text-[#0A2E1F] dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300"
                             @click="select(icon)"
                         >
                             <span class="text-xl"><i :class="icon"></i></span>
@@ -200,7 +200,7 @@
             </span>
             <select
                 name="status"
-                class="dark:bg-dark-900 shadow-theme-xs focus:border-[#FF4622] focus:ring-[#FF4622]/10 dark:focus:border-[#FF4622] h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 pl-[62px] text-sm text-gray-800 placeholder:text-gray-400 focus:ring-3 focus:outline-hidden dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30"
+                class="dark:bg-dark-900 shadow-theme-xs focus:border-[#124731] focus:ring-[#124731]/10 dark:focus:border-[#124731] h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 pl-[62px] text-sm text-gray-800 placeholder:text-gray-400 focus:ring-3 focus:outline-hidden dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30"
             >
                 <option value="1" {{ old('status', $menuOption->status ?? 1) == 1 ? 'selected' : '' }}>Activo</option>
                 <option value="0" {{ old('status', $menuOption->status ?? 1) == 0 ? 'selected' : '' }}>Inactivo</option>
@@ -219,7 +219,7 @@
             </span>
             <select
                 name="quick_access"
-                class="dark:bg-dark-900 shadow-theme-xs focus:border-[#FF4622] focus:ring-[#FF4622]/10 dark:focus:border-[#FF4622] h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 pl-[62px] text-sm text-gray-800 placeholder:text-gray-400 focus:ring-3 focus:outline-hidden dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30"
+                class="dark:bg-dark-900 shadow-theme-xs focus:border-[#124731] focus:ring-[#124731]/10 dark:focus:border-[#124731] h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 pl-[62px] text-sm text-gray-800 placeholder:text-gray-400 focus:ring-3 focus:outline-hidden dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30"
             >
                 <option value="0" {{ old('quick_access', $menuOption->quick_access ?? 0) == 0 ? 'selected' : '' }}>No</option>
                 <option value="1" {{ old('quick_access', $menuOption->quick_access ?? 0) == 1 ? 'selected' : '' }}>Sí</option>

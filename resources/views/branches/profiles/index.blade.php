@@ -151,11 +151,11 @@
                             name="search"
                             value="{{ $search }}"
                             placeholder="Buscar por nombre"
-                            class="dark:bg-dark-900 shadow-theme-xs focus:border-[#FF4622] focus:ring-[#FF4622]/10 dark:focus:border-[#FF4622] h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 pl-10 text-sm text-gray-800 placeholder:text-gray-400 focus:ring-3 focus:outline-hidden dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30"
+                            class="dark:bg-dark-900 shadow-theme-xs focus:border-[#124731] focus:ring-[#124731]/10 dark:focus:border-[#124731] h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 pl-10 text-sm text-gray-800 placeholder:text-gray-400 focus:ring-3 focus:outline-hidden dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30"
                         />
                     </div>
                     <div class="flex flex-wrap gap-2">
-                        <x-ui.button size="md" variant="primary" type="submit" class="flex-1 sm:flex-none h-11 px-4 shadow-sm hover:shadow-md transition-all duration-200 active:scale-95" style="background-color: #C43B25; border-color: #C43B25;">
+                        <x-ui.button size="md" variant="primary" type="submit" class="flex-1 sm:flex-none h-11 px-4 shadow-sm hover:shadow-md transition-all duration-200 active:scale-95" style="background-color: #0A2E1F; border-color: #0A2E1F;">
                             <i class="ri-search-line text-gray-100"></i>
                             <span class="font-medium text-gray-100">Buscar</span>
                         </x-ui.button>
@@ -219,13 +219,13 @@
                 <table class="w-full min-w-max">
                     <thead>
                         <tr class="text-white">
-                            <th style="background-color: #FF4622;" class="px-5 py-3 text-center sm:px-6 first:rounded-tl-xl sticky-left-header">
+                            <th style="background-color: #124731;" class="px-5 py-3 text-center sm:px-6 first:rounded-tl-xl sticky-left-header">
                                 <p class="font-semibold text-gray-100 text-theme-xs uppercase">Nombre</p>
                             </th>
-                            <th style="background-color: #FF4622;" class="px-5 py-3 text-center sm:px-6">
+                            <th style="background-color: #124731;" class="px-5 py-3 text-center sm:px-6">
                                 <p class="font-semibold text-gray-100 text-theme-xs uppercase">Estado</p>
                             </th>
-                            <th style="background-color: #FF4622;" class="px-5 py-3 text-center sm:px-6 last:rounded-tr-xl">
+                            <th style="background-color: #124731;" class="px-5 py-3 text-center sm:px-6 last:rounded-tr-xl">
                                 <p class="font-semibold text-gray-100 text-theme-xs uppercase">Acciones</p>
                             </th>
                         </tr>
@@ -346,7 +346,7 @@
             <div class="flex h-[70vh] flex-col overflow-hidden p-6 sm:p-8">
                     <div class="mb-6 flex shrink-0 items-center justify-between gap-4">
                         <div class="flex items-center gap-4">
-                            <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#FF4622]/10 text-[#FF4622] dark:bg-[#FF4622]/20">
+                            <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#124731]/10 text-[#124731] dark:bg-[#124731]/20">
                                 <i class="ri-user-add-line text-2xl"></i>
                             </div>
                             <div>
@@ -370,7 +370,7 @@
 
                         <div class="min-h-0 flex-1 overflow-y-auto rounded-xl border border-gray-200 bg-white custom-scrollbar dark:border-gray-800 dark:bg-white/[0.03]">
                             <table class="w-full">
-                                <thead class="sticky top-0 z-10" style="background-color: #FF4622; color: #FFFFFF;">
+                                <thead class="sticky top-0 z-10" style="background-color: #124731; color: #FFFFFF;">
                                     <tr>
                                         <th class="px-4 py-3 text-left text-xs font-semibold uppercase first:rounded-tl-xl">
                                             Asignar
@@ -390,7 +390,7 @@
                                                 <label class="inline-flex cursor-pointer items-center gap-2 text-sm text-gray-700 dark:text-gray-200">
                                                     <input type="checkbox" name="profiles[]" value="{{ $p->id }}"
                                                         @checked(in_array($p->id, $assignedProfileIds ?? [], true))
-                                                        class="h-4 w-4 rounded border-gray-300 text-[#FF4622] focus:ring-brand-500/10" />
+                                                        class="h-4 w-4 rounded border-gray-300 text-[#124731] focus:ring-brand-500/10" />
                                                     <span>Asignar</span>
                                                 </label>
                                             </td>

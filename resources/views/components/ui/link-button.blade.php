@@ -19,7 +19,7 @@
     $sizeClass = $sizeMap[$size] ?? $sizeMap['md'];
 
     $variantMap = [
-        'primary' => 'bg-[#FF4622] text-white shadow-theme-xs hover:bg-[#C43B25] disabled:opacity-50',
+        'primary' => 'bg-[#124731] text-white shadow-theme-xs hover:bg-[#0A2E1F] disabled:opacity-50',
         'outline' => 'bg-white text-gray-700 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-400 dark:ring-gray-700 dark:hover:bg-white/[0.03] dark:hover:text-gray-300',
         'eliminate' => 'bg-error-500 text-white shadow-theme-xs hover:bg-error-700 disabled:bg-error-300 dark:bg-error-600 dark:hover:bg-error-700',
         'edit' => 'bg-yellow-500 text-white shadow-theme-xs hover:bg-yellow-600 disabled:bg-yellow-300 dark:bg-yellow-600 dark:hover:bg-yellow-700',

@@ -48,7 +48,7 @@
             {{-- Información del movimiento --}}
             <div>
                 <h3 class="text-base font-medium text-gray-800 dark:text-white mb-4 flex items-center gap-2">
-                    <i class="ri-file-list-3-line text-[#FF4622]"></i> Información del Movimiento
+                    <i class="ri-file-list-3-line text-[#124731]"></i> Información del Movimiento
                 </h3>
                 <div class="bg-gray-50 rounded-xl p-5 border border-gray-100 dark:bg-white/[0.02] dark:border-gray-800 space-y-5">
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
@@ -91,7 +91,7 @@
             {{-- Detalle de productos --}}
             <div>
                 <h3 class="text-base font-medium text-gray-800 dark:text-white mb-4 flex items-center gap-2">
-                    <i class="ri-box-3-line text-[#FF4622]"></i> Detalle de Productos
+                    <i class="ri-box-3-line text-[#124731]"></i> Detalle de Productos
                 </h3>
                 <div class="overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-700">
                     <table class="w-full text-left text-sm">

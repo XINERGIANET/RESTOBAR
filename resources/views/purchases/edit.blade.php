@@ -16,7 +16,7 @@
                 <div>
                     <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Proveedor *</label>
                     <select name="supplier_id" id="supplierSelect" required disabled
-                        class="h-11 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 shadow-theme-xs focus:border-[#FF4622] focus:outline-hidden focus:ring-2 focus:ring-[#FF4622]/10 dark:focus:border-[#FF4622] opacity-50">
+                        class="h-11 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 shadow-theme-xs focus:border-[#124731] focus:outline-hidden focus:ring-2 focus:ring-[#124731]/10 dark:focus:border-[#124731] opacity-50">
                         @foreach($suppliers ?? [] as $supplier)
                             <option value="{{ $supplier->id }}">{{ $supplier->legal_name ?? $supplier->name }}</option>
                         @endforeach
@@ -27,7 +27,7 @@
                 <div>
                     <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Serie *</label>
                     <input type="text" name="serie" id="serie" placeholder="F001" required
-                        class="h-11 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 shadow-theme-xs focus:border-[#FF4622] focus:outline-hidden focus:ring-2 focus:ring-[#FF4622]/10 dark:focus:border-[#FF4622]"
+                        class="h-11 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 shadow-theme-xs focus:border-[#124731] focus:outline-hidden focus:ring-2 focus:ring-[#124731]/10 dark:focus:border-[#124731]"
                         value="{{ old('serie', $purchaseMovement->serie) }}" />
                     @error('serie') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
                 </div>
@@ -35,7 +35,7 @@
                 <div>
                     <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Año *</label>
                     <input type="text" name="anio" id="anio" placeholder="2026" required maxlength="4"
-                        class="h-11 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 shadow-theme-xs focus:border-[#FF4622] focus:outline-hidden focus:ring-2 focus:ring-[#FF4622]/10 dark:focus:border-[#FF4622]"
+                        class="h-11 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 shadow-theme-xs focus:border-[#124731] focus:outline-hidden focus:ring-2 focus:ring-[#124731]/10 dark:focus:border-[#124731]"
                         value="{{ old('anio', $purchaseMovement->anio) }}" />
                     @error('anio') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
                 </div>
@@ -43,7 +43,7 @@
                 <div>
                     <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Sucursal *</label>
                     <select name="branch_id" required
-                        class="h-11 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 shadow-theme-xs focus:border-[#FF4622] focus:outline-hidden focus:ring-2 focus:ring-[#FF4622]/10 dark:focus:border-[#FF4622]">
+                        class="h-11 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 shadow-theme-xs focus:border-[#124731] focus:outline-hidden focus:ring-2 focus:ring-[#124731]/10 dark:focus:border-[#124731]">
                         <option value="">-- Seleccionar Sucursal --</option>
                         @foreach($branches ?? [] as $branch)
                             <option value="{{ $branch->id }}" @selected(old('branch_id', $purchaseMovement->branch_id) == $branch->id)>
@@ -60,7 +60,7 @@
                 <div>
                     <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Tipo Detalle *</label>
                     <select name="tipo_detalle" required
-                        class="h-11 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 shadow-theme-xs focus:border-[#FF4622] focus:outline-hidden focus:ring-2 focus:ring-[#FF4622]/10 dark:focus:border-[#FF4622]">
+                        class="h-11 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 shadow-theme-xs focus:border-[#124731] focus:outline-hidden focus:ring-2 focus:ring-[#124731]/10 dark:focus:border-[#124731]">
                         <option value="DETALLADO" @selected(old('tipo_detalle', $purchaseMovement->tipo_detalle) == 'DETALLADO')>DETALLADO</option>
                         <option value="GLOSA" @selected(old('tipo_detalle', $purchaseMovement->tipo_detalle) == 'GLOSA')>GLOSA</option>
                     </select>
@@ -69,7 +69,7 @@
                 <div>
                     <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Incluye IGV *</label>
                     <select name="incluye_igv" required
-                        class="h-11 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 shadow-theme-xs focus:border-[#FF4622] focus:outline-hidden focus:ring-2 focus:ring-[#FF4622]/10 dark:focus:border-[#FF4622]">
+                        class="h-11 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 shadow-theme-xs focus:border-[#124731] focus:outline-hidden focus:ring-2 focus:ring-[#124731]/10 dark:focus:border-[#124731]">
                         <option value="N" @selected(old('incluye_igv', $purchaseMovement->incluye_igv) == 'N')>No incluye IGV</option>
                         <option value="S" @selected(old('incluye_igv', $purchaseMovement->incluye_igv) == 'S')>Incluye IGV</option>
                     </select>
@@ -78,7 +78,7 @@
                 <div>
                     <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Tipo Pago *</label>
                     <select name="tipo_pago" required
-                        class="h-11 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 shadow-theme-xs focus:border-[#FF4622] focus:outline-hidden focus:ring-2 focus:ring-[#FF4622]/10 dark:focus:border-[#FF4622]">
+                        class="h-11 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 shadow-theme-xs focus:border-[#124731] focus:outline-hidden focus:ring-2 focus:ring-[#124731]/10 dark:focus:border-[#124731]">
                         <option value="CONTADO" @selected(old('tipo_pago', $purchaseMovement->tipo_pago) == 'CONTADO')>CONTADO</option>
                         <option value="CREDITO" @selected(old('tipo_pago', $purchaseMovement->tipo_pago) == 'CREDITO')>CRÉDITO</option>
                     </select>
@@ -87,7 +87,7 @@
                 <div>
                     <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Moneda *</label>
                     <select name="moneda" required
-                        class="h-11 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 shadow-theme-xs focus:border-[#FF4622] focus:outline-hidden focus:ring-2 focus:ring-[#FF4622]/10 dark:focus:border-[#FF4622]">
+                        class="h-11 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 shadow-theme-xs focus:border-[#124731] focus:outline-hidden focus:ring-2 focus:ring-[#124731]/10 dark:focus:border-[#124731]">
                         <option value="PEN" @selected(old('moneda', $purchaseMovement->moneda) == 'PEN')>PEN (Soles)</option>
                         <option value="USD" @selected(old('moneda', $purchaseMovement->moneda) == 'USD')>USD (Dólares)</option>
                     </select>
@@ -99,14 +99,14 @@
                 <div>
                     <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Tipo de Cambio *</label>
                     <input type="number" name="tipocambio" step="0.01" required
-                        class="h-11 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 shadow-theme-xs focus:border-[#FF4622] focus:outline-hidden focus:ring-2 focus:ring-[#FF4622]/10 dark:focus:border-[#FF4622]"
+                        class="h-11 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 shadow-theme-xs focus:border-[#124731] focus:outline-hidden focus:ring-2 focus:ring-[#124731]/10 dark:focus:border-[#124731]"
                         value="{{ old('tipocambio', $purchaseMovement->tipocambio) }}" />
                 </div>
 
                 <div>
                     <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Afecta Caja</label>
                     <select name="afecta_caja"
-                        class="h-11 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 shadow-theme-xs focus:border-[#FF4622] focus:outline-hidden focus:ring-2 focus:ring-[#FF4622]/10 dark:focus:border-[#FF4622]">
+                        class="h-11 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 shadow-theme-xs focus:border-[#124731] focus:outline-hidden focus:ring-2 focus:ring-[#124731]/10 dark:focus:border-[#124731]">
                         <option value="N" @selected(old('afecta_caja', $purchaseMovement->afecta_caja) == 'N')>No</option>
                         <option value="S" @selected(old('afecta_caja', $purchaseMovement->afecta_caja) == 'S')>Sí</option>
                     </select>
@@ -115,7 +115,7 @@
                 <div>
                     <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Afecta Kardex</label>
                     <select name="afecta_kardex"
-                        class="h-11 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 shadow-theme-xs focus:border-[#FF4622] focus:outline-hidden focus:ring-2 focus:ring-[#FF4622]/10 dark:focus:border-[#FF4622]">
+                        class="h-11 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 shadow-theme-xs focus:border-[#124731] focus:outline-hidden focus:ring-2 focus:ring-[#124731]/10 dark:focus:border-[#124731]">
                         <option value="S" @selected(old('afecta_kardex', $purchaseMovement->afecta_kardex) == 'S')>Sí</option>
                         <option value="N" @selected(old('afecta_kardex', $purchaseMovement->afecta_kardex) == 'N')>No</option>
                     </select>
@@ -185,7 +185,7 @@
                 </div>
 
                 <button type="button" onclick="addItem()"
-                    class="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-[#FF4622] text-white rounded-lg text-sm font-bold hover:bg-[#C43B25] transition-colors">
+                    class="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-[#124731] text-white rounded-lg text-sm font-bold hover:bg-[#0A2E1F] transition-colors">
                     <i class="ri-add-line"></i>Agregar Item
                 </button>
             </div>
@@ -204,7 +204,7 @@
                 </div>
                 <div class="text-right">
                     <p class="text-sm text-gray-600 dark:text-gray-400 mb-1">Total:</p>
-                    <p class="text-2xl font-bold text-[#FF4622] dark:text-[#FF4622]">S/ <span id="totalDisplay">{{ number_format($purchaseMovement->total ?? 0, 2) }}</span></p>
+                    <p class="text-2xl font-bold text-[#124731] dark:text-[#124731]">S/ <span id="totalDisplay">{{ number_format($purchaseMovement->total ?? 0, 2) }}</span></p>
                     <input type="hidden" name="total" id="totalInput" value="{{ (float)($purchaseMovement->total ?? 0) }}" />
                 </div>
             </div>
@@ -216,7 +216,7 @@
                     Cancelar
                 </a>
                 <button type="submit"
-                    class="px-6 py-2 bg-[#FF4622] text-white rounded-lg font-semibold hover:bg-[#C43B25] transition-colors">
+                    class="px-6 py-2 bg-[#124731] text-white rounded-lg font-semibold hover:bg-[#0A2E1F] transition-colors">
                     Actualizar Compra
                 </button>
             </div>

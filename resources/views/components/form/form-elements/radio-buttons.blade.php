@@ -5,9 +5,9 @@
                 class="flex cursor-pointer items-center text-sm font-medium text-gray-700 select-none dark:text-gray-400">
                 <div class="relative">
                     <input type="checkbox" id="radioLabelOne" class="sr-only" @change="checkboxToggle = !checkboxToggle" />
-                    <div :class="checkboxToggle ? 'border-[#FF4622] bg-[#FF4622]' :
+                    <div :class="checkboxToggle ? 'border-[#124731] bg-[#124731]' :
                         'bg-transparent border-gray-300 dark:border-gray-700'"
-                        class="hover:border-[#FF4622] dark:hover:border-[#FF4622] mr-3 flex h-5 w-5 items-center justify-center rounded-full border-[1.25px]">
+                        class="hover:border-[#124731] dark:hover:border-[#124731] mr-3 flex h-5 w-5 items-center justify-center rounded-full border-[1.25px]">
                         <span class="h-2 w-2 rounded-full"
                             :class="checkboxToggle ? 'bg-white' : 'bg-white dark:bg-[#171f2e]'"></span>
                     </div>
@@ -22,9 +22,9 @@
                 <div class="relative">
                     <input type="checkbox" id="radioLabelTwo" class="sr-only"
                         @change="checkboxToggle = !checkboxToggle" />
-                    <div :class="checkboxToggle ? 'border-[#FF4622] bg-[#FF4622]' :
+                    <div :class="checkboxToggle ? 'border-[#124731] bg-[#124731]' :
                         'bg-transparent border-gray-300 dark:border-gray-700'"
-                        class="hover:border-[#FF4622] dark:hover:border-[#FF4622] mr-3 flex h-5 w-5 items-center justify-center rounded-full border-[1.25px]">
+                        class="hover:border-[#124731] dark:hover:border-[#124731] mr-3 flex h-5 w-5 items-center justify-center rounded-full border-[1.25px]">
                         <span class="h-2 w-2 rounded-full"
                             :class="checkboxToggle ? 'bg-white' : 'bg-white dark:bg-[#171f2e]'"></span>
                     </div>
@@ -40,7 +40,7 @@
                     <input type="checkbox" id="radioLabelThree" class="peer sr-only"
                         @change="checkboxToggle = !checkboxToggle" disabled />
                     <div :class="checkboxToggle ? 'bg-transparent border-gray-300 dark:border-gray-700' :
-                        'border-[#FF4622] bg-[#FF4622]'"
+                        'border-[#124731] bg-[#124731]'"
                         class="mr-3 flex h-5 w-5 items-center justify-center rounded-full border-[1.25px]">
                         <span class="h-2 w-2 rounded-full"
                             :class="checkboxToggle ? 'bg-white' : 'bg-white dark:bg-[#171f2e]'"></span>

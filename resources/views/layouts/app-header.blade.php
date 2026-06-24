@@ -1,4 +1,4 @@
-<header style="min-height: 55px; background: linear-gradient(150deg, #FF4622 0%, #C43B25 100%) !important;"
+<header style="min-height: 55px; background: linear-gradient(150deg, #124731 0%, #0A2E1F 100%) !important;"
     class="sticky top-0 flex w-full z-99999 dark:border-gray-800 dark:bg-gray-900" x-data="{
         isApplicationMenuOpen: false,
         toggleApplicationMenu() {
@@ -85,7 +85,7 @@
 
         <!-- Application Menu (mobile) and Right Side Actions (desktop) -->
         <div :class="isApplicationMenuOpen ? 'flex' : 'hidden'"
-            class="items-center justify-between w-full gap-4 px-5 py-4 xl:flex shadow-theme-md xl:justify-end xl:px-0 xl:shadow-none border-t border-white/5 xl:border-0 max-xl:bg-[linear-gradient(150deg,#FF4622_0%,#C43B25_100%)]">
+            class="items-center justify-between w-full gap-4 px-5 py-4 xl:flex shadow-theme-md xl:justify-end xl:px-0 xl:shadow-none border-t border-white/5 xl:border-0 max-xl:bg-[linear-gradient(150deg,#124731_0%,#0A2E1F_100%)]">
             <div class="flex items-center gap-2 2xsm:gap-3">
                 @if (!($isMozo ?? false) && !empty($quickOptions) && $quickOptions->count())
                     <div class="hidden xl:flex items-center gap-3">
@@ -200,23 +200,23 @@
                                                                         <button type="submit"
                                                                             class="group relative w-full flex items-center p-3 text-left border rounded-xl transition-all duration-200
                                                                                                                                                                                     {{ $isActive
-                                                ? 'bg-[#FF4622]/10 border-brand-200 ring-1 ring-brand-500/20 dark:bg-[#FF4622]/20 dark:border-[#FF4622]/30'
+                                                ? 'bg-[#124731]/10 border-brand-200 ring-1 ring-brand-500/20 dark:bg-[#124731]/20 dark:border-[#124731]/30'
                                                 : 'bg-gray-50 border-transparent hover:bg-white hover:border-gray-200 hover:shadow-sm dark:bg-gray-800 dark:hover:bg-gray-700 dark:hover:border-gray-600' 
                                                                                                                                                                                     }}">
 
                                                                             <div
                                                                                 class="flex items-center justify-center w-10 h-10 rounded-lg mr-4 
-                                                                                                                                                                                        {{ $isActive ? 'bg-brand-100 text-[#C43B25] dark:bg-[#FF4622]/20 dark:text-[#FF4622]/80' : 'bg-white text-gray-400 shadow-sm group-hover:text-[#FF4622] dark:bg-gray-700 dark:text-gray-400' }}">
+                                                                                                                                                                                        {{ $isActive ? 'bg-brand-100 text-[#0A2E1F] dark:bg-[#124731]/20 dark:text-[#124731]/80' : 'bg-white text-gray-400 shadow-sm group-hover:text-[#124731] dark:bg-gray-700 dark:text-gray-400' }}">
                                                                                 <i class="ri-store-2-line text-lg"></i>
                                                                             </div>
 
                                                                             <div class="flex-1 ml-4">
                                                                                 <h4
-                                                                                    class="font-medium {{ $isActive ? 'text-brand-700 dark:text-[#FF4622]/80' : 'text-gray-800 dark:text-gray-200' }}">
+                                                                                    class="font-medium {{ $isActive ? 'text-brand-700 dark:text-[#124731]/80' : 'text-gray-800 dark:text-gray-200' }}">
                                                                                     {{ $caja->number }}
                                                                                 </h4>
                                                                                 @if($isActive)
-                                                                                    <span class="text-xs text-[#FF4622] font-medium">● Activa
+                                                                                    <span class="text-xs text-[#124731] font-medium">● Activa
                                                                                         actualmente</span>
                                                                                 @else
                                                                                     <span class="text-xs text-gray-400 group-hover:text-gray-500"> Click
@@ -225,7 +225,7 @@
                                                                             </div>
 
                                                                             @if($isActive)
-                                                                                <div class="text-[#FF4622]">
+                                                                                <div class="text-[#124731]">
                                                                                     <i class="ri-checkbox-circle-fill text-xl"></i>
                                                                                 </div>
                                                                             @endif

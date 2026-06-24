@@ -16,7 +16,7 @@
 <div class="mt-6 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-900">
 
     <h3 class="text-lg font-bold text-gray-800 dark:text-white flex items-center gap-2 mb-5">
-        <span class="flex h-9 w-9 items-center justify-center rounded-xl bg-[#FF4622]/10 text-[#FF4622]">
+        <span class="flex h-9 w-9 items-center justify-center rounded-xl bg-[#124731]/10 text-[#124731]">
             <i class="ri-calendar-line text-xl"></i>
         </span>
         Resumen de {{ ucfirst($reportType === 'ambos' ? 'Ventas y Compras' : $reportType) }} por Mes
@@ -33,7 +33,7 @@
         <div class="flex flex-col gap-1">
             <label class="text-[11px] font-semibold uppercase tracking-widest text-gray-400">Ver</label>
             <select name="report_type"
-                class="h-10 rounded-lg border border-gray-200 bg-white px-3 text-sm text-gray-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-[#FF4622]/40 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200">
+                class="h-10 rounded-lg border border-gray-200 bg-white px-3 text-sm text-gray-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-[#124731]/40 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200">
                 <option value="ventas"  {{ $reportType === 'ventas'  ? 'selected' : '' }}>Ventas</option>
                 <option value="compras" {{ $reportType === 'compras' ? 'selected' : '' }}>Compras</option>
                 <option value="ambos"   {{ $reportType === 'ambos'   ? 'selected' : '' }}>Ambos</option>
@@ -41,7 +41,7 @@
         </div>
 
         <button type="submit"
-            class="h-10 rounded-lg bg-[#FF4622] px-5 text-sm font-semibold text-white shadow hover:bg-[#e03d1c] transition-colors flex items-center gap-1.5">
+            class="h-10 rounded-lg bg-[#124731] px-5 text-sm font-semibold text-white shadow hover:bg-[#e03d1c] transition-colors flex items-center gap-1.5">
             <i class="ri-search-line"></i> Buscar
         </button>
     </form>

@@ -9,7 +9,7 @@
     <div class="mx-3 md:mx-4 flex flex-col gap-4 rounded-2xl border border-gray-200 bg-white dark:bg-gray-900 p-4">
         <div x-data="posSystem()" x-cloak
             class="flex flex-col min-h-[calc(100vh-9rem)] w-full font-sans text-slate-800 dark:text-white"
-            style="--brand:#FF4622; --brand-soft:rgba(255,70,34,0.14);">
+            style="--brand:#124731; --brand-soft:rgba(255,70,34,0.14);">
 
             {{-- CONTROLES SUPERIORES: Áreas, Buscador y Chips --}}
             <div class="flex flex-col w-full mb-6 gap-4 shrink-0">
@@ -25,7 +25,7 @@
                                     x-show="canScrollAreasLeft"
                                     x-cloak
                                     @click="scrollAreas('left')"
-                                    class="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-500 shadow-sm transition hover:border-[#FF4622]/30 hover:text-[#FF4622] dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300"
+                                    class="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-500 shadow-sm transition hover:border-[#124731]/30 hover:text-[#124731] dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300"
                                     title="Ver áreas anteriores"
                                 >
                                     <i class="ri-arrow-left-s-line text-lg"></i>
@@ -52,7 +52,7 @@
                                     x-show="canScrollAreasRight"
                                     x-cloak
                                     @click="scrollAreas('right')"
-                                    class="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-500 shadow-sm transition hover:border-[#FF4622]/30 hover:text-[#FF4622] dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300"
+                                    class="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-500 shadow-sm transition hover:border-[#124731]/30 hover:text-[#124731] dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300"
                                     title="Ver más áreas"
                                 >
                                     <i class="ri-arrow-right-s-line text-lg"></i>
@@ -70,8 +70,8 @@
                     <div class="relative w-full lg:w-[380px] xl:w-[460px] shrink-0 min-w-0 flex items-center gap-2">
                         <input type="text" x-model="searchQuery" @keydown.enter.prevent="addSearchChip"
                             placeholder="Buscar por cliente, mozo o producto..."
-                            class="w-full pl-10 pr-4 py-2.5 text-sm bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-xl text-gray-800 dark:text-gray-200 placeholder-gray-400 focus:ring-2 focus:ring-[#FF4622]/30 focus:border-[#FF4622] outline-none transition-all">
-                        <x-ui.button size="xs" variant="primary" type="button" onclick="addSearchChip()" class="!px-1.5 !py-1.5 text-[11px] font-normal h-auto leading-tight" style="background-color: #FF4622; border-color: #FF4622;">Añadir filtro</x-ui.button>
+                            class="w-full pl-10 pr-4 py-2.5 text-sm bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-xl text-gray-800 dark:text-gray-200 placeholder-gray-400 focus:ring-2 focus:ring-[#124731]/30 focus:border-[#124731] outline-none transition-all">
+                        <x-ui.button size="xs" variant="primary" type="button" onclick="addSearchChip()" class="!px-1.5 !py-1.5 text-[11px] font-normal h-auto leading-tight" style="background-color: #124731; border-color: #124731;">Añadir filtro</x-ui.button>
                     </div>
 
                 </div>

@@ -105,12 +105,12 @@
                                     <i class="ri-search-line"></i>
                                 </span>
                                 <input type="text" name="search" value="{{ $search }}" placeholder="Buscar..."
-                                    class="dark:bg-dark-900 shadow-theme-xs focus:border-[#FF4622] focus:ring-[#FF4622]/10 dark:focus:border-[#FF4622] h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 pl-12 text-sm text-gray-800 placeholder:text-gray-400 focus:ring-3 focus:outline-hidden dark:border-gray-700 dark:bg-gray-900 dark:text-white/90" />
+                                    class="dark:bg-dark-900 shadow-theme-xs focus:border-[#124731] focus:ring-[#124731]/10 dark:focus:border-[#124731] h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 pl-12 text-sm text-gray-800 placeholder:text-gray-400 focus:ring-3 focus:outline-hidden dark:border-gray-700 dark:bg-gray-900 dark:text-white/90" />
                             </div>
                             <div class="flex gap-2 w-full sm:w-auto">
                                 <x-ui.button size="md" variant="primary" type="submit"
                                     class="h-11 w-full sm:w-auto px-6 shadow-sm hover:shadow-md transition-all duration-200 active:scale-95"
-                                    style="background-color: #C43B25; border-color: #C43B25;">
+                                    style="background-color: #0A2E1F; border-color: #0A2E1F;">
                                     <i class="ri-search-line text-gray-100"></i>
                                     <span class="font-medium text-gray-100 hidden sm:inline">Buscar</span>
                                 </x-ui.button>
@@ -127,7 +127,7 @@
                             @if ($topOperations->isNotEmpty())
                                 @foreach ($topOperations as $operation)
                                     @php
-                                        $topColor = $operation->color ?: '#FF4622';
+                                        $topColor = $operation->color ?: '#124731';
                                         $topTextColor = '#FFFFFF';
                                         $topStyle = "background-color: {$topColor}; color: {$topTextColor};";
                                         $topActionUrl = $resolveActionUrl($operation->action ?? '', null, $operation);
@@ -140,7 +140,7 @@
                                 @endforeach
                             @else
                                 <x-ui.link-button size="md" variant="primary"
-                                    style="background-color: #FF4622; color: #FFFFFF;"
+                                    style="background-color: #124731; color: #FFFFFF;"
                                     href="{{ route('sales.create', $viewId ? ['view_id' => $viewId] : []) }}"
                                     class="h-11">
                                     <i class="ri-add-line"></i>
@@ -156,7 +156,7 @@
                                 $filterClass = 'shrink-0';
                                 $labelClass = 'mb-1.5 block text-xs font-medium text-gray-600 dark:text-gray-400';
                                 $inputClass =
-                                    'h-11 w-full lg:w-[155px] rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 shadow-theme-xs focus:border-brand-300 focus:outline-hidden focus:ring-2 focus:ring-brand-500/10 dark:border-gray-600 dark:bg-gray-900 dark:text-white/90 dark:focus:border-[#FF4622]';
+                                    'h-11 w-full lg:w-[155px] rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 shadow-theme-xs focus:border-brand-300 focus:outline-hidden focus:ring-2 focus:ring-brand-500/10 dark:border-gray-600 dark:bg-gray-900 dark:text-white/90 dark:focus:border-[#124731]';
                             @endphp
 
                             <div class="{{ $filterClass }}">
@@ -285,7 +285,7 @@
                 class="table-responsive mt-4 rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03]">
                 <table class="w-full min-w-[1100px]">
                     <thead>
-                        <tr style="background-color: #FF4622; color: #FFFFFF;">
+                        <tr style="background-color: #124731; color: #FFFFFF;">
                             <th class="px-5 py-3 text-left sm:px-6 first:rounded-tl-xl sticky-left-header">
                                 <p class="font-semibold text-white text-center text-theme-xs uppercase">#</p>
                             </th>
@@ -320,7 +320,7 @@
                                     <div class="flex items-center justify-center gap-2">
                                         <button type="button"
                                             @click="openRow === {{ $sale->id }} ? openRow = null : openRow = {{ $sale->id }}"
-                                            class="inline-flex h-6 w-6 items-center justify-center rounded-full bg-[#FF4622] text-white transition hover:bg-[#C43B25]">
+                                            class="inline-flex h-6 w-6 items-center justify-center rounded-full bg-[#124731] text-white transition hover:bg-[#0A2E1F]">
                                             <i class="ri-add-line" x-show="openRow !== {{ $sale->id }}"></i>
                                             <i class="ri-subtract-line" x-show="openRow === {{ $sale->id }}"></i>
                                         </button>
@@ -351,7 +351,7 @@
                                         {{ number_format((float) ($sale->salesMovement?->tax ?? 0), 2) }}</p>
                                 </td>
                                 <td class="px-5 text-center py-4 sm:px-6">
-                                    <p class="font-bold text-[#FF4622] text-theme-sm dark:text-[#FF4622]/80">S/ 
+                                    <p class="font-bold text-[#124731] text-theme-sm dark:text-[#124731]/80">S/ 
                                         {{ number_format((float) ($sale->salesMovement?->total ?? 0), 2) }}</p>
                                 </td>
                                 <td class="px-5 py-4 sm:px-6">
@@ -436,7 +436,7 @@
                                                             $separator . 'movement_id=' . urlencode($sale->id);
                                                     }
 
-                                                    $buttonColor = $operation->color ?: '#FF4622';
+                                                    $buttonColor = $operation->color ?: '#124731';
                                                     $buttonTextColor = str_contains($action, 'edit')
                                                         ? '#111827'
                                                         : '#FFFFFF';
@@ -586,7 +586,7 @@
                                 <td colspan="8" class="px-6 py-5">
                                     <div class="rounded-xl border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-900 overflow-hidden shadow-sm">
                                         <div class="px-4 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/80 flex items-center gap-2">
-                                            <i class="ri-file-list-3-line text-[#FF4622]"></i>
+                                            <i class="ri-file-list-3-line text-[#124731]"></i>
                                             <h4 class="text-sm font-bold text-gray-700 dark:text-gray-200">Detalle de la venta #{{ $sale->salesMovement?->number ?? $sale->id }}</h4>
                                         </div>
                                         <div class="overflow-x-auto">
@@ -645,7 +645,7 @@
                                             registradas.</p>
                                         <p class="text-gray-500">Crea la primera venta para comenzar.</p>
                                         <x-ui.link-button size="sm" variant="primary"
-                                            style="background-color: #FF4622; color: #FFFFFF;"
+                                            style="background-color: #124731; color: #FFFFFF;"
                                             href="{{ route('sales.create', $viewId ? ['view_id' => $viewId] : []) }}">
                                             <i class="ri-add-line"></i>
                                             <span>Registrar venta</span>
@@ -724,7 +724,7 @@
                         @if ($branch ?? null)
                             <button type="button" title="Nuevo cliente"
                                 onclick="window.dispatchEvent(new CustomEvent('open-person-modal'))"
-                                class="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-gray-300 bg-white text-[#FF4622] hover:bg-[#FF4622]/10 dark:border-gray-600 dark:bg-gray-800 dark:hover:bg-[#FF4622]/20">
+                                class="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-gray-300 bg-white text-[#124731] hover:bg-[#124731]/10 dark:border-gray-600 dark:bg-gray-800 dark:hover:bg-[#124731]/20">
                                 <i class="ri-add-line text-xl"></i>
                             </button>
                         @endif
@@ -755,7 +755,7 @@
                 <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div class="flex items-center gap-4">
                         <div
-                            class="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#FF4622]/10 text-[#FF4622] dark:bg-[#FF4622]/20 dark:text-[#FF4622]">
+                            class="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#124731]/10 text-[#124731] dark:bg-[#124731]/20 dark:text-[#124731]">
                             <i class="ri-user-add-line text-2xl"></i>
                         </div>
                         <div>
@@ -784,7 +784,7 @@
                             Cancelar
                         </button>
                         <button type="submit"
-                            class="px-5 py-2.5 rounded-xl bg-[#FF4622] text-white font-semibold hover:bg-[#C43B25] shadow-lg shadow-[#FF4622]/30 transition-all">
+                            class="px-5 py-2.5 rounded-xl bg-[#124731] text-white font-semibold hover:bg-[#0A2E1F] shadow-lg shadow-[#124731]/30 transition-all">
                             <i class="ri-save-line mr-1"></i> Guardar Cliente
                         </button>
                     </div>

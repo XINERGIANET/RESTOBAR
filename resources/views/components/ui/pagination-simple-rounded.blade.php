@@ -93,7 +93,7 @@
                                     <span aria-current="page">
                                         <span
                                             class="relative inline-flex items-center h-10 w-10 justify-center text-sm font-bold rounded-xl leading-5 cursor-default text-white"
-                                            style="background-color: #FF4622;">{{ $page }}</span>
+                                            style="background-color: #124731;">{{ $page }}</span>
                                     </span>
                                 @else
                                     <a href="{{ $url }}"

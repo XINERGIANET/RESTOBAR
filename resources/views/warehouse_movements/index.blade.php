@@ -107,13 +107,13 @@
                             </span>
                             <input type="text" name="search" value="{{ $search }}"
                                 placeholder="Buscar por número, persona, usuario..."
-                                class="dark:bg-dark-900 shadow-theme-xs focus:border-[#FF4622] focus:ring-[#FF4622]/10 dark:focus:border-[#FF4622] h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 pl-11 text-sm text-gray-800 placeholder:text-gray-400 focus:ring-3 focus:outline-hidden dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30" />
+                                class="dark:bg-dark-900 shadow-theme-xs focus:border-[#124731] focus:ring-[#124731]/10 dark:focus:border-[#124731] h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 pl-11 text-sm text-gray-800 placeholder:text-gray-400 focus:ring-3 focus:outline-hidden dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30" />
                         </div>
                     </div>
                     <div class="flex items-center gap-2 flex-none">
                         <x-ui.button size="md" variant="primary" type="submit"
                             class="flex-1 sm:flex-none h-11 px-4 shadow-sm hover:shadow-md transition-all duration-200 active:scale-95"
-                            style="background-color: #C43B25; border-color: #C43B25;">
+                            style="background-color: #0A2E1F; border-color: #0A2E1F;">
                             <i class="ri-search-line text-gray-100"></i>
                             <span class="font-medium text-gray-100">Buscar</span>
                         </x-ui.button>
@@ -169,9 +169,9 @@
             <div
                 class="table-responsive mt-4 rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03]">
                 <table class="w-full min-w-[1100px]">
-                    <thead style="background-color: #FF4622; color: #FFFFFF;">
+                    <thead style="background-color: #124731; color: #FFFFFF;">
                         <tr>
-                            <th style="background-color: #FF4622; color: #FFFFFF;"
+                            <th style="background-color: #124731; color: #FFFFFF;"
                                 class="px-5 py-4 text-center first:rounded-tl-xl sticky-left-header">
                                 <p class="font-bold text-gray-100 text-xs uppercase tracking-wider">Número</p>
                             </th>
@@ -217,7 +217,7 @@
                                 <td class="px-5 py-4 align-middle">
                                     <div class="flex items-center gap-2">
                                         <div
-                                            class="flex h-8 w-8 items-center justify-center rounded-lg bg-[#FF4622]/10 text-[#FF4622] dark:bg-[#FF4622]/20 shrink-0">
+                                            class="flex h-8 w-8 items-center justify-center rounded-lg bg-[#124731]/10 text-[#124731] dark:bg-[#124731]/20 shrink-0">
                                             <i class="ri-archive-line text-xs"></i>
                                         </div>
                                         <p class="font-semibold text-gray-800 text-theme-sm dark:text-white/90 truncate"
@@ -317,7 +317,7 @@
                                             <div class="relative group">
                                                 <a href="{{ route('warehouse_movements.show', array_merge(['warehouseMovement' => $warehouseMovement->id], $viewId ? ['view_id' => $viewId] : [])) }}"
                                                     class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-info-500 text-white hover:bg-info-600 transition-colors shadow-sm"
-                                                    style="background-color: #FF4622; color: #FFFFFF;"
+                                                    style="background-color: #124731; color: #FFFFFF;"
                                                     aria-label="Ver Registro">
                                                     <i class="ri-eye-line"></i>
                                                 </a>
