@@ -100,8 +100,8 @@
                     <!-- ===== Common Grid Shape Start ===== -->
                     <x-common.common-grid-shape/>
                     <div class="flex max-w-xs flex-col items-center">
-                        <a href="/" class="mb-4 block">
-                            <img src="./images/logo/Xinergia.png" alt="Logo" class="mx-auto" />
+                        <a href="/" class="mb-4 block text-center">
+                            <img src="./images/logo/ALLAHUASCA.png" alt="Logo" class="mx-auto" />
                         </a>
                         <p class="text-center text-gray-400 dark:text-white/60">
                             Lo mejor en soluciones tecnológicas para tu negocio.
