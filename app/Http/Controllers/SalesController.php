@@ -1832,6 +1832,7 @@ class SalesController extends Controller
             ];
 
             $printData['usePublicAssets'] = true;
+            $printData['useEmbeddedAssets'] = true;
             $response['ticket_html_b64'] = base64_encode(view('sales.print.ticket', $printData)->render());
 
             if ($pdfBinary !== null && $pdfBinary !== '') {
@@ -2068,6 +2069,7 @@ class SalesController extends Controller
 
         $logoUrl = null;
         $logoFileUrl = null;
+        $logoEmbeddedUrl = null;
         if ($branchForLogo?->logo) {
             $rawLogo = trim((string) $branchForLogo->logo);
 
@@ -2086,6 +2088,12 @@ class SalesController extends Controller
                 if (file_exists($localLogoPath)) {
                     $normalized = str_replace('\\', '/', $localLogoPath);
                     $logoFileUrl = 'file:///'.ltrim($normalized, '/');
+
+                    $logoContents = file_get_contents($localLogoPath);
+                    if ($logoContents !== false) {
+                        $logoMime = mime_content_type($localLogoPath) ?: 'image/png';
+                        $logoEmbeddedUrl = 'data:'.$logoMime.';base64,'.base64_encode($logoContents);
+                    }
                 }
             }
         }
@@ -2101,6 +2109,7 @@ class SalesController extends Controller
             'branchForLogo' => $branchForLogo,
             'logoUrl' => $logoUrl,
             'logoFileUrl' => $logoFileUrl,
+            'logoEmbeddedUrl' => $logoEmbeddedUrl,
             'printedAt' => now(),
             'paymentLabel' => $this->resolveSalePaymentLabel($sale),
             'ticketAddressDisplay' => $this->resolveTicketAddressDisplay($sale),
