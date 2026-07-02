@@ -285,7 +285,7 @@
     <div class="center">
         @if(!empty($logoFileUrl) || !empty($logoUrl))
             <div class="logo-wrap">
-                <img src="{{ $logoFileUrl ?: $logoUrl }}" alt="Logo sucursal" class="logo">
+                <img src="{{ !empty($autoPrint) ? $logoUrl : ($logoFileUrl ?: $logoUrl) }}" alt="Logo sucursal" class="logo">
             </div>
         @endif
         <p class="company">{{ strtoupper($branchForLogo->legal_name ?? 'SUCURSAL') }}</p>
