@@ -324,7 +324,7 @@
             </div>
         </x-common.component-card>
 
-        <x-ui.modal x-data="{ open: @js($errors->any() && old('creation_mode')), mode: @js(old('creation_mode', 'single')) }" @open-table-modal.window="open = true" @close-table-modal.window="open = false" :isOpen="false" :showCloseButton="false" class="max-w-3xl">
+        <x-ui.modal x-data="{ open: false, mode: 'single' }" @open-table-modal.window="open = true; mode = 'single'" @close-table-modal.window="open = false" :isOpen="false" :showCloseButton="false" class="max-w-3xl">
             <div class="p-6 sm:p-8">
                 <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div class="flex items-center gap-4">
