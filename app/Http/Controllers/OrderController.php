@@ -593,8 +593,9 @@ class OrderController extends Controller
         $tables = Table::query()
             ->when($branchId, fn($q) => $q->where('branch_id', $branchId))
             ->when(! $branchId, fn($q) => $q->whereRaw('1 = 0'))
-            ->orderByRaw('CAST(name AS UNSIGNED) ASC, name ASC')
-            ->get(['id', 'name', 'area_id', 'capacity', 'situation', 'opened_at']);
+            ->get(['id', 'name', 'area_id', 'capacity', 'situation', 'opened_at'])
+            ->sortBy('name', SORT_NATURAL | SORT_FLAG_CASE)
+            ->values();
 
         // Área seleccionada explícitamente (por query)
         if ($request->has('area_id')) {
@@ -884,8 +885,9 @@ class OrderController extends Controller
         $tables = Table::query()
             ->when($branchId, fn($q) => $q->where('branch_id', $branchId))
             ->when(! $branchId, fn($q) => $q->whereRaw('1 = 0'))
-            ->orderByRaw('CAST(name AS UNSIGNED) ASC, name ASC')
-            ->get(['id', 'name', 'area_id', 'capacity', 'situation', 'opened_at']);
+            ->get(['id', 'name', 'area_id', 'capacity', 'situation', 'opened_at'])
+            ->sortBy('name', SORT_NATURAL | SORT_FLAG_CASE)
+            ->values();
         $tablesPayload = $tables->map(function (Table $table) use ($branchId) {
             $elapsed = '--:--';
             if (! empty($table->opened_at)) {
