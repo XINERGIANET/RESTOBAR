@@ -927,28 +927,17 @@
                             const paperMm = (parseInt(td.paper_width, 10) || 58) === 80 ? 80 : 58;
                             const paperHeight = Math.max(120, parseFloat(td.paper_height) || 200);
                             const sizeOpts = { units: 'mm', size: { width: paperMm, height: paperHeight } };
-                            const configPdf = qzApi.configs.create(printerName, { ...sizeOpts, scaleContent: true });
+                            const configPdf = qzApi.configs.create(printerName, { ...sizeOpts, scaleContent: true, rasterize: true });
+                            const decodeHtml = (encoded) => new TextDecoder('utf-8').decode(
+                                Uint8Array.from(atob(encoded), character => character.charCodeAt(0))
+                            );
                             const printHtmlTicket = () => qzApi.print(configPdf, [{
                                 type: 'pixel',
                                 format: 'html',
-                                flavor: 'base64',
-                                data: td.ticket_html_b64,
+                                flavor: 'plain',
+                                data: decodeHtml(td.ticket_html_b64),
                             }]);
-                            if (td.ticket_pdf_b64 && td.qz_print_format === 'pdf') {
-                                try {
-                                    await qzApi.print(configPdf, [{
-                                        type: 'pixel',
-                                        format: 'pdf',
-                                        flavor: 'base64',
-                                        data: td.ticket_pdf_b64,
-                                    }]);
-                                } catch (pdfErr) {
-                                    console.warn('QZ Tray: PDF no disponible, reintento con HTML maquetado', pdfErr);
-                                    await printHtmlTicket();
-                                }
-                            } else {
-                                await printHtmlTicket();
-                            }
+                            await printHtmlTicket();
                             thermalPrintToast('Impresión', 'Comprobante enviado a "' + printerName + '".', 'success');
                         } catch (e) {
                             console.warn('QZ Ticket listado:', e);
