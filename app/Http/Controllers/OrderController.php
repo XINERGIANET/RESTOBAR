@@ -593,7 +593,7 @@ class OrderController extends Controller
         $tables = Table::query()
             ->when($branchId, fn($q) => $q->where('branch_id', $branchId))
             ->when(! $branchId, fn($q) => $q->whereRaw('1 = 0'))
-            ->orderBy('name')
+            ->orderByRaw('CAST(name AS UNSIGNED) ASC, name ASC')
             ->get(['id', 'name', 'area_id', 'capacity', 'situation', 'opened_at']);
 
         // Área seleccionada explícitamente (por query)
@@ -884,7 +884,7 @@ class OrderController extends Controller
         $tables = Table::query()
             ->when($branchId, fn($q) => $q->where('branch_id', $branchId))
             ->when(! $branchId, fn($q) => $q->whereRaw('1 = 0'))
-            ->orderBy('name')
+            ->orderByRaw('CAST(name AS UNSIGNED) ASC, name ASC')
             ->get(['id', 'name', 'area_id', 'capacity', 'situation', 'opened_at']);
         $tablesPayload = $tables->map(function (Table $table) use ($branchId) {
             $elapsed = '--:--';

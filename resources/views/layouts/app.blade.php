@@ -129,7 +129,7 @@
                 isHovered: false,
 
                 toggleExpanded() {
-                    this.isExpanded = false;
+                    this.isExpanded = !this.isExpanded;
                     this.isHovered = false;
                     this.isMobileOpen = false;
                 },
