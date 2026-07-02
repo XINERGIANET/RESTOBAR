@@ -324,7 +324,7 @@
                     </div>
 
                     {{-- Contenido Resumen --}}
-                    <div id="aside-resumen" class="mt-3 flex flex-col flex-1 min-h-0 overflow-hidden">
+                    <div id="aside-resumen" class="mt-3 flex flex-col shrink min-h-0 overflow-hidden">
                         {{-- Datos Delivery --}}
                         <div id="delivery-info-container"
                             class="hidden p-3 bg-[#124731]/5 dark:bg-[#124731]/10 border-b border-[#124731]/20 dark:border-[#124731]/30 space-y-2 overflow-hidden">
@@ -406,7 +406,7 @@
                         </div>
 
                         <div id="cart-container"
-                            class="flex-1 min-h-0 overflow-y-auto p-3 sm:p-4 space-y-2 sm:space-y-2.5 bg-white dark:bg-gray-900">
+                            class="shrink min-h-0 overflow-y-auto p-3 sm:p-4 space-y-2 sm:space-y-2.5 bg-white dark:bg-gray-900">
                         </div>
                         <div id="cancelled-platos-container"
                             class="shrink-0 hidden border-t border-gray-200 dark:border-gray-700 bg-amber-50 dark:bg-amber-900/20 p-3 sm:p-4 max-h-40 overflow-y-auto">
