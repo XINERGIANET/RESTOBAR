@@ -1790,6 +1790,8 @@ class SalesController extends Controller
             ? (string) $ticketText
             : $this->buildThermalTicketPlainTextApproved($movement, $request, $printer);
         $payload = $this->wrapEscPosPlainPayload($plain);
+        $printerWidthMm = (int) ($printer?->width ?? 80);
+        $logoPayload = $this->buildEscPosBranchLogoPayload($movement, $request, $printerWidthMm);
 
         // Modo QZ: mismo ticket maquetado que la vista/PDF manual (wkhtmltopdf); fallback RAW si no hay PDF.
         if ($qzMode) {
@@ -1832,6 +1834,10 @@ class SalesController extends Controller
                 'paper_height' => (float) $pageHeight,
             ];
 
+            if ($logoPayload !== '') {
+                $response['logo_payload_b64'] = base64_encode($logoPayload);
+            }
+
             $printData['usePublicAssets'] = true;
             $response['ticket_html_b64'] = base64_encode(view('sales.print.ticket', $printData)->render());
 
@@ -1852,6 +1858,7 @@ class SalesController extends Controller
 
         $printerService = app(ThermalNetworkPrintService::class);
         $hasNetworkIp = filled((string) $printer->ip);
+        $payload = $logoPayload.$payload;
 
         try {
             if ($hasNetworkIp) {
@@ -3215,6 +3222,105 @@ class SalesController extends Controller
         $text = str_replace(["\r\n", "\r"], "\n", $text);
 
         return "\x1B\x40".$text."\n\n\n\x1D\x56\x00";
+    }
+
+    private function buildEscPosBranchLogoPayload(
+        Movement $sale,
+        Request $request,
+        int $paperWidthMm
+    ): string {
+        if (! function_exists('imagecreatefromstring')) {
+            Log::warning('No se pudo imprimir el logo térmico: la extensión GD no está disponible.');
+
+            return '';
+        }
+
+        $branch = $this->buildSalePrintData($sale, $request)['branchForLogo'] ?? null;
+        $rawLogo = trim((string) ($branch?->logo ?? ''));
+        if ($rawLogo === '') {
+            return '';
+        }
+
+        if (str_starts_with($rawLogo, 'http://') || str_starts_with($rawLogo, 'https://')) {
+            $urlPath = (string) parse_url($rawLogo, PHP_URL_PATH);
+            $relativePath = preg_replace('#^/storage/#', '', $urlPath) ?: '';
+        } else {
+            $relativePath = preg_replace('#^/?storage/#', '', str_replace('\\', '/', $rawLogo)) ?: '';
+        }
+
+        $logoPath = storage_path('app/public/'.ltrim($relativePath, '/'));
+        if (! is_file($logoPath) || ! is_readable($logoPath)) {
+            Log::warning('No se encontró el logo térmico de la sucursal.', [
+                'branch_id' => $branch?->id,
+                'path' => $logoPath,
+            ]);
+
+            return '';
+        }
+
+        $contents = file_get_contents($logoPath);
+        $source = $contents !== false ? @imagecreatefromstring($contents) : false;
+        if ($source === false) {
+            return '';
+        }
+
+        $sourceWidth = imagesx($source);
+        $sourceHeight = imagesy($source);
+        $maxWidth = $paperWidthMm >= 80 ? 512 : 360;
+        $targetWidth = min($maxWidth, $sourceWidth);
+        $targetHeight = max(1, (int) round($sourceHeight * ($targetWidth / max(1, $sourceWidth))));
+        $target = imagecreatetruecolor($targetWidth, $targetHeight);
+        $white = imagecolorallocate($target, 255, 255, 255);
+        imagefill($target, 0, 0, $white);
+        imagealphablending($target, true);
+        imagecopyresampled(
+            $target,
+            $source,
+            0,
+            0,
+            0,
+            0,
+            $targetWidth,
+            $targetHeight,
+            $sourceWidth,
+            $sourceHeight
+        );
+
+        $widthBytes = (int) ceil($targetWidth / 8);
+        $raster = '';
+        for ($y = 0; $y < $targetHeight; $y++) {
+            for ($byteX = 0; $byteX < $widthBytes; $byteX++) {
+                $byte = 0;
+                for ($bit = 0; $bit < 8; $bit++) {
+                    $x = ($byteX * 8) + $bit;
+                    if ($x >= $targetWidth) {
+                        continue;
+                    }
+
+                    $rgb = imagecolorat($target, $x, $y);
+                    $red = ($rgb >> 16) & 0xFF;
+                    $green = ($rgb >> 8) & 0xFF;
+                    $blue = $rgb & 0xFF;
+                    $luminance = (0.299 * $red) + (0.587 * $green) + (0.114 * $blue);
+                    if ($luminance < 210) {
+                        $byte |= 1 << (7 - $bit);
+                    }
+                }
+                $raster .= chr($byte);
+            }
+        }
+
+        imagedestroy($source);
+        imagedestroy($target);
+
+        return "\x1B\x40\x1B\x61\x01"
+            ."\x1D\x76\x30\x00"
+            .chr($widthBytes & 0xFF)
+            .chr(($widthBytes >> 8) & 0xFF)
+            .chr($targetHeight & 0xFF)
+            .chr(($targetHeight >> 8) & 0xFF)
+            .$raster
+            ."\n\x1B\x61\x00";
     }
 
     private function thermalPadCenter(string $s, int $len): string
