@@ -54,6 +54,14 @@
             object-fit: contain;
         }
 
+        @media print {
+            .logo {
+                -webkit-filter: grayscale(1) brightness(0);
+                filter: grayscale(1) brightness(0);
+                opacity: 1;
+            }
+        }
+
         .company {
             margin: 0;
             font-size: 6.2mm;
