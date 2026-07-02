@@ -1801,6 +1801,7 @@ class SalesController extends Controller
             $printData = $this->buildSalePrintData($movement, $request);
             $printData['autoPrint'] = false;
             $printData['ticketPageWidthMm'] = $paperWidthMm;
+            $printData['useEmbeddedAssets'] = true;
 
             $html = view('sales.print.ticket', $printData)->render();
             $pageHeight = $this->estimateSaleTicketHeight($movement);
@@ -1832,7 +1833,6 @@ class SalesController extends Controller
             ];
 
             $printData['usePublicAssets'] = true;
-            $printData['useEmbeddedAssets'] = true;
             $response['ticket_html_b64'] = base64_encode(view('sales.print.ticket', $printData)->render());
 
             if ($pdfBinary !== null && $pdfBinary !== '') {
