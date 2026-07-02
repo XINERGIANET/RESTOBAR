@@ -403,7 +403,7 @@
                         </div>
                         <div>
                             <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">Prefijo</label>
-                            <input type="text" name="prefix" value="{{ old('prefix', 'Mesa') }}" required maxlength="200" placeholder="Ej: Mesa"
+                            <input type="text" name="prefix" value="{{ old('prefix') }}" maxlength="200" placeholder="Opcional. Ej: Mesa"
                                 class="dark:bg-dark-900 shadow-theme-xs focus:border-[#124731] h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 text-sm text-gray-800 focus:outline-hidden dark:border-gray-700 dark:bg-gray-900 dark:text-white/90">
                             @error('prefix') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
                         </div>
@@ -432,7 +432,7 @@
                         </div>
                     </div>
 
-                    <p class="text-sm text-gray-500">Ejemplo: prefijo “Mesa”, inicio 1 y cantidad 10 creará Mesa 1 hasta Mesa 10.</p>
+                    <p class="text-sm text-gray-500">Con prefijo “Mesa” se crearán Mesa 1, Mesa 2… Si lo dejas vacío, se crearán 1, 2, 3…</p>
 
                     <div class="flex flex-wrap gap-3">
                         <x-ui.button type="submit" size="md" variant="primary">

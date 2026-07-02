@@ -156,7 +156,7 @@ class TableController extends Controller
     {
         $data = $request->validate([
             'area_id' => ['required', 'integer', 'exists:areas,id'],
-            'prefix' => ['required', 'string', 'max:200'],
+            'prefix' => ['nullable', 'string', 'max:200'],
             'start_number' => ['required', 'integer', 'min:1', 'max:999999'],
             'quantity' => ['required', 'integer', 'min:1', 'max:200'],
             'capacity' => ['nullable', 'integer', 'min:1'],
@@ -168,17 +168,11 @@ class TableController extends Controller
             ->when($branchId, fn ($query) => $query->where('branch_id', $branchId))
             ->findOrFail($data['area_id']);
 
-        $prefix = trim($data['prefix']);
-        if ($prefix === '') {
-            throw ValidationException::withMessages([
-                'prefix' => 'El prefijo debe contener al menos un carácter.',
-            ]);
-        }
-
+        $prefix = trim($data['prefix'] ?? '');
         $names = collect(range(
             $data['start_number'],
             $data['start_number'] + $data['quantity'] - 1
-        ))->map(fn ($number) => $prefix . ' ' . $number);
+        ))->map(fn ($number) => $prefix !== '' ? $prefix . ' ' . $number : (string) $number);
 
         $existingNames = Table::query()
             ->where('area_id', $area->id)
