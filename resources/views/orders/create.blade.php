@@ -3445,26 +3445,34 @@
                             const hasImg = prod.img && String(prod.img).trim() !== '';
                             const stockInfo = buildProductStockLabel(prod, productBranch);
 
+                            let badgeBg = 'bg-slate-50 border-slate-200 text-slate-700 dark:bg-slate-700 dark:border-slate-600 dark:text-slate-300';
+                            if (stockInfo.colorClass.includes('text-red')) {
+                                badgeBg = 'bg-red-50 border-red-200 text-red-600 dark:bg-red-900/30 dark:border-red-800 dark:text-red-400';
+                            } else if (stockInfo.colorClass.includes('text-amber')) {
+                                badgeBg = 'bg-orange-50 border-orange-200 text-orange-600 dark:bg-orange-900/30 dark:border-orange-800 dark:text-orange-400';
+                            }
+                            const displayStock = stockInfo.label.replace('.00', '');
+
                             el.innerHTML =
                                 `
-                                                                                                                                                                                                    <div class="rounded-2xl overflow-hidden p-4 sm:p-5 bg-white dark:bg-slate-800/60 border-2 border-[#124731]/20 dark:border-[#124731]/40 hover:border-[#124731] dark:hover:border-[#124731] transition-all duration-200 hover:-translate-y-0.5 flex flex-col items-center text-center h-full w-full">
-                                        <div class="hidden sm:flex w-20 h-20 rounded-full bg-[#124731] items-center justify-center shrink-0 overflow-hidden mb-3">
-                                            ${hasImg
-                                    ? `<img src="${imageUrl}" alt="${productName}" class="w-full h-full object-contain rounded-full object-cover object-center" loading="lazy" onerror="this.parentElement.innerHTML='<i class=\\'ri-restaurant-2-line text-2xl sm:text-3xl text-white\\'></i>'">`
-                                    : `<i class="ri-restaurant-2-line text-2xl sm:text-3xl text-white"></i>`
-                                }
-                                        </div>
-                                                                                                                                                                                                        <h4 class="font-semibold text-gray-900 dark:text-white text-sm sm:text-base line-clamp-2 leading-tight mb-1 min-h-[2.5rem]">
-                                                                                                                                                                                                            ${productName}
-                                                                                                                                                                                                        </h4>
-                                                                                                                                                                                                        <span class="text-base sm:text-lg font-bold text-[#124731] dark:text-[#124731]">
-                                                                                                                                                                                                            ${priceFormatted}
-                                                                                                                                                                                                        </span>
-                                                                                                                                                                                                        <span data-product-stock-label="${Number(prod.id)}" class="mt-1 text-xs font-medium ` +
-                                stockInfo.colorClass + `">` + escapeHtml(stockInfo.label) +
-                                `</span>
-                                                                                                                                                                                                    </div>
-                                                                                                                                                                                                `;
+                                <div class="relative rounded-2xl overflow-hidden p-3 bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 hover:border-[#124731] dark:hover:border-[#124731] hover:shadow-md transition-all duration-200 hover:-translate-y-0.5 flex flex-col items-center justify-center text-center h-full w-full">
+                                    <div data-product-stock-label="${Number(prod.id)}" class="absolute top-1 right-1 px-2 py-0.5 rounded-full text-[10px] sm:text-[11px] font-bold border ${badgeBg} whitespace-nowrap overflow-hidden text-ellipsis max-w-[90%] z-10 shadow-sm" title="${escapeHtml(stockInfo.label)}">
+                                        ${escapeHtml(displayStock)}
+                                    </div>
+                                    <div class="flex w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-[#124731] items-center justify-center shrink-0 overflow-hidden mb-2 mt-4 shadow-sm border border-[#124731]/10">
+                                        ${hasImg
+                                ? `<img src="${imageUrl}" alt="${productName}" class="w-full h-full object-contain rounded-full object-cover object-center" loading="lazy" onerror="this.parentElement.innerHTML='<i class=\\'ri-restaurant-2-line text-xl sm:text-2xl text-white\\'></i>'">`
+                                : `<i class="ri-restaurant-2-line text-xl sm:text-2xl text-white"></i>`
+                            }
+                                    </div>
+                                    <h4 class="font-bold text-slate-800 dark:text-slate-200 text-xs sm:text-[13px] line-clamp-2 leading-tight mb-1" title="${productName}">
+                                        ${productName}
+                                    </h4>
+                                    <span class="text-sm sm:text-[15px] font-extrabold text-[#124731] dark:text-[#124731]">
+                                        ${priceFormatted}
+                                    </span>
+                                </div>
+                            `;
                             grid.appendChild(el);
                             productsRendered++;
                         });
