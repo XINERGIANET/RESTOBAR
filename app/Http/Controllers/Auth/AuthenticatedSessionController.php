@@ -63,11 +63,20 @@ class AuthenticatedSessionController extends Controller
                     $request->session()->put('shift_snapshot', $shiftSnapshot);
                 }
 
-                $hasCashRegisters = CashRegister::query()
+                $cashRegisters = CashRegister::query()
                     ->where('branch_id', $person->branch_id)
-                    ->exists();
+                    ->where('status', '1')
+                    ->get();
 
-                $request->session()->put('force_cash_register_modal', $hasCashRegisters && ! current_user_is_mozo());
+                if ($cashRegisters->count() === 1 && ! current_user_is_mozo()) {
+                    $onlyRegister = $cashRegisters->first();
+                    $request->session()->put('cash_register_id', $onlyRegister->id);
+                    $request->session()->put('cash_register_name', $onlyRegister->name);
+                    $request->session()->put('cash_register_number', $onlyRegister->number);
+                    $request->session()->put('force_cash_register_modal', false);
+                } else {
+                    $request->session()->put('force_cash_register_modal', $cashRegisters->count() > 1 && ! current_user_is_mozo());
+                }
             }
 
             // Redirección según perfil:
