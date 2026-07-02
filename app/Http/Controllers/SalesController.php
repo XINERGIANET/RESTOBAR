@@ -1828,7 +1828,11 @@ class SalesController extends Controller
                 'payload_b64' => base64_encode($payload),
                 'printer_name' => $printer?->name ?? null,
                 'paper_width' => $paperWidthMm,
+                'paper_height' => (float) $pageHeight,
             ];
+
+            $printData['usePublicAssets'] = true;
+            $response['ticket_html_b64'] = base64_encode(view('sales.print.ticket', $printData)->render());
 
             if ($pdfBinary !== null && $pdfBinary !== '') {
                 $response['ticket_pdf_b64'] = base64_encode($pdfBinary);
