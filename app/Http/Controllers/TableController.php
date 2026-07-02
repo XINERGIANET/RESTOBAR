@@ -7,6 +7,8 @@ use App\Models\Operation;
 use App\Models\Table;
 use App\Support\InsensitiveSearch;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class TableController extends Controller
 {
@@ -148,6 +150,71 @@ class TableController extends Controller
 
         return redirect()->route('tables.index', $viewId ? ['view_id' => $viewId] : [])
             ->with('status', 'Mesa creada correctamente');
+    }
+
+    public function storeBulk(Request $request)
+    {
+        $data = $request->validate([
+            'area_id' => ['required', 'integer', 'exists:areas,id'],
+            'prefix' => ['required', 'string', 'max:200'],
+            'start_number' => ['required', 'integer', 'min:1', 'max:999999'],
+            'quantity' => ['required', 'integer', 'min:1', 'max:200'],
+            'capacity' => ['nullable', 'integer', 'min:1'],
+            'status' => ['required', 'integer', 'in:0,1'],
+        ]);
+
+        $branchId = \effective_branch_id();
+        $area = Area::query()
+            ->when($branchId, fn ($query) => $query->where('branch_id', $branchId))
+            ->findOrFail($data['area_id']);
+
+        $prefix = trim($data['prefix']);
+        if ($prefix === '') {
+            throw ValidationException::withMessages([
+                'prefix' => 'El prefijo debe contener al menos un carácter.',
+            ]);
+        }
+
+        $names = collect(range(
+            $data['start_number'],
+            $data['start_number'] + $data['quantity'] - 1
+        ))->map(fn ($number) => $prefix . ' ' . $number);
+
+        $existingNames = Table::query()
+            ->where('area_id', $area->id)
+            ->pluck('name')
+            ->map(fn ($name) => mb_strtolower(trim($name)))
+            ->all();
+
+        $duplicates = $names->filter(
+            fn ($name) => in_array(mb_strtolower($name), $existingNames, true)
+        )->values();
+
+        if ($duplicates->isNotEmpty()) {
+            throw ValidationException::withMessages([
+                'prefix' => 'Ya existen estas mesas en el salón: ' . $duplicates->take(5)->implode(', ')
+                    . ($duplicates->count() > 5 ? '…' : ''),
+            ]);
+        }
+
+        DB::transaction(function () use ($names, $data, $area) {
+            foreach ($names as $name) {
+                Table::create([
+                    'name' => $name,
+                    'capacity' => $data['capacity'] ?? null,
+                    'status' => $data['status'],
+                    'situation' => 'libre',
+                    'opened_at' => null,
+                    'area_id' => $area->id,
+                    'branch_id' => $area->branch_id,
+                ]);
+            }
+        });
+
+        $viewId = $request->input('view_id');
+
+        return redirect()->route('tables.index', $viewId ? ['view_id' => $viewId] : [])
+            ->with('status', $data['quantity'] . ' mesas creadas correctamente en ' . $area->name);
     }
 
     public function edit(Area $area, Table $table)

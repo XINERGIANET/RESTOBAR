@@ -402,6 +402,7 @@ Route::middleware('auth')->group(function () {
         ->parameters(['areas' => 'area']);
     Route::get('/mesas', [TableController::class, 'indexAll'])->name('tables.index');
     Route::post('/mesas', [TableController::class, 'storeGeneral'])->name('tables.store');
+    Route::post('/mesas/masivas', [TableController::class, 'storeBulk'])->name('tables.store-bulk');
     Route::get('/mesas/{table}/edit', [TableController::class, 'editGeneral'])->name('tables.edit');
     Route::put('/mesas/{table}', [TableController::class, 'updateGeneral'])->name('tables.update');
     Route::delete('/mesas/{table}', [TableController::class, 'destroyGeneral'])->name('tables.destroy');

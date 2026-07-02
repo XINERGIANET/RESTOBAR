@@ -324,7 +324,7 @@
             </div>
         </x-common.component-card>
 
-        <x-ui.modal x-data="{ open: false }" @open-table-modal.window="open = true" @close-table-modal.window="open = false" :isOpen="false" :showCloseButton="false" class="max-w-3xl">
+        <x-ui.modal x-data="{ open: @js($errors->any() && old('creation_mode')), mode: @js(old('creation_mode', 'single')) }" @open-table-modal.window="open = true" @close-table-modal.window="open = false" :isOpen="false" :showCloseButton="false" class="max-w-3xl">
             <div class="p-6 sm:p-8">
                 <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div class="flex items-center gap-4">
@@ -332,8 +332,8 @@
                             <i class="ri-table-line text-2xl"></i>
                         </div>
                         <div>
-                            <h3 class="text-lg font-semibold text-gray-800 dark:text-white/90">Registrar mesa</h3>
-                            <p class="mt-1 text-sm text-gray-500">Ingresa la informacion de la mesa.</p>
+                            <h3 class="text-lg font-semibold text-gray-800 dark:text-white/90" x-text="mode === 'bulk' ? 'Crear mesas masivamente' : 'Registrar mesa'"></h3>
+                            <p class="mt-1 text-sm text-gray-500" x-text="mode === 'bulk' ? 'Genera varias mesas consecutivas en un salón.' : 'Ingresa la información de la mesa.'"></p>
                         </div>
                     </div>
                     <button type="button" @click="open = false"
@@ -349,8 +349,22 @@
                     </div>
                 @endif
 
-                <form method="POST" action="{{ route('tables.store') }}" class="space-y-6">
+                <div class="mb-6 grid grid-cols-2 rounded-lg bg-gray-100 p-1 dark:bg-gray-800">
+                    <button type="button" @click="mode = 'single'"
+                        :class="mode === 'single' ? 'bg-white text-[#124731] shadow-sm dark:bg-gray-700 dark:text-white' : 'text-gray-500 dark:text-gray-400'"
+                        class="rounded-md px-4 py-2.5 text-sm font-medium transition">
+                        Una mesa
+                    </button>
+                    <button type="button" @click="mode = 'bulk'"
+                        :class="mode === 'bulk' ? 'bg-white text-[#124731] shadow-sm dark:bg-gray-700 dark:text-white' : 'text-gray-500 dark:text-gray-400'"
+                        class="rounded-md px-4 py-2.5 text-sm font-medium transition">
+                        Varias mesas
+                    </button>
+                </div>
+
+                <form x-show="mode === 'single'" method="POST" action="{{ route('tables.store') }}" class="space-y-6">
                     @csrf
+                    <input type="hidden" name="creation_mode" value="single">
                     @if ($viewId)
                         <input type="hidden" name="view_id" value="{{ $viewId }}">
                     @endif
@@ -361,6 +375,69 @@
                         <x-ui.button type="submit" size="md" variant="primary">
                             <i class="ri-save-line"></i>
                             <span>Guardar</span>
+                        </x-ui.button>
+                        <x-ui.button type="button" size="md" variant="outline" @click="open = false">
+                            <i class="ri-close-line"></i>
+                            <span>Cancelar</span>
+                        </x-ui.button>
+                    </div>
+                </form>
+
+                <form x-show="mode === 'bulk'" x-cloak method="POST" action="{{ route('tables.store-bulk') }}" class="space-y-6">
+                    @csrf
+                    <input type="hidden" name="creation_mode" value="bulk">
+                    @if ($viewId)
+                        <input type="hidden" name="view_id" value="{{ $viewId }}">
+                    @endif
+
+                    <div class="grid gap-5 sm:grid-cols-2">
+                        <div class="sm:col-span-2">
+                            <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">Salón</label>
+                            <select name="area_id" required class="dark:bg-dark-900 shadow-theme-xs focus:border-[#124731] h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 text-sm text-gray-800 focus:outline-hidden dark:border-gray-700 dark:bg-gray-900 dark:text-white/90">
+                                <option value="">Seleccione salón</option>
+                                @foreach ($areas as $area)
+                                    <option value="{{ $area->id }}" @selected(old('area_id') == $area->id)>{{ $area->name }}</option>
+                                @endforeach
+                            </select>
+                            @error('area_id') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                        </div>
+                        <div>
+                            <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">Prefijo</label>
+                            <input type="text" name="prefix" value="{{ old('prefix', 'Mesa') }}" required maxlength="200" placeholder="Ej: Mesa"
+                                class="dark:bg-dark-900 shadow-theme-xs focus:border-[#124731] h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 text-sm text-gray-800 focus:outline-hidden dark:border-gray-700 dark:bg-gray-900 dark:text-white/90">
+                            @error('prefix') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                        </div>
+                        <div>
+                            <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">Número inicial</label>
+                            <input type="number" name="start_number" min="1" max="999999" value="{{ old('start_number', 1) }}" required
+                                class="dark:bg-dark-900 shadow-theme-xs focus:border-[#124731] h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 text-sm text-gray-800 focus:outline-hidden dark:border-gray-700 dark:bg-gray-900 dark:text-white/90">
+                        </div>
+                        <div>
+                            <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">Cantidad de mesas</label>
+                            <input type="number" name="quantity" min="1" max="200" value="{{ old('quantity', 10) }}" required
+                                class="dark:bg-dark-900 shadow-theme-xs focus:border-[#124731] h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 text-sm text-gray-800 focus:outline-hidden dark:border-gray-700 dark:bg-gray-900 dark:text-white/90">
+                            @error('quantity') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                        </div>
+                        <div>
+                            <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">Capacidad por mesa</label>
+                            <input type="number" name="capacity" min="1" value="{{ old('capacity', 4) }}" placeholder="Ej: 4"
+                                class="dark:bg-dark-900 shadow-theme-xs focus:border-[#124731] h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 text-sm text-gray-800 focus:outline-hidden dark:border-gray-700 dark:bg-gray-900 dark:text-white/90">
+                        </div>
+                        <div>
+                            <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">Estado</label>
+                            <select name="status" class="dark:bg-dark-900 shadow-theme-xs focus:border-[#124731] h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 text-sm text-gray-800 focus:outline-hidden dark:border-gray-700 dark:bg-gray-900 dark:text-white/90">
+                                <option value="1" @selected(old('status', 1) == 1)>Activo</option>
+                                <option value="0" @selected(old('status', 1) == 0)>Inactivo</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <p class="text-sm text-gray-500">Ejemplo: prefijo “Mesa”, inicio 1 y cantidad 10 creará Mesa 1 hasta Mesa 10.</p>
+
+                    <div class="flex flex-wrap gap-3">
+                        <x-ui.button type="submit" size="md" variant="primary">
+                            <i class="ri-add-box-line"></i>
+                            <span>Crear mesas</span>
                         </x-ui.button>
                         <x-ui.button type="button" size="md" variant="outline" @click="open = false">
                             <i class="ri-close-line"></i>

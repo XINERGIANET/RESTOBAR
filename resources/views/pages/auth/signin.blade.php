@@ -103,9 +103,9 @@
                         <a href="/" class="mb-4 block text-center">
                             <img src="./images/logo/ALLAHUASCA.png" alt="Logo" class="mx-auto" />
                         </a>
-                        <p class="text-center text-gray-400 dark:text-white/60">
+                        {{-- <p class="text-center text-gray-400 dark:text-white/60">
                             Lo mejor en soluciones tecnológicas para tu negocio.
-                        </p>
+                        </p> --}}
                     </div>
                 </div>
             </div>
