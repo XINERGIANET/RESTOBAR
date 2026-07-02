@@ -674,6 +674,53 @@
         </x-common.component-card>
     </div>
 
+    <div x-data="{ open: false, url: '', loading: false }"
+        x-on:open-sale-print-preview.window="open = true; loading = true; url = $event.detail.url"
+        x-show="open" x-cloak
+        class="fixed inset-0 z-[160] items-center justify-center bg-slate-950/70 p-3 backdrop-blur-sm sm:p-6"
+        :class="{ 'flex': open }">
+        <div @click.outside="open = false"
+            class="flex h-[94vh] w-full max-w-4xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl dark:bg-gray-900">
+            <div class="flex shrink-0 items-center justify-between border-b border-gray-200 px-5 py-4 dark:border-gray-700">
+                <div>
+                    <h3 class="text-lg font-bold text-gray-900 dark:text-white">Vista previa del ticket</h3>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">Verifica el logo y el contenido antes de imprimir.</p>
+                </div>
+                <button type="button" @click="open = false; url = ''"
+                    class="flex h-10 w-10 items-center justify-center rounded-full text-gray-400 hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-gray-800 dark:hover:text-white"
+                    aria-label="Cerrar">
+                    <i class="ri-close-line text-2xl"></i>
+                </button>
+            </div>
+
+            <div class="relative flex min-h-0 flex-1 justify-center bg-gray-200 p-3 dark:bg-gray-950 sm:p-5">
+                <div x-show="loading" class="absolute inset-0 z-10 flex items-center justify-center bg-white/80 dark:bg-gray-900/80">
+                    <div class="flex items-center gap-3 text-sm font-medium text-gray-600 dark:text-gray-300">
+                        <i class="ri-loader-4-line animate-spin text-xl"></i>
+                        Cargando ticket…
+                    </div>
+                </div>
+                <iframe x-ref="ticketPreview" :src="url" @load="loading = false"
+                    class="h-full w-full max-w-[430px] rounded-xl border-0 bg-white shadow-xl"
+                    title="Vista previa del ticket"></iframe>
+            </div>
+
+            <div class="flex shrink-0 justify-end gap-3 border-t border-gray-200 px-5 py-4 dark:border-gray-700">
+                <button type="button" @click="open = false; url = ''"
+                    class="rounded-xl border border-gray-300 px-5 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-800">
+                    Cancelar
+                </button>
+                <button type="button"
+                    @click="$refs.ticketPreview.contentWindow.focus(); $refs.ticketPreview.contentWindow.print()"
+                    :disabled="loading || !url"
+                    class="inline-flex items-center gap-2 rounded-xl bg-teal-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-teal-700 disabled:cursor-not-allowed disabled:opacity-50">
+                    <i class="ri-printer-line"></i>
+                    Imprimir directo
+                </button>
+            </div>
+        </div>
+    </div>
+
     <div x-data="{ open: false, saleId: null, personId: '', documentTypeId: '{{ $firstConvertibleDocumentTypeId }}' }"
         x-on:open-convert-ticket-modal.window="
             open = true;
@@ -808,6 +855,18 @@
                         ticketUrl += (ticketUrl.includes('?') ? '&' : '?') + 'view_id=' + encodeURIComponent(salesIndexViewId);
                     }
                     window.open(ticketUrl, '_blank', 'noopener,noreferrer');
+                }
+
+                function openSaleTicketPreview(movementId) {
+                    if (!movementId) return;
+                    let ticketUrl = salesTicketPrintBaseUrl.replace('__SALE__', movementId);
+                    ticketUrl += (ticketUrl.includes('?') ? '&' : '?') + 'preview=1';
+                    if (salesIndexViewId) {
+                        ticketUrl += '&view_id=' + encodeURIComponent(salesIndexViewId);
+                    }
+                    window.dispatchEvent(new CustomEvent('open-sale-print-preview', {
+                        detail: { url: ticketUrl }
+                    }));
                 }
 
                 function isQzTrayAvailable() {
@@ -1017,7 +1076,7 @@
                     e.preventDefault();
                     const id = parseInt(btn.getAttribute('data-thermal-print-sale'), 10);
                     if (id) {
-                        printThermalSaleReceipt(id);
+                        openSaleTicketPreview(id);
                     }
                 });
 
