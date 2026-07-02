@@ -1572,14 +1572,6 @@ es                        style="max-height: 80vh;">
                         const paperHeight = Math.max(120, parseFloat(td.paper_height) || 200);
                         const sizeOpts = { units: 'mm', size: { width: paperMm, height: paperHeight } };
                         const configPdf = qzApi.configs.create(printerName, { ...sizeOpts, scaleContent: true });
-                        const configRaw = qzApi.configs.create(printerName, { ...sizeOpts, scaleContent: false });
-                        if (td.logo_payload_b64) {
-                            await qzApi.print(configRaw, [{
-                                type: 'raw',
-                                format: 'base64',
-                                data: td.logo_payload_b64
-                            }]);
-                        }
                         const printHtmlTicket = () => qzApi.print(configPdf, [{
                             type: 'pixel',
                             format: 'html',
