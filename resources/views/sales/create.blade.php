@@ -1571,17 +1571,28 @@ es                        style="max-height: 80vh;">
                         const paperMm = (parseInt(td.paper_width) || 58) === 80 ? 80 : 58;
                         const paperHeight = Math.max(120, parseFloat(td.paper_height) || 200);
                         const sizeOpts = { units: 'mm', size: { width: paperMm, height: paperHeight } };
-                        const configPdf = qzApi.configs.create(printerName, { ...sizeOpts, scaleContent: true, rasterize: true });
-                        const decodeHtml = (encoded) => new TextDecoder('utf-8').decode(
-                            Uint8Array.from(atob(encoded), character => character.charCodeAt(0))
-                        );
+                        const configPdf = qzApi.configs.create(printerName, { ...sizeOpts, scaleContent: true });
                         const printHtmlTicket = () => qzApi.print(configPdf, [{
                             type: 'pixel',
                             format: 'html',
-                            flavor: 'plain',
-                            data: decodeHtml(td.ticket_html_b64)
+                            flavor: 'base64',
+                            data: td.ticket_html_b64
                         }]);
-                        await printHtmlTicket();
+                        if (td.ticket_pdf_b64 && td.qz_print_format === 'pdf') {
+                            try {
+                                await qzApi.print(configPdf, [{
+                                    type: 'pixel',
+                                    format: 'pdf',
+                                    flavor: 'base64',
+                                    data: td.ticket_pdf_b64
+                                }]);
+                            } catch (pdfErr) {
+                                console.warn('QZ Tray: PDF no disponible, reintento con HTML maquetado', pdfErr);
+                                await printHtmlTicket();
+                            }
+                        } else {
+                            await printHtmlTicket();
+                        }
                         showCobroNotification('Impresión', 'Ticket enviado a "' + printerName + '".', 'success');
                     } catch (e) {
                         markQzTrayUnavailable();
