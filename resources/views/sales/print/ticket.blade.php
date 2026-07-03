@@ -139,6 +139,11 @@
             font-weight: 700;
         }
 
+        .items-table th strong {
+            font-family: Arial, Helvetica, sans-serif;
+            font-weight: 700;
+        }
+
         .items-table td {
             vertical-align: top;
         }
@@ -451,10 +456,10 @@
             <th colspan="4">------------------------------------------------------------</th>
         </tr>
         <tr>
-            <th class="col-qty">Cant.</th>
-            <th class="col-product">Prod.</th>
-            <th class="col-unit">P. Unit.</th>
-            <th class="col-subtotal">Subt.</th>
+            <th class="col-qty"><strong>Cant.</strong></th>
+            <th class="col-product"><strong>Prod.</strong></th>
+            <th class="col-unit"><strong>P. Unit.</strong></th>
+            <th class="col-subtotal"><strong>Subt.</strong></th>
         </tr>
         <tr class="dash-row">
             <th colspan="4">------------------------------------------------------------</th>

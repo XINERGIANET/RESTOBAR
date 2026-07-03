@@ -1591,7 +1591,6 @@ es                        style="max-height: 80vh;">
                                     flavor: 'base64',
                                     data: td.ticket_pdf_b64,
                                     options: {
-                                        altFontRendering: true,
                                         ignoreTransparency: true
                                     }
                                 }]);
