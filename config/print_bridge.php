@@ -3,12 +3,10 @@
 return [
 
     /*
-     * Cola en caché para comandas hacia ticketeras sin IP (USB en otra PC).
+     * Cola persistente en base de datos para comandas hacia otra PC.
      * Los nombres de impresora que usan el puente son los mismos que QZ_SECONDARY_FIRST_PRINTER_NAMES (qz.php).
      */
 
-    'cache_ttl_seconds' => 600,
-
-    'max_queue_length' => 200,
+    'claim_timeout_seconds' => 90,
 
 ];

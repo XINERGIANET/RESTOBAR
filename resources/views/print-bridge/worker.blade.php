@@ -43,6 +43,7 @@
             const targetPrinter = @json($targetPrinter);
             const pullBase = @json(route('print-bridge.pull'));
             const ackBase = @json(route('print-bridge.ack'));
+            const failBase = @json(route('print-bridge.fail'));
             const st = document.getElementById('bridge-status');
             const bEl = document.getElementById('bridge-branch');
             if (bEl) bEl.textContent = @json((string) (session('branch_id') ?? ''));
@@ -130,6 +131,24 @@
                 }
             }
 
+            async function failJob(jobId, error) {
+                const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+                await fetch(failBase, {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': token,
+                        'Accept': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        printer_name: targetPrinter,
+                        job_id: String(jobId || ''),
+                        error: String(error?.message || error || 'Error de impresión en QZ'),
+                    }),
+                });
+            }
+
             let busy = false;
             let currentJobId = null;
             let failureCount = 0;
@@ -203,6 +222,10 @@
                     }
                 } catch (e) {
                     console.error(e);
+                    if (currentJobId) {
+                        await failJob(currentJobId, e).catch(() => null);
+                        currentJobId = null;
+                    }
                     log('Error: ' + (e && e.message ? e.message : e));
                 } finally {
                     busy = false;

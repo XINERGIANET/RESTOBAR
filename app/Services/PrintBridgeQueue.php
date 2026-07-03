@@ -2,16 +2,13 @@
 
 namespace App\Services;
 
+use App\Models\PrintJob;
 use App\Models\PrinterBranch;
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class PrintBridgeQueue
 {
-    /**
-     * Misma lista que BARRA2 / certificado secondary (app/qz2) en qz.php — sin variables nuevas.
-     */
     public function stationPrinterNames(): array
     {
         $names = array_merge(
@@ -19,38 +16,27 @@ class PrintBridgeQueue
             config('qz.tertiary_first_printer_names', ['BARRA3'])
         );
 
-        return array_values(array_unique(array_filter(array_map(
-            'trim',
-            $names
-        ))));
+        return array_values(array_unique(array_filter(array_map('trim', $names))));
     }
 
-    public function shouldQueueToStation(PrinterBranch $printer): bool
+    public function shouldQueueToStation(PrinterBranch $printer, bool $remoteRequest = false): bool
     {
-        if (! config('qz.enabled', true)) {
+        if (! config('qz.enabled', true) || ! $this->isStationPrinterName((string) $printer->name)) {
             return false;
-        }
-        if (filled((string) $printer->ip)) {
-            return false;
-        }
-        $n = mb_strtolower(trim($printer->name));
-        foreach ($this->stationPrinterNames() as $t) {
-            if ($n === mb_strtolower(trim($t))) {
-                return true;
-            }
         }
 
-        return false;
+        return $remoteRequest || ! filled((string) $printer->ip);
     }
 
     public function isStationPrinterName(string $name): bool
     {
-        $n = mb_strtolower(trim($name));
-        if ($n === '') {
+        $normalized = mb_strtolower(trim($name));
+        if ($normalized === '') {
             return false;
         }
-        foreach ($this->stationPrinterNames() as $t) {
-            if ($n === mb_strtolower(trim($t))) {
+
+        foreach ($this->stationPrinterNames() as $allowed) {
+            if ($normalized === mb_strtolower(trim($allowed))) {
                 return true;
             }
         }
@@ -58,92 +44,109 @@ class PrintBridgeQueue
         return false;
     }
 
-    public function key(int $branchId, string $printerName): string
+    public function push(int $branchId, string $printerName, string $escposRaw, string $kind = 'comanda'): PrintJob
     {
-        $norm = mb_strtolower(trim($printerName));
-
-        return 'print_br:' . $branchId . ':' . md5($norm);
+        return PrintJob::query()->create([
+            'uuid' => (string) Str::uuid(),
+            'branch_id' => $branchId,
+            'requested_by' => auth()->id(),
+            'printer_name' => trim($printerName),
+            'kind' => $kind,
+            'payload_base64' => base64_encode($escposRaw),
+            'status' => 'pending',
+        ]);
     }
 
-    public function push(int $branchId, string $printerName, string $escposRaw): void
-    {
-        $k = $this->key($branchId, $printerName);
-        $lock = Cache::lock('lock:' . $k, 5);
-        $lock->block(4, function () use ($k, $escposRaw, $branchId, $printerName) {
-            $list = Cache::get($k, []);
-            $list[] = [
-                'id' => (string) Str::uuid(),
-                'b64' => base64_encode($escposRaw),
-                'at' => time(),
-            ];
-            $max = (int) config('print_bridge.max_queue_length', 200);
-            if (count($list) > $max) {
-                $list = array_slice($list, -$max);
-            }
-            $ttl = (int) config('print_bridge.cache_ttl_seconds', 600);
-            Cache::put($k, $list, $ttl);
-        });
-        if (config('app.debug')) {
-            Log::debug('Print bridge encolada', [
-                'branch_id' => $branchId,
-                'printer' => $printerName,
-            ]);
-        }
-    }
-
-    public function pop(int $branchId, string $printerName): ?array
-    {
-        $k = $this->key($branchId, $printerName);
-
-        return Cache::lock('lock:' . $k, 5)->block(3, function () use ($k) {
-            $list = Cache::get($k, []);
-            if (empty($list) || ! is_array($list)) {
-                return null;
-            }
-            $job = array_shift($list);
-            $ttl = (int) config('print_bridge.cache_ttl_seconds', 600);
-            Cache::put($k, $list, $ttl);
-
-            return is_array($job) ? $job : null;
-        });
-    }
-
+    /** Reserva un trabajo. Una reserva abandonada vuelve a estar disponible luego de 90 segundos. */
     public function peek(int $branchId, string $printerName): ?array
     {
-        $k = $this->key($branchId, $printerName);
+        return DB::transaction(function () use ($branchId, $printerName) {
+            $job = PrintJob::query()
+                ->where('branch_id', $branchId)
+                ->whereRaw('LOWER(TRIM(printer_name)) = ?', [mb_strtolower(trim($printerName))])
+                ->where(function ($query) {
+                    $query->where('status', 'pending')
+                        ->orWhere(function ($stale) {
+                            $stale->where('status', 'processing')
+                                ->where('claimed_at', '<=', now()->subSeconds((int) config('print_bridge.claim_timeout_seconds', 90)));
+                        });
+                })
+                ->orderBy('created_at')
+                ->lockForUpdate()
+                ->first();
 
-        return Cache::lock('lock:' . $k, 5)->block(3, function () use ($k) {
-            $list = Cache::get($k, []);
-            if (empty($list) || ! is_array($list)) {
+            if (! $job) {
                 return null;
             }
 
-            $job = reset($list);
+            $job->update([
+                'status' => 'processing',
+                'claimed_at' => now(),
+                'attempts' => $job->attempts + 1,
+                'last_error' => null,
+            ]);
 
-            return is_array($job) ? $job : null;
-        });
+            return [
+                'id' => $job->uuid,
+                'b64' => $job->payload_base64,
+                'kind' => $job->kind,
+                'attempts' => $job->attempts,
+            ];
+        }, 3);
     }
 
-    public function ack(int $branchId, string $printerName, string $jobId): bool
+    public function ack(int $branchId, string $printerName, string $jobUuid): bool
     {
-        $k = $this->key($branchId, $printerName);
+        return PrintJob::query()
+            ->where('branch_id', $branchId)
+            ->where('uuid', $jobUuid)
+            ->whereRaw('LOWER(TRIM(printer_name)) = ?', [mb_strtolower(trim($printerName))])
+            ->whereIn('status', ['pending', 'processing'])
+            ->update([
+                'status' => 'printed',
+                'printed_at' => now(),
+                'claimed_at' => null,
+                'last_error' => null,
+                'updated_at' => now(),
+            ]) > 0;
+    }
 
-        return Cache::lock('lock:' . $k, 5)->block(3, function () use ($k, $jobId) {
-            $list = Cache::get($k, []);
-            if (empty($list) || ! is_array($list)) {
-                return false;
-            }
-            $originalCount = count($list);
-            $list = array_values(array_filter($list, function ($job) use ($jobId) {
-                return ! (is_array($job) && isset($job['id']) && (string) $job['id'] === $jobId);
-            }));
-            if (count($list) === $originalCount) {
-                return false;
-            }
-            $ttl = (int) config('print_bridge.cache_ttl_seconds', 600);
-            Cache::put($k, $list, $ttl);
+    public function fail(int $branchId, string $printerName, string $jobUuid, string $error): bool
+    {
+        return PrintJob::query()
+            ->where('branch_id', $branchId)
+            ->where('uuid', $jobUuid)
+            ->whereRaw('LOWER(TRIM(printer_name)) = ?', [mb_strtolower(trim($printerName))])
+            ->where('status', 'processing')
+            ->update([
+                'status' => 'failed',
+                'last_error' => Str::limit(trim($error), 1000, ''),
+                'claimed_at' => null,
+                'updated_at' => now(),
+            ]) > 0;
+    }
 
-            return true;
-        });
+    public function retry(int $branchId, int $jobId): bool
+    {
+        return PrintJob::query()
+            ->where('branch_id', $branchId)
+            ->where('id', $jobId)
+            ->where('status', 'failed')
+            ->update([
+                'status' => 'pending',
+                'claimed_at' => null,
+                'last_error' => null,
+                'updated_at' => now(),
+            ]) > 0;
+    }
+
+    public function unresolvedForBranch(int $branchId, int $limit = 20)
+    {
+        return PrintJob::query()
+            ->where('branch_id', $branchId)
+            ->whereIn('status', ['pending', 'processing', 'failed'])
+            ->latest()
+            ->limit($limit)
+            ->get();
     }
 }

@@ -35,6 +35,7 @@ use App\Models\User;
 use App\Services\AccountReceivablePayableService;
 use App\Services\ApisunatService;
 use App\Services\KardexSyncService;
+use App\Services\PrintBridgeQueue;
 use App\Services\ThermalNetworkPrintService;
 use App\Support\InsensitiveSearch;
 use App\Support\LocalNetworkClient;
@@ -261,6 +262,10 @@ class SalesController extends Controller
                 ->get(['id', 'name', 'ip', 'width'])
             : collect();
 
+        $unresolvedPrintJobs = $branchId
+            ? app(PrintBridgeQueue::class)->unresolvedForBranch((int) $branchId)
+            : collect();
+
         if ($request->wantsJson() || $request->ajax()) {
             return response()->json([
                 'success' => true,
@@ -323,6 +328,7 @@ class SalesController extends Controller
             'clientOnLocalNetwork' => LocalNetworkClient::isOnLocalNetwork($request),
             'thermalPrinters' => $thermalPrintersIndex,
             'thermalPrintEnabled' => (bool) config('local_network.thermal_print_enabled', true),
+            'unresolvedPrintJobs' => $unresolvedPrintJobs,
         ];
 
         return view('sales.index', $viewData);

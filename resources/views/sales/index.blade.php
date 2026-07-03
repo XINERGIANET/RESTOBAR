@@ -88,6 +88,46 @@
 
         <x-common.page-breadcrumb pageTitle="Ventas" />
 
+        @if(collect($unresolvedPrintJobs ?? [])->isNotEmpty())
+            <div class="mb-4 rounded-xl border border-amber-300 bg-amber-50 p-4 text-amber-950 shadow-sm dark:border-amber-700 dark:bg-amber-950/40 dark:text-amber-100">
+                <div class="mb-3 flex items-center justify-between gap-3">
+                    <div>
+                        <h3 class="font-bold">Impresiones pendientes o con error</h3>
+                        <p class="text-xs opacity-80">La PC con QZ debe tener activo el puente de impresión de esta sucursal.</p>
+                    </div>
+                    <a href="{{ route('print-bridge.worker') }}" target="_blank" class="rounded-lg bg-amber-900 px-3 py-2 text-xs font-semibold text-white">Abrir puente</a>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full min-w-[620px] text-left text-sm">
+                        <thead><tr class="border-b border-amber-300"><th class="py-2">Fecha</th><th>Tipo</th><th>Impresora</th><th>Estado</th><th>Error</th><th class="text-right">Acción</th></tr></thead>
+                        <tbody>
+                            @foreach($unresolvedPrintJobs as $printJob)
+                                <tr class="border-b border-amber-200/70 last:border-0">
+                                    <td class="py-2 pr-3 whitespace-nowrap">{{ $printJob->created_at?->format('d/m/Y H:i:s') }}</td>
+                                    <td class="pr-3">{{ ucfirst($printJob->kind) }}</td>
+                                    <td class="pr-3 font-semibold">{{ $printJob->printer_name }}</td>
+                                    <td class="pr-3">
+                                        {{ ['pending' => 'Pendiente', 'processing' => 'Procesando', 'failed' => 'Falló'][$printJob->status] ?? $printJob->status }}
+                                    </td>
+                                    <td class="max-w-[260px] truncate pr-3" title="{{ $printJob->last_error }}">{{ $printJob->last_error ?: '—' }}</td>
+                                    <td class="py-2 text-right">
+                                        @if($printJob->status === 'failed')
+                                            <form method="POST" action="{{ route('print-bridge.retry', ['job' => $printJob->id]) }}">
+                                                @csrf
+                                                <button type="submit" class="rounded-lg bg-amber-800 px-3 py-1.5 text-xs font-semibold text-white hover:bg-amber-900">Reimprimir</button>
+                                            </form>
+                                        @else
+                                            <span class="text-xs opacity-70">Esperando estación</span>
+                                        @endif
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        @endif
+
         <x-common.component-card title="Listado de ventas" desc="Gestiona las ventas registradas.">
             <div class="flex flex-col gap-4">
                 <form method="GET" class="w-full flex flex-col gap-4">

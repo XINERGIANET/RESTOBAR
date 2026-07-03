@@ -2556,12 +2556,7 @@ class OrderController extends Controller
             abort(404);
         }
 
-        if (! LocalNetworkClient::isOnLocalNetwork($request)) {
-            return response()->json([
-                'success' => false,
-                'message' => 'La impresión por red desde el servidor solo está permitida dentro de la red del local.',
-            ], 403);
-        }
+        $isRemoteRequest = ! LocalNetworkClient::isOnLocalNetwork($request);
 
         $validated = $request->validate([
             'ticket_text' => ['required', 'string'],
@@ -2601,9 +2596,15 @@ class OrderController extends Controller
                 'duplicate_skipped' => true,
             ]);
         }
-        $bridgeResponse = $this->maybeQueuePrintBridge($printer, $branchId, $payload, 'comanda');
+        $bridgeResponse = $this->maybeQueuePrintBridge($printer, $branchId, $payload, 'comanda', $isRemoteRequest);
         if ($bridgeResponse) {
             return $bridgeResponse;
+        }
+        if ($isRemoteRequest) {
+            return response()->json([
+                'success' => false,
+                'message' => 'La impresora no está habilitada para el puente de impresión de esta sucursal.',
+            ], 422);
         }
         $printerService = app(ThermalNetworkPrintService::class);
         $timeout = (int) config('local_network.thermal_timeout_seconds', 4);
@@ -2647,12 +2648,7 @@ class OrderController extends Controller
             abort(404);
         }
 
-        if (! LocalNetworkClient::isOnLocalNetwork($request)) {
-            return response()->json([
-                'success' => false,
-                'message' => 'La impresión por red desde el servidor solo está permitida dentro de la red del local.',
-            ], 403);
-        }
+        $isRemoteRequest = ! LocalNetworkClient::isOnLocalNetwork($request);
 
         $validated = $request->validate([
             'ticket_text' => ['required', 'string'],
@@ -2693,9 +2689,15 @@ class OrderController extends Controller
                 'duplicate_skipped' => true,
             ]);
         }
-        $bridgeResponse = $this->maybeQueuePrintBridge($printer, $branchId, $payload, 'precuenta');
+        $bridgeResponse = $this->maybeQueuePrintBridge($printer, $branchId, $payload, 'precuenta', $isRemoteRequest);
         if ($bridgeResponse) {
             return $bridgeResponse;
+        }
+        if ($isRemoteRequest) {
+            return response()->json([
+                'success' => false,
+                'message' => 'La impresora no está habilitada para el puente de impresión de esta sucursal.',
+            ], 422);
         }
         $printerService = app(ThermalNetworkPrintService::class);
         $timeout = (int) config('local_network.thermal_timeout_seconds', 4);
@@ -2910,15 +2912,15 @@ class OrderController extends Controller
     }
 
     /**
-     * Comanda / precuenta hacia BARRA2 (USB en otra PC): cola en caché; la PC con QZ activa el puente (worker o escucha global).
+     * Comanda / precuenta hacia BARRA2: cola persistente; la PC con QZ activa el puente.
      */
-    private function maybeQueuePrintBridge(PrinterBranch $printer, int $branchId, string $escposPayload, string $kind = 'comanda'): ?\Illuminate\Http\JsonResponse
+    private function maybeQueuePrintBridge(PrinterBranch $printer, int $branchId, string $escposPayload, string $kind = 'comanda', bool $remoteRequest = false): ?\Illuminate\Http\JsonResponse
     {
         $queue = app(PrintBridgeQueue::class);
-        if (! $queue->shouldQueueToStation($printer)) {
+        if (! $queue->shouldQueueToStation($printer, $remoteRequest)) {
             return null;
         }
-        $queue->push($branchId, (string) $printer->name, $escposPayload);
+        $job = $queue->push($branchId, (string) $printer->name, $escposPayload, $kind);
         if ($kind === 'precuenta') {
             $msg = 'Precuenta en cola para la estación (QZ en la PC con BARRA2). En esa PC, inicie sesión y active el puente (página /print-bridge/worker o “escuchar en todas las pantallas”).';
 
@@ -2926,6 +2928,7 @@ class OrderController extends Controller
                 'success' => true,
                 'message' => $msg,
                 'print_bridge' => true,
+                'print_job_id' => $job->id,
             ]);
         }
 
@@ -2933,6 +2936,7 @@ class OrderController extends Controller
             'success' => true,
             'message' => 'Comanda en cola para la estación (QZ en la PC con BARRA2). En esa PC, misma sucursal en sesión y puente activo (/print-bridge/worker o escuchar en todas las pantallas).',
             'print_bridge' => true,
+            'print_job_id' => $job->id,
         ]);
     }
 

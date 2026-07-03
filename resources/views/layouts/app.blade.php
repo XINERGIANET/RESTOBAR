@@ -9,6 +9,8 @@
     @auth
         <script>
             window.__printBridgePullUrl = @json(route('print-bridge.pull'));
+            window.__printBridgeAckUrl = @json(route('print-bridge.ack'));
+            window.__printBridgeFailUrl = @json(route('print-bridge.fail'));
         </script>
     @endauth
     @php

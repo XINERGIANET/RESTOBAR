@@ -77,4 +77,32 @@ class PrintBridgeController extends Controller
 
         return response()->json(['success' => true]);
     }
+
+    public function fail(Request $request, PrintBridgeQueue $queue): JsonResponse
+    {
+        $validated = $request->validate([
+            'printer_name' => 'nullable|string|max:120',
+            'job_id' => 'required|string|max:120',
+            'error' => 'nullable|string|max:1000',
+        ]);
+        $name = trim((string) ($validated['printer_name'] ?? 'BARRA2')) ?: 'BARRA2';
+        $branchId = (int) session('branch_id');
+        if (! $branchId || ! $queue->isStationPrinterName($name)) {
+            return response()->json(['success' => false, 'message' => 'Solicitud no válida'], 422);
+        }
+
+        $queue->fail($branchId, $name, (string) $validated['job_id'], (string) ($validated['error'] ?? 'Error de impresión en QZ'));
+
+        return response()->json(['success' => true]);
+    }
+
+    public function retry(Request $request, int $job, PrintBridgeQueue $queue)
+    {
+        $branchId = (int) session('branch_id');
+        if (! $branchId || ! $queue->retry($branchId, $job)) {
+            return back()->with('error', 'No se pudo reenviar el trabajo de impresión.');
+        }
+
+        return back()->with('success', 'Trabajo reenviado a la estación de impresión.');
+    }
 }

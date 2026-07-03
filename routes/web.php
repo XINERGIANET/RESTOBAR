@@ -556,4 +556,9 @@ Route::middleware('auth')->group(function () {
     Route::post('/print-bridge/ack', [PrintBridgeController::class, 'ack'])
         ->middleware('throttle:120,1')
         ->name('print-bridge.ack');
+    Route::post('/print-bridge/fail', [PrintBridgeController::class, 'fail'])
+        ->middleware('throttle:120,1')
+        ->name('print-bridge.fail');
+    Route::post('/print-bridge/jobs/{job}/retry', [PrintBridgeController::class, 'retry'])
+        ->name('print-bridge.retry');
 });
