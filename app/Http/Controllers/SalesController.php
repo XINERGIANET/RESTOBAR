@@ -1635,13 +1635,6 @@ class SalesController extends Controller
     {
         $sale = $this->resolvePrintableForTicket($sale);
         $printData = $this->buildSalePrintData($sale, $request);
-        if ($request->boolean('preview')) {
-            $printData['autoPrint'] = false;
-            $printData['usePublicAssets'] = true;
-
-            return view('sales.print.ticket', $printData);
-        }
-
         if ($request->boolean('direct_print')) {
             $printData['autoPrint'] = true;
 
