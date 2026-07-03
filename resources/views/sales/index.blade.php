@@ -629,6 +629,55 @@
                                             <i class="ri-file-list-3-line text-[#124731]"></i>
                                             <h4 class="text-sm font-bold text-gray-700 dark:text-gray-200">Detalle de la venta #{{ $sale->salesMovement?->number ?? $sale->id }}</h4>
                                         </div>
+                                        @php
+                                            $saleData = $sale->salesMovement;
+                                            $detailType = strtoupper(trim((string) ($saleData?->detail_type ?? 'DETALLADO')));
+                                            $detailTypeLabel = match ($detailType) {
+                                                'CONSUMO' => 'Por consumo',
+                                                'GLOSA' => 'Glosa',
+                                                default => 'Detallado',
+                                            };
+                                            $paymentType = strtoupper(trim((string) ($saleData?->payment_type ?? 'CONTADO')));
+                                            $paymentTypeLabel = in_array($paymentType, ['CREDIT', 'CREDITO'], true) ? 'Al crédito' : 'Al contado';
+                                            $sunatStatus = strtolower(trim((string) ($sale->electronic_invoice_status ?? '')));
+                                            $sunatLabel = match ($sunatStatus) {
+                                                'accepted', 'aceptado', 'success', 'sent', 'enviado' => 'Declarado / aceptado',
+                                                'rejected', 'rechazado', 'error' => 'Rechazado',
+                                                'pending', 'pendiente' => 'Pendiente',
+                                                default => 'Aún no declarado',
+                                            };
+                                            $originMovement = $sale->movement;
+                                            $originLabel = $originMovement
+                                                ? 'Pedido - '.($originMovement->number ?: str_pad((string) $originMovement->id, 7, '0', STR_PAD_LEFT))
+                                                : 'Venta directa';
+                                            $personDocument = trim((string) ($sale->person?->document_number ?? ''));
+                                            $personLabel = trim(($personDocument !== '' ? $personDocument.' - ' : '').($sale->person_name ?: 'CLIENTES VARIOS'));
+                                            $responsibleLabel = trim(collect([$sale->responsible_id, $sale->responsible_name ?: $sale->user_name])->filter()->implode(' - '));
+                                        @endphp
+                                        <div class="grid grid-cols-1 gap-x-8 border-b border-gray-200 bg-gray-50/50 px-5 py-4 text-sm dark:border-gray-700 dark:bg-gray-800/30 md:grid-cols-2 xl:grid-cols-3">
+                                            @foreach([
+                                                'Comprobante' => $displayNumber,
+                                                'Tipo' => $sale->documentType?->name ?? '-',
+                                                'Fecha' => $sale->moved_at?->format('d/m/Y H:i:s') ?? '-',
+                                                'Usuario' => $sale->user_name ?: '-',
+                                                'Persona' => $personLabel ?: '-',
+                                                'Moneda' => $saleData?->currency ?: 'PEN',
+                                                'T. cambio' => number_format((float) ($saleData?->exchange_rate ?? 1), 3),
+                                                'Responsable' => $responsibleLabel ?: '-',
+                                                'Tipo de detalle' => $detailTypeLabel,
+                                                'Por consumo' => in_array(strtoupper((string) ($saleData?->consumption ?? 'N')), ['S', 'Y', '1'], true) ? 'Sí' : 'No',
+                                                'Tipo de pago' => $paymentTypeLabel,
+                                                'RC' => 'S/ 0.00',
+                                                'Comentario' => $sale->comment ?: '-',
+                                                'Estado en SUNAT' => $sunatLabel,
+                                                'Origen' => $originLabel,
+                                            ] as $metaLabel => $metaValue)
+                                                <div class="flex min-w-0 gap-3 border-b border-gray-200/70 py-2.5 last:border-0 dark:border-gray-700/70">
+                                                    <span class="w-32 shrink-0 font-bold text-gray-700 dark:text-gray-200">{{ $metaLabel }}</span>
+                                                    <span class="min-w-0 break-words text-gray-600 dark:text-gray-300">{{ $metaValue }}</span>
+                                                </div>
+                                            @endforeach
+                                        </div>
                                         <div class="overflow-x-auto">
                                             <table class="w-full text-sm text-left">
                                                 <thead class="text-xs text-gray-500 uppercase bg-white dark:bg-gray-900 dark:text-gray-400 border-b border-gray-100 dark:border-gray-800">

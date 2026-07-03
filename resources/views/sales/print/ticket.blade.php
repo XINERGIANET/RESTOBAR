@@ -601,7 +601,7 @@
         @if(!empty($ticketFooterMeta))
             <div class="ticket-footer-meta">
                 <div><strong>Pedido:</strong> {{ $ticketFooterMeta['order_number'] }}</div>
-                <div><strong>Mostrador:</strong> {{ $ticketFooterMeta['location'] }}</div>
+                <div><strong>Mesa:</strong> {{ $ticketFooterMeta['location'] }}</div>
                 <div><strong>Responsable:</strong> {{ $ticketFooterMeta['responsible'] }}</div>
                 <div><strong>Caja:</strong> {{ $ticketFooterMeta['cash_register'] }}</div>
                 <div><strong>Forma de pago:</strong></div>
