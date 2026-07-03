@@ -137,7 +137,7 @@
 
         .items-table th {
             font-weight: 800;
-            border-bottom: 0.2mm solid #bdbdbd;
+            border-bottom: 0.2mm dashed #7ea1d4;
         }
 
         .items-table td {
@@ -147,7 +147,7 @@
         .col-product {
             width: 38%;
             text-align: left;
-            padding-left: 0.35mm;
+            padding-left: 1.2mm;
             padding-right: 0.35mm;
             word-break: break-word;
             overflow-wrap: anywhere;
@@ -156,7 +156,7 @@
         .col-qty {
             width: 13%;
             text-align: right;
-            padding-right: 0.35mm;
+            padding-right: 1.2mm;
         }
 
         .col-unit {
@@ -196,7 +196,7 @@
         }
 
         .grand-total td {
-            border-top: 0.25mm solid #7ea1d4;
+            border-top: 0.25mm dashed #7ea1d4;
             padding-top: 1.1mm;
             font-size: 4.1mm;
             font-weight: 800;
@@ -224,8 +224,12 @@
 
         body.ticket-paper-58 .col-product {
             width: 36%;
-            padding-left: 0.2mm;
+            padding-left: 0.8mm;
             padding-right: 0.2mm;
+        }
+
+        body.ticket-paper-58 .col-qty {
+            padding-right: 0.8mm;
         }
 
         body.ticket-paper-58 .col-unit {
@@ -263,18 +267,40 @@
         body.ticket-paper-80.thermal-print .doc-code { font-size: 5.3mm; }
         body.ticket-paper-80.thermal-print .info-table td,
         body.ticket-paper-80.thermal-print .totals-table td { font-size: 3.4mm; }
-        body.ticket-paper-80.thermal-print .items-table th,
-        body.ticket-paper-80.thermal-print .items-table td { font-size: 3.2mm; }
+        body.ticket-paper-80.thermal-print .items-table th { font-size: 3.2mm; }
+        body.ticket-paper-80.thermal-print .items-table td {
+            font-size: 3.55mm;
+            line-height: 1.18;
+        }
         body.ticket-paper-80.thermal-print .grand-total td { font-size: 4.5mm; }
 
         body.ticket-paper-58.thermal-print .info-table td { font-size: 2.9mm; }
-        body.ticket-paper-58.thermal-print .items-table th,
-        body.ticket-paper-58.thermal-print .items-table td { font-size: 2.7mm; }
+        body.ticket-paper-58.thermal-print .items-table th { font-size: 2.7mm; }
+        body.ticket-paper-58.thermal-print .items-table td {
+            font-size: 2.95mm;
+            line-height: 1.16;
+        }
         body.ticket-paper-58.thermal-print .grand-total td { font-size: 3.8mm; }
 
         body.thermal-print .notes { font-size: 3.25mm; }
         body.thermal-print .footer { font-size: 3mm; }
         body.thermal-print .thanks { font-size: 3.25mm; }
+        body.thermal-print .separator,
+        body.thermal-print .items-table th,
+        body.thermal-print .grand-total td {
+            border-color: #000;
+            border-style: dashed;
+        }
+
+        body.thermal-print .company,
+        body.thermal-print .doc-code,
+        body.thermal-print .info-label,
+        body.thermal-print .items-table th,
+        body.thermal-print .totals-label,
+        body.thermal-print .grand-total td,
+        body.thermal-print .notes strong {
+            font-weight: 800;
+        }
 
         .notes {
             font-size: 3mm;
