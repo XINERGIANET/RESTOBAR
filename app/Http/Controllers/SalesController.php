@@ -39,6 +39,7 @@ use App\Services\PrintBridgeQueue;
 use App\Services\ThermalNetworkPrintService;
 use App\Support\InsensitiveSearch;
 use App\Support\LocalNetworkClient;
+use App\Support\SpanishAmountInWords;
 use Barryvdh\Snappy\Facades\SnappyPdf as PDF;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -2141,6 +2142,7 @@ class SalesController extends Controller
             'printedAt' => now(),
             'paymentLabel' => $this->resolveSalePaymentLabel($sale),
             'ticketAddressDisplay' => $this->resolveTicketAddressDisplay($sale),
+            'totalInWords' => SpanishAmountInWords::soles((float) ($sale->salesMovement?->total ?? $sale->orderMovement?->total ?? 0)),
             'qrPayload' => $this->buildSaleQrPayload($sale, $branchForLogo),
             'qrImageUrl' => $this->buildSaleQrImageUrl($sale, $branchForLogo),
             'viewId' => $request->input('view_id'),

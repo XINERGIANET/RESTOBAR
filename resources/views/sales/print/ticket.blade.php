@@ -217,6 +217,15 @@
             font-weight: 700;
         }
 
+        .amount-in-words {
+            margin-top: 1.2mm;
+            line-height: 1.2;
+        }
+
+        .amount-in-words strong {
+            font-weight: 700;
+        }
+
         /* Rollo 58 mm: menos ancho útil; tipografía y columnas más compactas */
         body.ticket-paper-58 .ticket {
             padding: 1.8mm 1mm 2.5mm;
@@ -498,7 +507,7 @@
                 <td class="col-qty">{{ number_format($qty, 2) }}</td>
                 <td class="col-product">{{ $detail->description ?? $detail->product?->description ?? '-' }}</td>
                 @if($showUnitColumn)
-                    <td class="col-measure">{{ $detail->unit?->abbreviation ?: ($detail->unit?->description ?: '-') }}</td>
+                    <td class="col-measure">{{ $detail->unit?->description ?: '-' }}</td>
                 @endif
                 <td class="col-unit">{{ number_format($unitPrice, 2) }}</td>
                 <td class="col-subtotal">{{ number_format($lineTotal, 2) }}</td>
@@ -524,6 +533,10 @@
             <td class="totals-value">S/ {{ number_format($ticketTotal, 2) }}</td>
         </tr>
     </table>
+
+    @if($showUnitColumn)
+        <div class="amount-in-words"><strong>SON:</strong> {{ $totalInWords }}</div>
+    @endif
 
     @if($sale->comment)
         <div class="separator"></div>
