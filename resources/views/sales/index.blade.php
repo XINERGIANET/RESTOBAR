@@ -842,7 +842,7 @@
     @endif
 
     @push('scripts')
-        @vite(['resources/js/qz-tray-init.js', 'resources/js/html2canvas-init.js'])
+        @vite(['resources/js/qz-tray-init.js'])
         <script>
             (function() {
                 const salesThermalPrintUrl = @json(route('sales.print.ticket.thermal'));
@@ -927,32 +927,46 @@
                     return target === 'barra2' || target.startsWith('barra2') || target === 'barra3' || target.startsWith('barra3');
                 }
 
-                async function printableImageFromPreview(previewFrame) {
+                async function imageBlobToDataUrl(blob) {
+                    return await new Promise((resolve, reject) => {
+                        const reader = new FileReader();
+                        reader.onload = () => resolve(String(reader.result || ''));
+                        reader.onerror = reject;
+                        reader.readAsDataURL(blob);
+                    });
+                }
+
+                async function printableHtmlFromPreview(previewFrame) {
                     const sourceDocument = previewFrame?.contentDocument;
-                    const ticket = sourceDocument?.querySelector('.ticket');
-                    if (!ticket || typeof window.html2canvas !== 'function') {
+                    if (!sourceDocument?.documentElement) {
                         throw new Error('La vista previa todavía no está lista.');
                     }
 
-                    const canvas = await window.html2canvas(ticket, {
-                        backgroundColor: '#ffffff',
-                        scale: 2,
-                        useCORS: true,
-                        logging: false,
-                        onclone: clonedDocument => {
-                            const clonedLogo = clonedDocument.querySelector('.logo');
-                            if (clonedLogo) {
-                                clonedLogo.style.filter = 'grayscale(1) brightness(0)';
-                                clonedLogo.style.webkitFilter = 'grayscale(1) brightness(0)';
-                                clonedLogo.style.opacity = '1';
-                            }
-                        },
-                    });
+                    const clonedDocument = sourceDocument.documentElement.cloneNode(true);
+                    const sourceImages = Array.from(sourceDocument.querySelectorAll('img'));
+                    const clonedImages = Array.from(clonedDocument.querySelectorAll('img'));
 
-                    return {
-                        data: canvas.toDataURL('image/png').split(',')[1],
-                        heightMm: Math.max(120, Math.min(900, (canvas.height / canvas.width) * 80)),
-                    };
+                    await Promise.all(sourceImages.map(async (sourceImage, index) => {
+                        const imageUrl = sourceImage.currentSrc || sourceImage.src;
+                        if (!imageUrl || imageUrl.startsWith('data:')) {
+                            return;
+                        }
+                        try {
+                            const imageResponse = await fetch(imageUrl, { credentials: 'same-origin' });
+                            if (imageResponse.ok) {
+                                clonedImages[index].setAttribute(
+                                    'src',
+                                    await imageBlobToDataUrl(await imageResponse.blob())
+                                );
+                            }
+                        } catch (error) {
+                            console.warn('No se pudo incrustar una imagen del ticket:', imageUrl, error);
+                        }
+                    }));
+
+                    clonedDocument.querySelectorAll('script').forEach(script => script.remove());
+
+                    return '<!DOCTYPE html>\n' + clonedDocument.outerHTML;
                 }
 
                 window.printSalePreviewDirect = async function(previewUrl, previewFrame) {
@@ -970,18 +984,18 @@
                             throw new Error('No hay una impresora configurada para impresión directa.');
                         }
 
-                        const ticketImage = await printableImageFromPreview(previewFrame);
+                        const ticketHtml = await printableHtmlFromPreview(previewFrame);
                         const config = qzApi.configs.create(targetPrinter, {
                             units: 'mm',
-                            size: { width: 80, height: ticketImage.heightMm },
+                            size: { width: 80, height: 200 },
                             scaleContent: true,
                             rasterize: true,
                         });
                         await qzApi.print(config, [{
                             type: 'pixel',
-                            format: 'image',
-                            flavor: 'base64',
-                            data: ticketImage.data,
+                            format: 'html',
+                            flavor: 'plain',
+                            data: ticketHtml,
                         }]);
 
                         window.dispatchEvent(new CustomEvent('close-sale-print-preview'));
