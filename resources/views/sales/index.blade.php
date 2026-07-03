@@ -993,7 +993,7 @@
                     }
 
                     // Prioridad 1: impresión RAW por la IP configurada.
-                    try {
+                    if (@json((bool) ($clientOnLocalNetwork ?? false))) try {
                         const networkResponse = await fetch(salesThermalPrintUrl, {
                             method: 'POST',
                             headers: {

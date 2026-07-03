@@ -9,6 +9,7 @@
         window.__qzTertiaryFirstPrinterNames = @json(config('qz.tertiary_first_printer_names', []));
         window.__qzKitchenSkipClientQzWhenPrinterHasIp = @json((bool) config('qz.kitchen_skip_client_qz_when_printer_has_ip', true));
         window.__qzKitchenComandaDisableClientOnTouch = @json((bool) config('qz.kitchen_comanda_disable_client_qz_on_touch_devices', true));
+        window.__clientOnLocalNetwork = @json((bool) ($clientOnLocalNetwork ?? false));
     </script>
     @vite(['resources/js/qz-tray-init.js'])
 
@@ -1769,6 +1770,11 @@
                      * Comanda: ticketera con IP en sucursal → RAW vía Laravel (sin QZ en este navegador).
                      */
                     function kitchenComandaPrinterUsesServerThermal(printerName) {
+                        // En un despliegue VPS, la red local pertenece a la laptop, no al servidor.
+                        // En ese caso QZ usa la cola de Windows (USB o puerto TCP/IP estándar).
+                        if (window.__clientOnLocalNetwork !== true) {
+                            return false;
+                        }
                         if (window.__qzKitchenSkipClientQzWhenPrinterHasIp === false) {
                             return false;
                         }
@@ -4986,7 +4992,7 @@
                         if (printerId) body.printer_id = printerId;
 
                         // Prioridad 1: impresión RAW por la IP configurada.
-                        try {
+                        if (window.__clientOnLocalNetwork === true) try {
                             const networkResponse = await fetch(salesThermalPrintUrl, {
                                 method: 'POST',
                                 headers: {

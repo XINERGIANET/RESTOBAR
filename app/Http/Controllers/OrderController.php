@@ -1340,6 +1340,7 @@ class OrderController extends Controller
             'allowZeroStockSales' => (bool) ($branch?->allow_zero_stock_sales ?? true),
             'recipeStockData' => $recipeStockData,
             'areaPrinterNames' => $areaPrinterNames,
+            'clientOnLocalNetwork' => LocalNetworkClient::isOnLocalNetwork($request),
             'afterPaymentIndexUrl' => route('orders.index', $viewIdForPos ? ['view_id' => $viewIdForPos] : []),
         ], $this->splitAccountViewData($pendingOrder)));
         $response->headers->set('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
@@ -1719,6 +1720,7 @@ class OrderController extends Controller
             'allowZeroStockSales' => (bool) ($branch?->allow_zero_stock_sales ?? true),
             'recipeStockData' => $recipeStockData,
             'areaPrinterNames' => $areaPrinterNames,
+            'clientOnLocalNetwork' => LocalNetworkClient::isOnLocalNetwork($request),
             'isCounterSale' => true,
             'posStorageKey' => $posStorageKey,
             'afterPaymentIndexUrl' => $salesIndexUrl,

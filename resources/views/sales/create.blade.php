@@ -1553,7 +1553,7 @@ es                        style="max-height: 80vh;">
                 if (printerId) body.printer_id = printerId;
 
                 // Prioridad 1: impresión RAW por la IP configurada en printers_branch.
-                try {
+                if (@json((bool) ($clientOnLocalNetwork ?? false))) try {
                     const networkResponse = await fetch(salesThermalPrintUrl, {
                         method: 'POST',
                         headers: {
