@@ -44,6 +44,7 @@ use Barryvdh\Snappy\Facades\SnappyPdf as PDF;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -1790,6 +1791,16 @@ class SalesController extends Controller
 
         if (! $printer) {
             $printer = $this->resolveBranchThermalPrinter($branchId);
+        }
+
+        $printerKey = mb_strtolower(trim((string) ($printer?->name ?: $printer?->id ?: 'default')));
+        $dedupeKey = 'sale_thermal_print:'.$branchId.':'.$movement->id.':'.md5($printerKey);
+        if (! Cache::add($dedupeKey, 1, now()->addSeconds(15))) {
+            return response()->json([
+                'success' => true,
+                'duplicate_skipped' => true,
+                'message' => 'Solicitud duplicada detectada; se omitió la segunda impresión.',
+            ]);
         }
 
         $ticketText = $validated['ticket_text'] ?? null;

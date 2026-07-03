@@ -5015,6 +5015,7 @@
                                 });
                                 const td = tr.headers.get('content-type')?.includes('application/json') ? await tr.json() :
                                     null;
+                                if (tr.ok && td?.duplicate_skipped) return;
                                 if (!tr.ok || !td?.success || (!td?.ticket_pdf_b64 && !td?.payload_b64)) {
                                     throw new Error(td?.message || 'No se pudo obtener el ticket del servidor.');
                                 }
@@ -5049,12 +5050,8 @@
                                             data: td.ticket_pdf_b64
                                         }]);
                                     } catch (pdfErr) {
-                                        console.warn('QZ Tray: PDF ticket, reintento RAW', pdfErr);
-                                        await qzApi.print(configRaw, [{
-                                            type: 'raw',
-                                            format: 'base64',
-                                            data: td.payload_b64
-                                        }]);
+                                        console.warn('QZ Tray: resultado PDF incierto; no se reintenta para evitar duplicados', pdfErr);
+                                        throw pdfErr;
                                     }
                                 } else {
                                     await qzApi.print(configRaw, [{

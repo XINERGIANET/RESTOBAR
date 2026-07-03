@@ -1558,6 +1558,7 @@ es                        style="max-height: 80vh;">
                         });
                         const td = tr.headers.get('content-type')?.includes('application/json') ? await tr.json() :
                             null;
+                        if (tr.ok && td?.duplicate_skipped) return;
                         if (!tr.ok || !td?.success || (!td?.ticket_pdf_b64 && !td?.ticket_html_b64)) {
                             openSaleTicketPdfTab(movementId);
                             return;
@@ -1595,8 +1596,8 @@ es                        style="max-height: 80vh;">
                                     }
                                 }]);
                             } catch (pdfErr) {
-                                console.warn('QZ Tray: PDF no disponible, reintento con HTML maquetado', pdfErr);
-                                await printHtmlTicket();
+                                console.warn('QZ Tray: resultado PDF incierto; no se reintenta para evitar duplicados', pdfErr);
+                                throw pdfErr;
                             }
                         } else {
                             await printHtmlTicket();
