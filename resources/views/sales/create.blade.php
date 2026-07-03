@@ -1336,6 +1336,18 @@ es                        style="max-height: 80vh;">
                 const gw = row.querySelector('.cobro-pm-gateway');
                 const card = row.querySelector('.cobro-pm-card');
                 const wallet = row.querySelector('.cobro-pm-wallet');
+                const bank = row.querySelector('.cobro-pm-bank');
+                const selectFirstValid = (select) => {
+                    if (!select || select.value) return;
+                    const first = Array.from(select.options).find(option => String(option.value || '') !== '');
+                    if (first) select.value = first.value;
+                };
+                if (isCard) {
+                    selectFirstValid(gw);
+                    selectFirstValid(card);
+                }
+                if (isWallet) selectFirstValid(wallet);
+                if (isTransfer) selectFirstValid(bank);
                 if (!isCard && gw) gw.value = '';
                 if (!isCard && card) card.value = '';
                 if (!isWallet && wallet) wallet.value = '';
@@ -1540,7 +1552,29 @@ es                        style="max-height: 80vh;">
                 };
                 if (printerId) body.printer_id = printerId;
 
-                // Si QZ Tray está activo y conectado, obtener el payload del servidor e imprimir por QZ (USB o red)
+                // Prioridad 1: impresión RAW por la IP configurada en printers_branch.
+                try {
+                    const networkResponse = await fetch(salesThermalPrintUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': csrf,
+                            'Accept': 'application/json'
+                        },
+                        credentials: 'same-origin',
+                        body: JSON.stringify(body)
+                    });
+                    const networkData = networkResponse.headers.get('content-type')?.includes('application/json') ?
+                        await networkResponse.json() : null;
+                    if (networkResponse.ok && networkData?.success) {
+                        showCobroNotification('Impresión', networkData.message || 'Ticket enviado por red.', 'success');
+                        return;
+                    }
+                } catch (networkError) {
+                    console.warn('Impresión por IP no disponible; se intentará QZ.', networkError);
+                }
+
+                // Prioridad 2: QZ Tray como respaldo.
                 if (qzApi && await ensureQzTrayConnected(qzApi, preferredPrinterName)) {
                     try {
                         const tr = await fetch(salesThermalPrintUrl, {

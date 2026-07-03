@@ -1863,6 +1863,7 @@ class SalesController extends Controller
         }
 
         if (! $printer) {
+            Cache::forget($dedupeKey);
             return response()->json([
                 'success' => false,
                 'message' => 'No hay ticketera activa configurada para esta sucursal.',
@@ -1885,6 +1886,7 @@ class SalesController extends Controller
             }
 
             if (! config('local_network.thermal_windows_local_enabled', true)) {
+                Cache::forget($dedupeKey);
                 return response()->json([
                     'success' => false,
                     'message' => 'La ticketera seleccionada no tiene IP y la impresión USB local está deshabilitada.',
@@ -1902,6 +1904,7 @@ class SalesController extends Controller
                 'message' => 'Ticket enviado a la ticketera USB local.',
             ]);
         } catch (\Throwable $e) {
+            Cache::forget($dedupeKey);
             Log::warning('Impresión térmica: '.$e->getMessage());
             $safeMessage = $this->normalizeUtf8ForJson((string) $e->getMessage());
 

@@ -1774,18 +1774,6 @@
                         }
                         const rawName = String(printerName || '').trim();
                         const target = rawName.toLowerCase();
-                        // Misma ticketera que el cobro en la 2.ª PC (BARRA2 / qz2): la comanda debe ir por QZ
-                        // en este navegador. Si en BD hay IP de producto, el RAW desde el servidor no llega al USB/local de la PC2.
-                        if (typeof window.__qzPrinterRequiresSecondaryCertFirst === 'function') {
-                            if (window.__qzPrinterRequiresSecondaryCertFirst(rawName)) {
-                                return false;
-                            }
-                        } else {
-                            const compact = target.replace(/\s+/g, '');
-                            if (compact === 'barra2' || compact.startsWith('barra2')) {
-                                return false;
-                            }
-                        }
                         if (!target || !Array.isArray(serverProductBranches)) {
                             return false;
                         }
@@ -4997,6 +4985,30 @@
                         };
                         if (printerId) body.printer_id = printerId;
 
+                        // Prioridad 1: impresión RAW por la IP configurada.
+                        try {
+                            const networkResponse = await fetch(salesThermalPrintUrl, {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'X-CSRF-TOKEN': csrf,
+                                    'Accept': 'application/json'
+                                },
+                                credentials: 'same-origin',
+                                body: JSON.stringify(body)
+                            });
+                            const networkData = networkResponse.headers.get('content-type')?.includes('application/json') ?
+                                await networkResponse.json() : null;
+                            if (networkResponse.ok && networkData?.success) {
+                                if (typeof showNotification === 'function') {
+                                    showNotification('Impresión', networkData.message || 'Comprobante enviado por red.', 'success');
+                                }
+                                return;
+                            }
+                        } catch (networkError) {
+                            console.warn('Impresión por IP no disponible; se intentará QZ.', networkError);
+                        }
+
                         let qzFailed = false;
                         if (qzApi && await ensureQzTrayConnected(qzApi, printerName)) {
                             try {
@@ -6374,6 +6386,18 @@
                         const gw = row.querySelector('.cobro-pm-gateway');
                         const card = row.querySelector('.cobro-pm-card');
                         const wallet = row.querySelector('.cobro-pm-wallet');
+                        const bank = row.querySelector('.cobro-pm-bank');
+                        const selectFirstValid = (select) => {
+                            if (!select || select.value) return;
+                            const first = Array.from(select.options).find(option => String(option.value || '') !== '');
+                            if (first) select.value = first.value;
+                        };
+                        if (isCard) {
+                            selectFirstValid(gw);
+                            selectFirstValid(card);
+                        }
+                        if (isWallet) selectFirstValid(wallet);
+                        if (isTransfer) selectFirstValid(bank);
                         if (!isCard && gw) gw.value = '';
                         if (!isCard && card) card.value = '';
                         if (!isWallet && wallet) wallet.value = '';

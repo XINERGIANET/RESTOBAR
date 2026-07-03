@@ -959,6 +959,17 @@ pmSelectionButtons.forEach(btn => {
                             paymentMethodsData[currentEditingIndex].walletName = '';
                             paymentMethodsData[currentEditingIndex].bankId = null;
                             paymentMethodsData[currentEditingIndex].bankName = '';
+                            const firstGateway = paymentGateways[0] || null;
+                            const firstCard = cards.find(card => String(card.type || '').toUpperCase() === 'C') || cards[0] || null;
+                            if (firstGateway && firstCard) {
+                                paymentMethodsData[currentEditingIndex].gatewayId = firstGateway.id;
+                                paymentMethodsData[currentEditingIndex].gatewayName = firstGateway.description || '';
+                                paymentMethodsData[currentEditingIndex].cardId = firstCard.id;
+                                paymentMethodsData[currentEditingIndex].cardName = firstCard.description || '';
+                                updatePaymentMethodsList();
+                                closePaymentMethodModal();
+                                return;
+                            }
                             const savedIndex = currentEditingIndex;
                             closePaymentMethodModal(false);
                             currentEditingIndex = savedIndex;
@@ -972,6 +983,14 @@ pmSelectionButtons.forEach(btn => {
                             paymentMethodsData[currentEditingIndex].bankId = null;
                             paymentMethodsData[currentEditingIndex].bankName = '';
                             paymentMethodsData[currentEditingIndex].walletName = '';
+                            const firstWallet = digitalWallets[0] || null;
+                            if (firstWallet) {
+                                paymentMethodsData[currentEditingIndex].walletId = firstWallet.id;
+                                paymentMethodsData[currentEditingIndex].walletName = firstWallet.description || '';
+                                updatePaymentMethodsList();
+                                closePaymentMethodModal();
+                                return;
+                            }
                             const savedIndex = currentEditingIndex;
                             closePaymentMethodModal(false);
                             currentEditingIndex = savedIndex;
@@ -983,8 +1002,9 @@ pmSelectionButtons.forEach(btn => {
                             paymentMethodsData[currentEditingIndex].cardName = '';
                             paymentMethodsData[currentEditingIndex].walletId = null;
                             paymentMethodsData[currentEditingIndex].walletName = '';
-                            paymentMethodsData[currentEditingIndex].bankId = null;
-                            paymentMethodsData[currentEditingIndex].bankName = '';
+                            const firstBank = isTransfer ? (banks[0] || null) : null;
+                            paymentMethodsData[currentEditingIndex].bankId = firstBank?.id || null;
+                            paymentMethodsData[currentEditingIndex].bankName = firstBank?.description || '';
                             updatePaymentMethodsList();
                             closePaymentMethodModal();
                         }

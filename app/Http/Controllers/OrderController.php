@@ -2596,7 +2596,33 @@ class OrderController extends Controller
                 'duplicate_skipped' => true,
             ]);
         }
-        $bridgeResponse = $this->maybeQueuePrintBridge($printer, $branchId, $payload, 'comanda', $isRemoteRequest);
+        $networkError = null;
+        if (filled((string) $printer->ip)) {
+            try {
+                app(ThermalNetworkPrintService::class)->sendRaw(
+                    (string) $printer->ip,
+                    (int) config('local_network.thermal_port', 9100),
+                    $payload,
+                    (int) config('local_network.thermal_timeout_seconds', 4)
+                );
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Comanda enviada por red a "'.($printer->name ?? 'Ticketera').'".',
+                    'network_print' => true,
+                ]);
+            } catch (\Throwable $e) {
+                $networkError = $e;
+                Log::warning('Impresión comanda por IP; se intentará respaldo: '.$e->getMessage());
+            }
+        }
+        $bridgeResponse = $this->maybeQueuePrintBridge(
+            $printer,
+            $branchId,
+            $payload,
+            'comanda',
+            $isRemoteRequest || $networkError !== null
+        );
         if ($bridgeResponse) {
             return $bridgeResponse;
         }
@@ -2611,12 +2637,7 @@ class OrderController extends Controller
 
         try {
             if (filled((string) $printer->ip)) {
-                $printerService->sendRaw(
-                    (string) $printer->ip,
-                    (int) config('local_network.thermal_port', 9100),
-                    $payload,
-                    $timeout
-                );
+                throw $networkError ?: new \RuntimeException('No se pudo imprimir por IP.');
             } else {
                 if (! config('local_network.thermal_windows_local_enabled', true)) {
                     return response()->json([
@@ -2689,7 +2710,33 @@ class OrderController extends Controller
                 'duplicate_skipped' => true,
             ]);
         }
-        $bridgeResponse = $this->maybeQueuePrintBridge($printer, $branchId, $payload, 'precuenta', $isRemoteRequest);
+        $networkError = null;
+        if (filled((string) $printer->ip)) {
+            try {
+                app(ThermalNetworkPrintService::class)->sendRaw(
+                    (string) $printer->ip,
+                    (int) config('local_network.thermal_port', 9100),
+                    $payload,
+                    (int) config('local_network.thermal_timeout_seconds', 4)
+                );
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Precuenta enviada por red a "'.($printer->name ?? 'Ticketera').'".',
+                    'network_print' => true,
+                ]);
+            } catch (\Throwable $e) {
+                $networkError = $e;
+                Log::warning('Impresión precuenta por IP; se intentará respaldo: '.$e->getMessage());
+            }
+        }
+        $bridgeResponse = $this->maybeQueuePrintBridge(
+            $printer,
+            $branchId,
+            $payload,
+            'precuenta',
+            $isRemoteRequest || $networkError !== null
+        );
         if ($bridgeResponse) {
             return $bridgeResponse;
         }
@@ -2704,12 +2751,7 @@ class OrderController extends Controller
 
         try {
             if (filled((string) $printer->ip)) {
-                $printerService->sendRaw(
-                    (string) $printer->ip,
-                    (int) config('local_network.thermal_port', 9100),
-                    $payload,
-                    $timeout
-                );
+                throw $networkError ?: new \RuntimeException('No se pudo imprimir por IP.');
             } else {
                 if (! config('local_network.thermal_windows_local_enabled', true)) {
                     return response()->json([
