@@ -38,6 +38,14 @@
             overflow: visible;
         }
 
+        /* Respaldo visual si el servidor no dispone temporalmente del generador PDF. */
+        @media screen {
+            body {
+                width: {{ (int) ($ticketPageWidthMm ?? 80) }}mm;
+                max-width: {{ (int) ($ticketPageWidthMm ?? 80) }}mm;
+            }
+        }
+
         .center {
             text-align: center;
         }

@@ -1949,12 +1949,33 @@ class SalesController extends Controller
 
     private function resolveWkhtmltopdfBinary(): ?string
     {
-        $candidates = array_filter([
-            env('SNAPPY_PDF_BINARY'),
-        ]);
+        $configuredBinary = config('snappy.pdf.binary');
+        $pathCandidates = [];
 
-        foreach ($candidates as $candidate) {
-            if (is_string($candidate) && file_exists($candidate)) {
+        foreach (explode(PATH_SEPARATOR, (string) getenv('PATH')) as $directory) {
+            $directory = trim($directory, " \t\n\r\0\x0B\"");
+            if ($directory === '') {
+                continue;
+            }
+
+            $pathCandidates[] = $directory.DIRECTORY_SEPARATOR.'wkhtmltopdf';
+            if (PHP_OS_FAMILY === 'Windows') {
+                $pathCandidates[] = $directory.DIRECTORY_SEPARATOR.'wkhtmltopdf.exe';
+            }
+        }
+
+        // config() funciona también cuando Laravel tiene la configuración cacheada.
+        // Las rutas adicionales cubren las instalaciones habituales de Linux y Windows.
+        $candidates = array_filter(array_merge([
+            is_string($configuredBinary) ? trim($configuredBinary, " \t\n\r\0\x0B\"") : null,
+            '/usr/local/bin/wkhtmltopdf',
+            '/usr/bin/wkhtmltopdf',
+            'C:\\Program Files\\wkhtmltopdf\\bin\\wkhtmltopdf.exe',
+            'C:\\Program Files (x86)\\wkhtmltopdf\\bin\\wkhtmltopdf.exe',
+        ], $pathCandidates));
+
+        foreach (array_unique($candidates) as $candidate) {
+            if (is_string($candidate) && is_file($candidate)) {
                 return $candidate;
             }
         }
