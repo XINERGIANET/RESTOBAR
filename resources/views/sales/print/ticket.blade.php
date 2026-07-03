@@ -386,6 +386,16 @@
             margin-top: 1.6mm;
         }
 
+        .qr-dash {
+            height: 3mm;
+            overflow: hidden;
+            white-space: nowrap;
+            font-family: "Courier New", monospace;
+            font-size: 3mm;
+            font-weight: 700;
+            line-height: 3mm;
+        }
+
         .qr-wrap img {
             width: 24mm;
             height: 24mm;
@@ -545,9 +555,11 @@
 
     @if(!empty($qrImageUrl))
         <div class="separator"></div>
+        <div class="qr-dash">------------------------------------------------------------</div>
         <div class="qr-wrap">
             <img src="{{ $qrImageUrl }}" alt="QR del comprobante">
         </div>
+        <div class="qr-dash">------------------------------------------------------------</div>
     @endif
 
     <div class="separator"></div>
