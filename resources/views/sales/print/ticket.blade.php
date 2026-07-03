@@ -314,6 +314,39 @@
             -webkit-text-stroke-width: 0.13mm;
         }
 
+        /* En la impresión física todo el contenido usa una escala uniforme. */
+        body.ticket-paper-80.thermal-print .ticket,
+        body.ticket-paper-80.thermal-print .ticket p,
+        body.ticket-paper-80.thermal-print .ticket th,
+        body.ticket-paper-80.thermal-print .ticket td,
+        body.ticket-paper-80.thermal-print .notes,
+        body.ticket-paper-80.thermal-print .footer,
+        body.ticket-paper-80.thermal-print .thanks,
+        body.ticket-paper-80.thermal-print .sunat-warning {
+            font-size: 3.4mm;
+            line-height: 1.15;
+        }
+
+        body.ticket-paper-58.thermal-print .ticket,
+        body.ticket-paper-58.thermal-print .ticket p,
+        body.ticket-paper-58.thermal-print .ticket th,
+        body.ticket-paper-58.thermal-print .ticket td,
+        body.ticket-paper-58.thermal-print .notes,
+        body.ticket-paper-58.thermal-print .footer,
+        body.ticket-paper-58.thermal-print .thanks,
+        body.ticket-paper-58.thermal-print .sunat-warning {
+            font-size: 2.9mm;
+            line-height: 1.15;
+        }
+
+        body.thermal-print .company,
+        body.thermal-print .subhead,
+        body.thermal-print .items-table th {
+            font-family: Arial, Helvetica, sans-serif;
+            font-weight: bold !important;
+            -webkit-text-stroke: 0.1mm #000;
+        }
+
         .sunat-warning {
             margin: 1.4mm 0 0;
             text-align: center;
@@ -431,16 +464,19 @@
 
     <table class="items-table">
         <thead>
+        <tr class="dash-row">
+            <th colspan="4">------------------------------------------------------------</th>
+        </tr>
         <tr>
             <th class="col-qty">CANT.</th>
             <th class="col-product">DESCRIPCION</th>
             <th class="col-unit">PRECIO</th>
             <th class="col-subtotal">IMPORTE</th>
         </tr>
+        <tr class="dash-row">
+            <th colspan="4">------------------------------------------------------------</th>
+        </tr>
         </thead>
-        <tbody class="dash-row">
-            <tr><td colspan="4">------------------------------------------------------------</td></tr>
-        </tbody>
         <tbody>
         @foreach($details as $detail)
             @php
