@@ -451,10 +451,10 @@
             <th colspan="4">------------------------------------------------------------</th>
         </tr>
         <tr>
-            <th class="col-qty">CANT.</th>
-            <th class="col-product">DESCRIPCION</th>
-            <th class="col-unit">PRECIO</th>
-            <th class="col-subtotal">IMPORTE</th>
+            <th class="col-qty">Cant.</th>
+            <th class="col-product">Prod.</th>
+            <th class="col-unit">P. Unit.</th>
+            <th class="col-subtotal">Subt.</th>
         </tr>
         <tr class="dash-row">
             <th colspan="4">------------------------------------------------------------</th>
