@@ -1802,6 +1802,7 @@ class SalesController extends Controller
             $printData['autoPrint'] = false;
             $printData['ticketPageWidthMm'] = $paperWidthMm;
             $printData['useEmbeddedAssets'] = true;
+            $printData['thermalPrint'] = true;
 
             $html = view('sales.print.ticket', $printData)->render();
             $pageHeight = $this->estimateSaleTicketHeight($movement);

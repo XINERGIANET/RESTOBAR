@@ -38,6 +38,15 @@
             overflow: visible;
         }
 
+        /* La ticketera tiene menos ancho imprimible que el rollo: desplaza el
+           contenido a la izquierda y reserva 2 mm extra en el borde derecho. */
+        body.thermal-print .ticket {
+            width: calc(90% - 2mm);
+            max-width: calc(90% - 2mm);
+            padding-left: 0;
+            padding-right: 2mm;
+        }
+
         /* Respaldo visual si el servidor no dispone temporalmente del generador PDF. */
         @media screen {
             body {
@@ -198,6 +207,11 @@
             padding: 1.8mm 1mm 2.5mm;
         }
 
+        body.ticket-paper-58.thermal-print .ticket {
+            padding-left: 0;
+            padding-right: 2mm;
+        }
+
         body.ticket-paper-58 .items-table th,
         body.ticket-paper-58 .items-table td {
             font-size: 2.45mm;
@@ -275,7 +289,7 @@
         }
     </style>
 </head>
-<body class="ticket-paper-{{ (int) ($ticketPageWidthMm ?? 80) === 58 ? '58' : '80' }}">
+<body class="ticket-paper-{{ (int) ($ticketPageWidthMm ?? 80) === 58 ? '58' : '80' }}{{ !empty($thermalPrint) ? ' thermal-print' : '' }}">
 @php
     $docName = strtoupper($sale->documentType?->name ?? 'TICKET DE VENTA');
     $ticketSeries = $sale->salesMovement?->series ?? '001';
