@@ -415,6 +415,22 @@
             line-height: 3mm;
         }
 
+        .ticket-footer-meta {
+            margin-top: 1.2mm;
+            text-align: left;
+            line-height: 1.25;
+        }
+
+        .ticket-footer-meta strong {
+            font-weight: 700;
+        }
+
+        .ticket-footer-condition {
+            display: flex;
+            justify-content: space-between;
+            gap: 2mm;
+        }
+
         .qr-wrap img {
             width: 24mm;
             height: 24mm;
@@ -582,6 +598,24 @@
             <img src="{{ $qrImageUrl }}" alt="QR del comprobante">
         </div>
         <div class="qr-dash">------------------------------------------------------------</div>
+        @if(!empty($ticketFooterMeta))
+            <div class="ticket-footer-meta">
+                <div><strong>Pedido:</strong> {{ $ticketFooterMeta['order_number'] }}</div>
+                <div><strong>Mostrador:</strong> {{ $ticketFooterMeta['location'] }}</div>
+                <div><strong>Responsable:</strong> {{ $ticketFooterMeta['responsible'] }}</div>
+                <div><strong>Caja:</strong> {{ $ticketFooterMeta['cash_register'] }}</div>
+                <div><strong>Forma de pago:</strong></div>
+                @forelse($ticketFooterMeta['payment_lines'] as $paymentLine)
+                    <div>{{ $paymentLine }}</div>
+                @empty
+                    <div>{{ $paymentLabel }}</div>
+                @endforelse
+                <div class="ticket-footer-condition">
+                    <span>{{ $ticketFooterMeta['condition'] }}</span>
+                    <span><strong>Hora:</strong> {{ $ticketFooterMeta['time'] }}</span>
+                </div>
+            </div>
+        @endif
     @endif
 
     <div class="separator"></div>

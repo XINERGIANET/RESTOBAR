@@ -2099,6 +2099,8 @@ class SalesController extends Controller
             'orderMovement.details.product',
             'orderMovement.area',
             'orderMovement.table.area',
+            'cashMovement.cashRegister',
+            'cashMovement.details.paymentMethod',
         ]);
 
         $userBranchId = (int) (auth()->user()?->person?->branch_id ?? 0);
@@ -2143,6 +2145,26 @@ class SalesController extends Controller
             abort(404, 'Comprobante sin detalle.');
         }
 
+        $cashMovement = $sale->cashMovement ?: $this->resolveCashMovementBySaleMovement($sale->id);
+        $cashMovement?->loadMissing(['cashRegister', 'details.paymentMethod']);
+        $paymentLines = collect($cashMovement?->details ?? [])
+            ->filter(fn ($detail) => ($detail->status ?? 'A') === 'A' && strtoupper((string) ($detail->type ?? '')) !== 'DEUDA')
+            ->map(function ($detail) {
+                $label = trim((string) ($detail->paymentMethod?->description ?? $detail->payment_method ?? 'Pago'));
+
+                return $label.': S/ '.number_format((float) $detail->amount, 2);
+            })
+            ->values();
+        $order = $sale->orderMovement;
+        $serviceLocation = collect([
+            $order?->table?->name,
+            $order?->area?->name ?? $order?->table?->area?->name,
+        ])->filter(fn ($value) => filled($value))->implode(' - ');
+        $responsibleLabel = collect([
+            $sale->responsible_id,
+            $sale->responsible_name ?: $sale->user_name,
+        ])->filter(fn ($value) => filled($value))->implode(' - ');
+
         return [
             'sale' => $sale,
             'details' => $details,
@@ -2154,6 +2176,15 @@ class SalesController extends Controller
             'paymentLabel' => $this->resolveSalePaymentLabel($sale),
             'ticketAddressDisplay' => $this->resolveTicketAddressDisplay($sale),
             'totalInWords' => SpanishAmountInWords::soles((float) ($sale->salesMovement?->total ?? $sale->orderMovement?->total ?? 0)),
+            'ticketFooterMeta' => [
+                'order_number' => $order?->id ?: $sale->number,
+                'location' => $serviceLocation !== '' ? $serviceLocation : ($order?->service_type ?: 'Mostrador'),
+                'responsible' => $responsibleLabel !== '' ? $responsibleLabel : '-',
+                'cash_register' => $cashMovement?->cashRegister?->number ?: $cashMovement?->cash_register ?: '-',
+                'payment_lines' => $paymentLines,
+                'condition' => $this->saleMovementIsCredit($sale) ? 'Al crédito' : 'Al contado',
+                'time' => optional($sale->moved_at)->format('H:i:s') ?: now()->format('H:i:s'),
+            ],
             'qrPayload' => $this->buildSaleQrPayload($sale, $branchForLogo),
             'qrImageUrl' => $this->buildSaleQrImageUrl($sale, $branchForLogo),
             'viewId' => $request->input('view_id'),
