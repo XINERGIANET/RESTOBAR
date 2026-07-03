@@ -154,7 +154,8 @@
 
         .col-qty {
             width: 13%;
-            text-align: right;
+            text-align: left;
+            padding-left: 0;
             padding-right: 1.2mm;
         }
 
