@@ -979,7 +979,7 @@
                         });
                         await qzApi.print(config, [{
                             type: 'pixel',
-                            format: 'png',
+                            format: 'image',
                             flavor: 'base64',
                             data: ticketImage.data,
                         }]);
