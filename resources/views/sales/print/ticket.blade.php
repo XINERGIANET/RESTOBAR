@@ -149,19 +149,19 @@
         }
 
         .col-product {
-            width: 42%;
+            width: 44%;
             text-align: left;
-            padding-left: 0.7mm;
+            padding-left: 0.35mm;
             padding-right: 0.35mm;
             word-break: break-word;
             overflow-wrap: anywhere;
         }
 
         .col-qty {
-            width: 12%;
+            width: 10%;
             text-align: left;
             padding-left: 0;
-            padding-right: 1.2mm;
+            padding-right: 0.35mm;
         }
 
         .col-unit {
@@ -175,8 +175,8 @@
             word-break: break-word;
         }
 
-        .items-table.has-measure-column .col-qty { width: 11%; }
-        .items-table.has-measure-column .col-product { width: 34%; }
+        .items-table.has-measure-column .col-qty { width: 10%; }
+        .items-table.has-measure-column .col-product { width: 35%; }
         .items-table.has-measure-column .col-measure { width: 12%; }
         .items-table.has-measure-column .col-unit { width: 19%; }
         .items-table.has-measure-column .col-subtotal { width: 24%; }
@@ -243,17 +243,17 @@
         }
 
         body.ticket-paper-58 .col-qty {
-            width: 11%;
+            width: 9%;
         }
 
         body.ticket-paper-58 .col-product {
-            width: 40%;
-            padding-left: 0.7mm;
+            width: 42%;
+            padding-left: 0.35mm;
             padding-right: 0.2mm;
         }
 
         body.ticket-paper-58 .col-qty {
-            padding-right: 0.8mm;
+            padding-right: 0.35mm;
         }
 
         body.ticket-paper-58 .col-unit {
@@ -264,8 +264,8 @@
             width: 28%;
         }
 
-        body.ticket-paper-58 .items-table.has-measure-column .col-qty { width: 10%; }
-        body.ticket-paper-58 .items-table.has-measure-column .col-product { width: 31%; }
+        body.ticket-paper-58 .items-table.has-measure-column .col-qty { width: 9%; }
+        body.ticket-paper-58 .items-table.has-measure-column .col-product { width: 32%; }
         body.ticket-paper-58 .items-table.has-measure-column .col-measure { width: 13%; }
         body.ticket-paper-58 .items-table.has-measure-column .col-unit { width: 19%; }
         body.ticket-paper-58 .items-table.has-measure-column .col-subtotal { width: 27%; }
@@ -499,7 +499,7 @@
             @if($showUnitColumn)
                 <th class="col-measure"><strong>Unidad</strong></th>
             @endif
-            <th class="col-unit"><strong>P. Unit.</strong></th>
+            <th class="col-unit"><strong>P.Unit.</strong></th>
             <th class="col-subtotal"><strong>Subt.</strong></th>
         </tr>
         <tr class="dash-row">
