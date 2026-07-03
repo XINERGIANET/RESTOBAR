@@ -257,6 +257,25 @@
             font-size: 4.2mm;
         }
 
+        /* Tipografía optimizada para la salida física del botón verde. */
+        body.ticket-paper-80.thermal-print .company { font-size: 6.7mm; }
+        body.ticket-paper-80.thermal-print .subhead { font-size: 4.15mm; }
+        body.ticket-paper-80.thermal-print .doc-code { font-size: 5.3mm; }
+        body.ticket-paper-80.thermal-print .info-table td,
+        body.ticket-paper-80.thermal-print .totals-table td { font-size: 3.4mm; }
+        body.ticket-paper-80.thermal-print .items-table th,
+        body.ticket-paper-80.thermal-print .items-table td { font-size: 3.2mm; }
+        body.ticket-paper-80.thermal-print .grand-total td { font-size: 4.5mm; }
+
+        body.ticket-paper-58.thermal-print .info-table td { font-size: 2.9mm; }
+        body.ticket-paper-58.thermal-print .items-table th,
+        body.ticket-paper-58.thermal-print .items-table td { font-size: 2.7mm; }
+        body.ticket-paper-58.thermal-print .grand-total td { font-size: 3.8mm; }
+
+        body.thermal-print .notes { font-size: 3.25mm; }
+        body.thermal-print .footer { font-size: 3mm; }
+        body.thermal-print .thanks { font-size: 3.25mm; }
+
         .notes {
             font-size: 3mm;
             line-height: 1.15;

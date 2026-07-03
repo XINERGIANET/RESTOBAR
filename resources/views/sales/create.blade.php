@@ -1571,7 +1571,12 @@ es                        style="max-height: 80vh;">
                         const paperMm = (parseInt(td.paper_width) || 58) === 80 ? 80 : 58;
                         const paperHeight = Math.max(120, parseFloat(td.paper_height) || 200);
                         const sizeOpts = { units: 'mm', size: { width: paperMm, height: paperHeight } };
-                        const configPdf = qzApi.configs.create(printerName, { ...sizeOpts, scaleContent: true });
+                        const configPdf = qzApi.configs.create(printerName, {
+                            ...sizeOpts,
+                            scaleContent: true,
+                            rasterize: false,
+                            colorType: 'blackwhite'
+                        });
                         const printHtmlTicket = () => qzApi.print(configPdf, [{
                             type: 'pixel',
                             format: 'html',
@@ -1584,7 +1589,11 @@ es                        style="max-height: 80vh;">
                                     type: 'pixel',
                                     format: 'pdf',
                                     flavor: 'base64',
-                                    data: td.ticket_pdf_b64
+                                    data: td.ticket_pdf_b64,
+                                    options: {
+                                        altFontRendering: true,
+                                        ignoreTransparency: true
+                                    }
                                 }]);
                             } catch (pdfErr) {
                                 console.warn('QZ Tray: PDF no disponible, reintento con HTML maquetado', pdfErr);
