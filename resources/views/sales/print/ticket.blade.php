@@ -283,7 +283,8 @@
         body.thermal-print .notes { font-size: 3.25mm; }
         body.thermal-print .footer { font-size: 3mm; }
         body.thermal-print .thanks { font-size: 3.25mm; }
-        .dash-row td {
+        .dash-row td,
+        .dash-row th {
             height: 3mm;
             padding: 0;
             overflow: hidden;
@@ -295,7 +296,9 @@
         }
 
         body.thermal-print .company,
+        body.thermal-print .subhead,
         body.thermal-print .doc-code,
+        body.thermal-print .sunat-warning,
         body.thermal-print .info-label,
         body.thermal-print .items-table th,
         body.thermal-print .totals-label,
@@ -303,6 +306,21 @@
         body.thermal-print .notes strong {
             font-family: Arial, Helvetica, sans-serif;
             font-weight: bold !important;
+            -webkit-text-stroke: 0.08mm #000;
+        }
+
+        body.thermal-print .company,
+        body.thermal-print .doc-code,
+        body.thermal-print .grand-total td {
+            -webkit-text-stroke-width: 0.13mm;
+        }
+
+        .sunat-warning {
+            margin: 1.4mm 0 0;
+            text-align: center;
+            font-size: 3.2mm;
+            font-weight: bold;
+            line-height: 1.15;
         }
 
         .notes {
@@ -340,6 +358,7 @@
 <body class="ticket-paper-{{ (int) ($ticketPageWidthMm ?? 80) === 58 ? '58' : '80' }}{{ !empty($thermalPrint) ? ' thermal-print' : '' }}">
 @php
     $docName = strtoupper($sale->documentType?->name ?? 'TICKET DE VENTA');
+    $isSaleTicket = str_contains(mb_strtolower($docName, 'UTF-8'), 'ticket');
     $ticketSeries = $sale->salesMovement?->series ?? '001';
     if (!empty($sale->electronic_invoice_series) && preg_match('/^[A-Z]+(\d+)$/i', (string) $sale->electronic_invoice_series, $seriesMatches) === 1) {
         $ticketSeries = $seriesMatches[1];
@@ -373,6 +392,9 @@
         @endif
         <p class="subhead">{{ $docName }}</p>
         <p class="doc-code">{{ $docCode }}</p>
+        @if($isSaleTicket)
+            <p class="sunat-warning">ESTE COMPROBANTE NO ES VÁLIDO PARA SUNAT</p>
+        @endif
     </div>
 
     <div class="separator"></div>
@@ -410,16 +432,19 @@
 
     <table class="items-table">
         <thead>
+        <tr class="dash-row">
+            <th colspan="4">------------------------------------------------------------</th>
+        </tr>
         <tr>
             <th class="col-qty">CANT.</th>
             <th class="col-product">DESCRIPCION</th>
             <th class="col-unit">PRECIO</th>
             <th class="col-subtotal">IMPORTE</th>
         </tr>
+        <tr class="dash-row">
+            <th colspan="4">------------------------------------------------------------</th>
+        </tr>
         </thead>
-        <tbody class="dash-row">
-            <tr><td colspan="4">------------------------------------------------------------</td></tr>
-        </tbody>
         <tbody>
         @foreach($details as $detail)
             @php
