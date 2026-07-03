@@ -676,6 +676,7 @@
 
     <div x-data="{ open: false, url: '', loading: false }"
         x-on:open-sale-print-preview.window="open = true; loading = true; url = $event.detail.url"
+        x-on:close-sale-print-preview.window="open = false; url = ''"
         x-show="open" x-cloak
         class="fixed inset-0 z-[160] items-center justify-center bg-slate-950/70 p-3 backdrop-blur-sm sm:p-6"
         :class="{ 'flex': open }">
@@ -711,7 +712,7 @@
                     Cancelar
                 </button>
                 <button type="button"
-                    @click="$refs.ticketPreview.contentWindow.focus(); $refs.ticketPreview.contentWindow.print()"
+                    @click="window.printSalePreviewDirect(url)"
                     :disabled="loading || !url"
                     class="inline-flex items-center gap-2 rounded-xl bg-teal-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-teal-700 disabled:cursor-not-allowed disabled:opacity-50">
                     <i class="ri-printer-line"></i>
@@ -925,6 +926,63 @@
                     const target = String(printerName || '').trim().toLowerCase();
                     return target === 'barra2' || target.startsWith('barra2') || target === 'barra3' || target.startsWith('barra3');
                 }
+
+                async function blobToBase64(blob) {
+                    return await new Promise((resolve, reject) => {
+                        const reader = new FileReader();
+                        reader.onload = () => resolve(String(reader.result || '').split(',')[1] || '');
+                        reader.onerror = reject;
+                        reader.readAsDataURL(blob);
+                    });
+                }
+
+                window.printSalePreviewDirect = async function(previewUrl) {
+                    const qzApi = window.qz;
+                    const printerName = resolveStrictLocalPrinterName();
+
+                    if (!qzApi || !await ensureQzTrayConnected(qzApi, printerName)) {
+                        thermalPrintToast('QZ Tray no disponible', 'Abre QZ Tray para realizar la impresión directa.', 'error');
+                        return;
+                    }
+
+                    try {
+                        const pdfUrl = new URL(previewUrl, window.location.origin);
+                        pdfUrl.searchParams.delete('preview');
+                        const response = await fetch(pdfUrl.toString(), {
+                            credentials: 'same-origin',
+                            headers: { Accept: 'application/pdf' },
+                        });
+                        const contentType = response.headers.get('content-type') || '';
+                        if (!response.ok || !contentType.includes('application/pdf')) {
+                            throw new Error('El servidor no devolvió el PDF del ticket.');
+                        }
+
+                        const targetPrinter = printerName || await qzApi.printers.getDefault();
+                        if (!targetPrinter) {
+                            throw new Error('No hay una impresora configurada para impresión directa.');
+                        }
+
+                        const pdfBase64 = await blobToBase64(await response.blob());
+                        const config = qzApi.configs.create(targetPrinter, {
+                            units: 'mm',
+                            size: { width: 80, height: 200 },
+                            scaleContent: true,
+                            rasterize: true,
+                        });
+                        await qzApi.print(config, [{
+                            type: 'pixel',
+                            format: 'pdf',
+                            flavor: 'base64',
+                            data: pdfBase64,
+                        }]);
+
+                        window.dispatchEvent(new CustomEvent('close-sale-print-preview'));
+                        thermalPrintToast('Impresión', 'Ticket enviado directamente a "' + targetPrinter + '".', 'success');
+                    } catch (error) {
+                        console.error('Impresión directa desde vista previa:', error);
+                        thermalPrintToast('No se pudo imprimir', error?.message || 'Error al enviar el ticket.', 'error');
+                    }
+                };
 
                 function thermalPrintToast(title, message, icon) {
                     if (window.Swal) {
