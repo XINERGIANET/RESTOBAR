@@ -2958,11 +2958,26 @@ class OrderController extends Controller
     private function buildKitchenEscPosPayload(string $plainText): string
     {
         $normalized = $this->normalizeKitchenAscii($plainText);
+        $formatted = '';
+
+        foreach (explode("\n", $normalized) as $index => $line) {
+            $trimmed = trim($line);
+            $isTableHeader = preg_match('/^Cant\s+Producto\s+P\.\s*Unit\./i', $trimmed) === 1;
+            $isProductRow = preg_match('/^x\d/i', $trimmed) === 1;
+
+            if ($isTableHeader || $isProductRow) {
+                $formatted .= "\x1B\x45\x01\x1B\x21\x10".$line."\x1B\x45\x00\x1B\x21\x00\n";
+            } elseif ($index === 0 && $trimmed !== '') {
+                $formatted .= "\x1B\x45\x01".$line."\x1B\x45\x00\n";
+            } else {
+                $formatted .= "\x1B\x21\x00".$line."\n";
+            }
+        }
 
         return
             "\x1B\x40" .     // init
             "\x1B\x74\x02" . // codepage PC850
-            $normalized .
+            $formatted .
             "\n\n" .
             "\x1D\x56\x42\x10"; // cut
     }

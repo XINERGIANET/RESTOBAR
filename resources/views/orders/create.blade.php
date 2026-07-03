@@ -1851,7 +1851,7 @@
                             //   - primera línea (COMANDA / ANULADO / PRECUENTA): doble alto + doble ancho (título)
                             //   - separadores (===...): tamaño normal
                             //   - cabecera (Mesa, Mozo, Fecha, Area, Salon, Hora): tamaño normal
-                            //   - líneas de producto (Producto + cantidad al final): negrita + doble alto
+                            //   - encabezado y líneas de producto: negrita + doble alto
                             //   - resto (Nota, Estado, Motivo): normal
                             const rawContent = toEscPos(plainText);
                             const rawLines = rawContent.split('\n');
@@ -1860,6 +1860,8 @@
                                 const line = rawLines[li];
                                 const trimmed = line.trim();
                                 const isSep = /^=+$/.test(trimmed);
+                                const isTableHeader = /^Cant\s+Producto\s+P\.\s*Unit\./i.test(trimmed);
+                                const isProductRow = /^x\d/i.test(trimmed);
                                 const isHeader = li === 1 ||
                                     /^(Mesa|Mozo|Fecha\/Hora|Fecha|Area|Salon|Hora|Producto|Cant|Total|Subtotal)/.test(
                                         trimmed) ||
@@ -1868,16 +1870,15 @@
                                 if (li === 0) {
                                     // Título principal: solo negrita
                                     formattedContent += '\x1B\x45\x01' + line + '\x1B\x45\x00\n';
+                                } else if (isTableHeader || isProductRow) {
+                                    // Encabezado y detalle: negrita + doble alto.
+                                    formattedContent += '\x1B\x45\x01' + '\x1B\x21\x10' + line +
+                                        '\x1B\x45\x00' + '\x1B\x21\x00\n';
                                 } else if (isSep || isHeader || isMeta) {
                                     // Separadores, cabecera y metadatos: tamaño normal
                                     formattedContent += '\x1B\x21\x00' + line + '\n';
                                 } else {
-                                    // Líneas de producto: negrita + doble alto
-                                    formattedContent += '\x1B\x45\x01' + // ESC E 1 → negrita ON
-                                        '\x1B\x21\x10' + // ESC ! 0x10 → doble alto
-                                        line +
-                                        '\x1B\x45\x00' + // ESC E 0 → negrita OFF
-                                        '\x1B\x21\x00\n'; // tamaño normal
+                                    formattedContent += '\x1B\x21\x00' + line + '\n';
                                 }
                             }
                             const ticketCommands =
@@ -1903,6 +1904,9 @@
                             .map((line) => {
                                 const t = String(line || '');
                                 const trimmed = t.trimStart();
+                                if (/^Cant\s+Producto\s+P\.\s*Unit\./i.test(trimmed) || /^x\d/i.test(trimmed)) {
+                                    return '<strong class="detail">' + escapeHtmlForQzPrint(t) + '</strong>';
+                                }
                                 if (trimmed.startsWith('Hora:') || trimmed.startsWith('Nota:')) {
                                     return '<span class="meta">' + escapeHtmlForQzPrint(t) + '</span>';
                                 }
@@ -1915,7 +1919,7 @@
                             'mm;margin:0;padding:0;}' +
                             'body{font-family:Segoe UI,Arial,sans-serif;}' +
                             'pre{white-space:pre-wrap;word-wrap:break-word;margin:0;padding:0;font-family:inherit;line-height:1.2;}' +
-                            '.meta{font-size:8pt;color:#555;}</style></head><body><pre>' +
+                            '.meta{font-size:8pt;color:#555;}.detail{font-size:16pt;font-weight:700;line-height:1.3;}</style></head><body><pre>' +
                             htmlLines + '</pre></body></html>';
 
                         await qzApi.print(config, [{
@@ -2879,10 +2883,10 @@
                             const lines = byPrinter[pname] || [];
                             let body = '';
                             const paperWidth = resolvePrinterWidthByName(pname);
-                            const LINE_WIDTH = paperWidth === 80 ? 48 : 24;
-                            const COL_QTY = 4; // x99
-                            const COL_TIME = 6; // "09:54"
-                            const COL_NAME = LINE_WIDTH - COL_TIME - COL_QTY;
+                            const LINE_WIDTH = paperWidth === 80 ? 48 : 32;
+                            const COL_QTY = paperWidth === 80 ? 6 : 5;
+                            const COL_PRICE = paperWidth === 80 ? 10 : 9;
+                            const COL_NAME = LINE_WIDTH - COL_QTY - COL_PRICE;
                             const separator = '='.repeat(LINE_WIDTH) + '\n';
                             const orderNumber = String(table?.order_movement_number ?? '').trim();
                             const orderDate = String(table?.order_movement_date ?? '').trim();
@@ -2898,7 +2902,7 @@
                                 (clientLabel ? 'Cliente: ' + clientLabel + '\n' : '') +
                                 'Fecha: ' + new Date().toLocaleString() + '\n' +
                                 separator +
-                                padEnd('Producto', COL_NAME) + padCenter('Hora', COL_TIME) + padStart('Cant', COL_QTY) +
+                                padEnd('Cant', COL_QTY) + padEnd('Producto', COL_NAME) + padStart('P. Unit.', COL_PRICE) +
                                 '\n' +
                                 separator;
                             const canceledByProduct = {};
@@ -2913,20 +2917,17 @@
                                 const qty = it.qty ?? 1;
                                 const nm = (it.name || 'Producto').trim();
                                 const qtyCol = 'x' + qty;
-                                const timeCol = (it.commandTime ? String(it.commandTime).trim() : '');
                                 const complementsText = formatComplementsLabel(it?.complements);
                                 const courtesyQty = Math.max(0, Math.min(parseFloat(qty) || 0, parseFloat(it
                                     ?.courtesyQty ?? 0) || 0));
                                 const takeawayQty = Math.max(0, Math.min(parseFloat(qty) || 0, parseFloat(it
                                     ?.takeawayQty ?? 0) || 0));
-                                body += padEnd(nm, COL_NAME) + padCenter(timeCol, COL_TIME) + padStart(qtyCol,
-                                    COL_QTY) + '\n';
+                                const unitK = parseFloat(it?.price);
+                                const priceCol = !isNaN(unitK) && unitK >= 0 ? 'S/' + unitK.toFixed(2) : '-';
+                                body += padEnd(qtyCol, COL_QTY) + padEnd(nm, COL_NAME) + padStart(priceCol,
+                                    COL_PRICE) + '\n';
                                 if (complementsText) {
                                     body += 'Detalle: ' + complementsText + '\n';
-                                }
-                                const unitK = parseFloat(it?.price);
-                                if (!isNaN(unitK) && unitK >= 0) {
-                                    body += 'P.unit: S/ ' + unitK.toFixed(2) + '\n';
                                 }
                                 if (courtesyQty > 0 || takeawayQty > 0) {
                                     const tags = [];
@@ -2957,8 +2958,8 @@
                                 canceledItems.forEach((c) => {
                                     const qtyCol = 'x' + (c.qty ?? 1);
                                     const complementsText = formatComplementsLabel(c?.complements);
-                                    body += padEnd('ANULADO ' + (c.name || 'Producto'), COL_NAME) + padCenter('',
-                                        COL_TIME) + padStart(qtyCol, COL_QTY) + '\n';
+                                    body += padEnd(qtyCol, COL_QTY) + padEnd('ANULADO ' + (c.name || 'Producto'),
+                                        COL_NAME) + padStart('-', COL_PRICE) + '\n';
                                     if (complementsText) {
                                         body += 'Detalle: ' + complementsText + '\n';
                                     }

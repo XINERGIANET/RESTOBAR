@@ -170,6 +170,17 @@
             padding-right: 0.2mm;
         }
 
+        .col-measure {
+            text-align: center;
+            word-break: break-word;
+        }
+
+        .items-table.has-measure-column .col-qty { width: 11%; }
+        .items-table.has-measure-column .col-product { width: 34%; }
+        .items-table.has-measure-column .col-measure { width: 12%; }
+        .items-table.has-measure-column .col-unit { width: 19%; }
+        .items-table.has-measure-column .col-subtotal { width: 24%; }
+
         .col-subtotal {
             width: 26%;
             text-align: right;
@@ -243,6 +254,12 @@
         body.ticket-paper-58 .col-subtotal {
             width: 28%;
         }
+
+        body.ticket-paper-58 .items-table.has-measure-column .col-qty { width: 10%; }
+        body.ticket-paper-58 .items-table.has-measure-column .col-product { width: 31%; }
+        body.ticket-paper-58 .items-table.has-measure-column .col-measure { width: 13%; }
+        body.ticket-paper-58 .items-table.has-measure-column .col-unit { width: 19%; }
+        body.ticket-paper-58 .items-table.has-measure-column .col-subtotal { width: 27%; }
 
         body.ticket-paper-58 .info-label {
             width: 17mm;
@@ -381,7 +398,9 @@
 <body class="ticket-paper-{{ (int) ($ticketPageWidthMm ?? 80) === 58 ? '58' : '80' }}{{ !empty($thermalPrint) ? ' thermal-print' : '' }}">
 @php
     $docName = strtoupper($sale->documentType?->name ?? 'TICKET DE VENTA');
-    $isSaleTicket = str_contains(mb_strtolower($docName, 'UTF-8'), 'ticket');
+    $documentNameLower = mb_strtolower($docName, 'UTF-8');
+    $isSaleTicket = str_contains($documentNameLower, 'ticket');
+    $showUnitColumn = str_contains($documentNameLower, 'boleta') || str_contains($documentNameLower, 'factura');
     $ticketSeries = $sale->salesMovement?->series ?? '001';
     if (!empty($sale->electronic_invoice_series) && preg_match('/^[A-Z]+(\d+)$/i', (string) $sale->electronic_invoice_series, $seriesMatches) === 1) {
         $ticketSeries = $seriesMatches[1];
@@ -450,19 +469,22 @@
 
     <div class="separator"></div>
 
-    <table class="items-table">
+    <table class="items-table{{ $showUnitColumn ? ' has-measure-column' : '' }}">
         <thead>
         <tr class="dash-row">
-            <th colspan="4">------------------------------------------------------------</th>
+            <th colspan="{{ $showUnitColumn ? 5 : 4 }}">------------------------------------------------------------</th>
         </tr>
         <tr>
             <th class="col-qty"><strong>Cant.</strong></th>
             <th class="col-product"><strong>Prod.</strong></th>
+            @if($showUnitColumn)
+                <th class="col-measure"><strong>Unidad</strong></th>
+            @endif
             <th class="col-unit"><strong>P. Unit.</strong></th>
             <th class="col-subtotal"><strong>Subt.</strong></th>
         </tr>
         <tr class="dash-row">
-            <th colspan="4">------------------------------------------------------------</th>
+            <th colspan="{{ $showUnitColumn ? 5 : 4 }}">------------------------------------------------------------</th>
         </tr>
         </thead>
         <tbody>
@@ -475,11 +497,14 @@
             <tr>
                 <td class="col-qty">{{ number_format($qty, 2) }}</td>
                 <td class="col-product">{{ $detail->description ?? $detail->product?->description ?? '-' }}</td>
+                @if($showUnitColumn)
+                    <td class="col-measure">{{ $detail->unit?->abbreviation ?: ($detail->unit?->description ?: '-') }}</td>
+                @endif
                 <td class="col-unit">{{ number_format($unitPrice, 2) }}</td>
                 <td class="col-subtotal">{{ number_format($lineTotal, 2) }}</td>
             </tr>
         @endforeach
-            <tr class="dash-row"><td colspan="4">------------------------------------------------------------</td></tr>
+            <tr class="dash-row"><td colspan="{{ $showUnitColumn ? 5 : 4 }}">------------------------------------------------------------</td></tr>
         </tbody>
     </table>
 
