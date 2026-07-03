@@ -148,6 +148,24 @@
             vertical-align: top;
         }
 
+        .item-description td {
+            padding-top: 0.9mm;
+            padding-bottom: 0.25mm;
+            text-align: left;
+            font-weight: 700;
+            word-break: normal;
+            overflow-wrap: anywhere;
+        }
+
+        .item-values td {
+            padding-top: 0.2mm;
+            padding-bottom: 0.7mm;
+        }
+
+        .item-values .col-qty {
+            text-align: center;
+        }
+
         .col-product {
             width: 44%;
             text-align: left;
@@ -494,8 +512,8 @@
             <th colspan="{{ $showUnitColumn ? 5 : 4 }}">------------------------------------------------------------</th>
         </tr>
         <tr>
-            <th class="col-qty"><strong>Cant.</strong></th>
             <th class="col-product"><strong>Prod.</strong></th>
+            <th class="col-qty"><strong>Cant.</strong></th>
             @if($showUnitColumn)
                 <th class="col-measure"><strong>Unidad</strong></th>
             @endif
@@ -513,9 +531,12 @@
                 $lineTotal = (float) $detail->amount;
                 $unitPrice = $qty > 0 ? ($lineTotal / $qty) : 0;
             @endphp
-            <tr>
+            <tr class="item-description">
+                <td colspan="{{ $showUnitColumn ? 5 : 4 }}">{{ $detail->description ?? $detail->product?->description ?? '-' }}</td>
+            </tr>
+            <tr class="item-values">
+                <td class="col-product"></td>
                 <td class="col-qty">{{ number_format($qty, 2) }}</td>
-                <td class="col-product">{{ $detail->description ?? $detail->product?->description ?? '-' }}</td>
                 @if($showUnitColumn)
                     <td class="col-measure">{{ $detail->unit?->description ?: '-' }}</td>
                 @endif
