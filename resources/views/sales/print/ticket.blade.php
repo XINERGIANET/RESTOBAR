@@ -427,7 +427,7 @@
             <td class="info-value">{{ $customerName }}</td>
         </tr>
         <tr>
-            <td class="info-label">Dir. cliente:</td>
+            <td class="info-label">Dirección:</td>
             <td class="info-value">{{ $ticketAddressDisplay ?? '-' }}</td>
         </tr>
         <tr>
@@ -435,7 +435,7 @@
             <td class="info-value">{{ $customerDocument }}</td>
         </tr>
         <tr>
-            <td class="info-label">Forma pago:</td>
+            <td class="info-label">F. pago:</td>
             <td class="info-value">{{ $paymentLabel }}</td>
         </tr>
         @if (($sale->orderMovement?->payment_type ?? '') === 'CREDITO' || in_array((string) ($sale->salesMovement?->payment_type ?? ''), ['CREDIT', 'CREDITO'], true))
