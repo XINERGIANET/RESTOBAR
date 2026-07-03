@@ -652,7 +652,10 @@
                                                 : 'Venta directa';
                                             $personDocument = trim((string) ($sale->person?->document_number ?? ''));
                                             $personLabel = trim(($personDocument !== '' ? $personDocument.' - ' : '').($sale->person_name ?: 'CLIENTES VARIOS'));
-                                            $responsibleLabel = trim(collect([$sale->responsible_id, $sale->responsible_name ?: $sale->user_name])->filter()->implode(' - '));
+                                            $responsibleLabel = trim(collect([
+                                                $sale->responsibleUser?->person?->document_number,
+                                                $sale->responsible_name ?: $sale->user_name,
+                                            ])->filter()->implode(' - '));
                                         @endphp
                                         <div class="grid grid-cols-1 gap-x-8 border-b border-gray-200 bg-gray-50/50 px-5 py-4 text-sm dark:border-gray-700 dark:bg-gray-800/30 md:grid-cols-2 xl:grid-cols-3">
                                             @foreach([

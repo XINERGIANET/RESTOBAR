@@ -484,7 +484,7 @@
         <p class="company">{{ strtoupper($branchForLogo->legal_name ?? 'SUCURSAL') }}</p>
         <p class="subhead">RUC: {{ $branchForLogo->ruc ?? '-' }}</p>
         @if(!empty(trim((string) ($branchForLogo->address ?? ''))))
-            <p class="subhead">Suc.: {{ trim((string) $branchForLogo->address) }}</p>
+            <p class="subhead">{{ trim((string) $branchForLogo->address) }}</p>
         @endif
         <p class="subhead">{{ $docName }}</p>
         <p class="doc-code">{{ $docCode }}</p>

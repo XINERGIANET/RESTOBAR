@@ -53,6 +53,11 @@ class Movement extends Model
         return $this->belongsTo(Person::class);
     }
 
+    public function responsibleUser()
+    {
+        return $this->belongsTo(User::class, 'responsible_id');
+    }
+
     public function movementType()
     {
         return $this->belongsTo(MovementType::class);

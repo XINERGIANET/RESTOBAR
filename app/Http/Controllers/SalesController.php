@@ -155,7 +155,7 @@ class SalesController extends Controller
         $query = Movement::query()
             ->select('movements.*')
             ->join('sales_movements', 'sales_movements.movement_id', '=', 'movements.id')
-            ->with(['branch', 'person', 'movementType', 'documentType', 'salesMovement.details', 'orderMovement.table', 'movement.orderMovement.table'])
+            ->with(['branch', 'person', 'responsibleUser.person', 'movementType', 'documentType', 'salesMovement.details', 'orderMovement.table', 'movement.orderMovement.table'])
             ->where('movements.movement_type_id', 2)
             ->when($branchId, fn ($q) => $q->where('movements.branch_id', $branchId))
             ->when(! $branchId, fn ($q) => $q->whereRaw('1 = 0'));
@@ -2091,6 +2091,7 @@ class SalesController extends Controller
         $sale->loadMissing([
             'documentType',
             'person',
+            'responsibleUser.person',
             'branch',
             'salesMovement.details.unit',
             'salesMovement.details.product',
@@ -2161,7 +2162,7 @@ class SalesController extends Controller
             $order?->area?->name ?? $order?->table?->area?->name,
         ])->filter(fn ($value) => filled($value))->implode(' - ');
         $responsibleLabel = collect([
-            $sale->responsible_id,
+            $sale->responsibleUser?->person?->document_number,
             $sale->responsible_name ?: $sale->user_name,
         ])->filter(fn ($value) => filled($value))->implode(' - ');
 
