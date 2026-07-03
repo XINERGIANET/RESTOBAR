@@ -144,29 +144,29 @@
         }
 
         .col-product {
-            width: 38%;
+            width: 42%;
             text-align: left;
-            padding-left: 1.2mm;
+            padding-left: 0.7mm;
             padding-right: 0.35mm;
             word-break: break-word;
             overflow-wrap: anywhere;
         }
 
         .col-qty {
-            width: 13%;
+            width: 12%;
             text-align: left;
             padding-left: 0;
             padding-right: 1.2mm;
         }
 
         .col-unit {
-            width: 21%;
+            width: 20%;
             text-align: right;
             padding-right: 0.2mm;
         }
 
         .col-subtotal {
-            width: 28%;
+            width: 26%;
             text-align: right;
             padding-right: 0;
         }
@@ -218,12 +218,12 @@
         }
 
         body.ticket-paper-58 .col-qty {
-            width: 12%;
+            width: 11%;
         }
 
         body.ticket-paper-58 .col-product {
-            width: 36%;
-            padding-left: 0.8mm;
+            width: 40%;
+            padding-left: 0.7mm;
             padding-right: 0.2mm;
         }
 
@@ -232,11 +232,11 @@
         }
 
         body.ticket-paper-58 .col-unit {
-            width: 22%;
+            width: 21%;
         }
 
         body.ticket-paper-58 .col-subtotal {
-            width: 30%;
+            width: 28%;
         }
 
         body.ticket-paper-58 .info-label {
@@ -410,9 +410,6 @@
         @endif
         <p class="subhead">{{ $docName }}</p>
         <p class="doc-code">{{ $docCode }}</p>
-        @if($isSaleTicket)
-            <p class="sunat-warning">ESTE COMPROBANTE NO ES VÁLIDO PARA SUNAT</p>
-        @endif
     </div>
 
     <div class="separator"></div>
@@ -515,6 +512,9 @@
     <div class="footer">
         Impreso: {{ $printedAt->format('d/m/Y H:i:s') }}<br>
         <div class="thanks">Gracias por su preferencia</div>
+        @if($isSaleTicket)
+            <p class="sunat-warning">Este documento no constituye un Comprobante de Pago válido para efectos tributarios conforme a la normativa de SUNAT.</p>
+        @endif
     </div>
 </div>
 
