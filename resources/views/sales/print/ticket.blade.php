@@ -82,7 +82,7 @@
         .company {
             margin: 0;
             font-size: 6.2mm;
-            font-weight: 800;
+            font-weight: 700;
             line-height: 1;
         }
 
@@ -95,7 +95,7 @@
         .doc-code {
             margin: 1.2mm 0 0;
             font-size: 4.9mm;
-            font-weight: 800;
+            font-weight: 700;
             line-height: 1.05;
         }
 
@@ -119,7 +119,7 @@
 
         .info-label {
             width: 21mm;
-            font-weight: 800;
+            font-weight: 700;
             padding-right: 1mm;
             white-space: nowrap;
         }
@@ -136,7 +136,7 @@
         }
 
         .items-table th {
-            font-weight: 800;
+            font-weight: 700;
         }
 
         .items-table td {
@@ -183,7 +183,7 @@
 
         .totals-label {
             width: 52%;
-            font-weight: 800;
+            font-weight: 700;
             padding-right: 1mm;
         }
 
@@ -197,7 +197,7 @@
         .grand-total td {
             padding-top: 1.1mm;
             font-size: 4.1mm;
-            font-weight: 800;
+            font-weight: 700;
         }
 
         /* Rollo 58 mm: menos ancho útil; tipografía y columnas más compactas */
@@ -290,7 +290,7 @@
             white-space: nowrap;
             font-family: "Courier New", monospace;
             font-size: 3mm;
-            font-weight: bold;
+            font-weight: 700;
             line-height: 3mm;
         }
 
@@ -304,14 +304,7 @@
         body.thermal-print .grand-total td,
         body.thermal-print .notes strong {
             font-family: Arial, Helvetica, sans-serif;
-            font-weight: bold !important;
-            -webkit-text-stroke: 0.08mm #000;
-        }
-
-        body.thermal-print .company,
-        body.thermal-print .doc-code,
-        body.thermal-print .grand-total td {
-            -webkit-text-stroke-width: 0.13mm;
+            font-weight: 700 !important;
         }
 
         /* En la impresión física todo el contenido usa una escala uniforme. */
@@ -339,19 +332,11 @@
             line-height: 1.15;
         }
 
-        body.thermal-print .company,
-        body.thermal-print .subhead,
-        body.thermal-print .items-table th {
-            font-family: Arial, Helvetica, sans-serif;
-            font-weight: bold !important;
-            -webkit-text-stroke: 0.1mm #000;
-        }
-
         .sunat-warning {
             margin: 1.4mm 0 0;
             text-align: center;
             font-size: 3.2mm;
-            font-weight: bold;
+            font-weight: 700;
             line-height: 1.15;
         }
 
@@ -361,7 +346,7 @@
         }
 
         .notes strong {
-            font-weight: 800;
+            font-weight: 700;
         }
 
         .qr-wrap {
