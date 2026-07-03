@@ -100,8 +100,18 @@
         }
 
         .separator {
-            border-top: 0.3mm dashed #7ea1d4;
             margin: 1.8mm 0;
+            height: 3mm;
+            overflow: hidden;
+            white-space: nowrap;
+            font-family: "Courier New", monospace;
+            font-size: 3mm;
+            font-weight: 900;
+            line-height: 3mm;
+        }
+
+        .separator::before {
+            content: "------------------------------------------------------------";
         }
 
         table {
@@ -137,7 +147,6 @@
 
         .items-table th {
             font-weight: 800;
-            border-bottom: 0.2mm dashed #7ea1d4;
         }
 
         .items-table td {
@@ -196,7 +205,6 @@
         }
 
         .grand-total td {
-            border-top: 0.25mm dashed #7ea1d4;
             padding-top: 1.1mm;
             font-size: 4.1mm;
             font-weight: 800;
@@ -285,11 +293,15 @@
         body.thermal-print .notes { font-size: 3.25mm; }
         body.thermal-print .footer { font-size: 3mm; }
         body.thermal-print .thanks { font-size: 3.25mm; }
-        body.thermal-print .separator,
-        body.thermal-print .items-table th,
-        body.thermal-print .grand-total td {
-            border-color: #000;
-            border-style: dashed;
+        .dash-row td {
+            height: 3mm;
+            padding: 0;
+            overflow: hidden;
+            white-space: nowrap;
+            font-family: "Courier New", monospace;
+            font-size: 3mm;
+            font-weight: 900;
+            line-height: 3mm;
         }
 
         body.thermal-print .company,
@@ -299,7 +311,8 @@
         body.thermal-print .totals-label,
         body.thermal-print .grand-total td,
         body.thermal-print .notes strong {
-            font-weight: 800;
+            font-family: "Arial Black", Arial, Helvetica, sans-serif;
+            font-weight: 900;
         }
 
         .notes {
@@ -414,6 +427,9 @@
             <th class="col-subtotal">IMPORTE</th>
         </tr>
         </thead>
+        <tbody class="dash-row">
+            <tr><td colspan="4">------------------------------------------------------------</td></tr>
+        </tbody>
         <tbody>
         @foreach($details as $detail)
             @php
@@ -441,6 +457,9 @@
         <tr>
             <td class="totals-label">IGV:</td>
             <td class="totals-value">S/ {{ number_format($ticketTax, 2) }}</td>
+        </tr>
+        <tr class="dash-row">
+            <td colspan="2">------------------------------------------------------------</td>
         </tr>
         <tr class="grand-total">
             <td class="totals-label">TOTAL:</td>
