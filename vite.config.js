@@ -9,6 +9,7 @@ export default defineConfig({
                 'resources/css/app.css',
                 'resources/js/app.js',
 'resources/js/qz-tray-init.js',
+                'resources/js/html2canvas-init.js',
             ],
             refresh: true,
         }),
