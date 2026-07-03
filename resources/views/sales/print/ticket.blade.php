@@ -190,14 +190,15 @@
 
         .col-measure {
             text-align: center;
-            word-break: break-word;
+            white-space: nowrap;
+            word-break: normal;
         }
 
-        .items-table.has-measure-column .col-qty { width: 10%; }
-        .items-table.has-measure-column .col-product { width: 35%; }
-        .items-table.has-measure-column .col-measure { width: 12%; }
-        .items-table.has-measure-column .col-unit { width: 19%; }
-        .items-table.has-measure-column .col-subtotal { width: 24%; }
+        .items-table.has-measure-column .col-product { width: 18%; }
+        .items-table.has-measure-column .col-qty { width: 12%; }
+        .items-table.has-measure-column .col-measure { width: 28%; }
+        .items-table.has-measure-column .col-unit { width: 20%; }
+        .items-table.has-measure-column .col-subtotal { width: 22%; }
 
         .col-subtotal {
             width: 26%;
@@ -282,11 +283,11 @@
             width: 28%;
         }
 
-        body.ticket-paper-58 .items-table.has-measure-column .col-qty { width: 9%; }
-        body.ticket-paper-58 .items-table.has-measure-column .col-product { width: 32%; }
-        body.ticket-paper-58 .items-table.has-measure-column .col-measure { width: 13%; }
-        body.ticket-paper-58 .items-table.has-measure-column .col-unit { width: 19%; }
-        body.ticket-paper-58 .items-table.has-measure-column .col-subtotal { width: 27%; }
+        body.ticket-paper-58 .items-table.has-measure-column .col-product { width: 14%; }
+        body.ticket-paper-58 .items-table.has-measure-column .col-qty { width: 12%; }
+        body.ticket-paper-58 .items-table.has-measure-column .col-measure { width: 30%; }
+        body.ticket-paper-58 .items-table.has-measure-column .col-unit { width: 20%; }
+        body.ticket-paper-58 .items-table.has-measure-column .col-subtotal { width: 24%; }
 
         body.ticket-paper-58 .info-label {
             width: 17mm;
