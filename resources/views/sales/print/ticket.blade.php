@@ -101,17 +101,7 @@
 
         .separator {
             margin: 1.8mm 0;
-            height: 3mm;
-            overflow: hidden;
-            white-space: nowrap;
-            font-family: "Courier New", monospace;
-            font-size: 3mm;
-            font-weight: 900;
-            line-height: 3mm;
-        }
-
-        .separator::before {
-            content: "------------------------------------------------------------";
+            height: 0;
         }
 
         table {
@@ -300,7 +290,7 @@
             white-space: nowrap;
             font-family: "Courier New", monospace;
             font-size: 3mm;
-            font-weight: 900;
+            font-weight: bold;
             line-height: 3mm;
         }
 
@@ -311,8 +301,8 @@
         body.thermal-print .totals-label,
         body.thermal-print .grand-total td,
         body.thermal-print .notes strong {
-            font-family: "Arial Black", Arial, Helvetica, sans-serif;
-            font-weight: 900;
+            font-family: Arial, Helvetica, sans-serif;
+            font-weight: bold !important;
         }
 
         .notes {
@@ -444,6 +434,7 @@
                 <td class="col-subtotal">{{ number_format($lineTotal, 2) }}</td>
             </tr>
         @endforeach
+            <tr class="dash-row"><td colspan="4">------------------------------------------------------------</td></tr>
         </tbody>
     </table>
 
@@ -457,9 +448,6 @@
         <tr>
             <td class="totals-label">IGV:</td>
             <td class="totals-value">S/ {{ number_format($ticketTax, 2) }}</td>
-        </tr>
-        <tr class="dash-row">
-            <td colspan="2">------------------------------------------------------------</td>
         </tr>
         <tr class="grand-total">
             <td class="totals-label">TOTAL:</td>
