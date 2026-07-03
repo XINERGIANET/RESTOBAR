@@ -283,8 +283,7 @@
         body.thermal-print .notes { font-size: 3.25mm; }
         body.thermal-print .footer { font-size: 3mm; }
         body.thermal-print .thanks { font-size: 3.25mm; }
-        .dash-row td,
-        .dash-row th {
+        .dash-row td {
             height: 3mm;
             padding: 0;
             overflow: hidden;
@@ -432,19 +431,16 @@
 
     <table class="items-table">
         <thead>
-        <tr class="dash-row">
-            <th colspan="4">------------------------------------------------------------</th>
-        </tr>
         <tr>
             <th class="col-qty">CANT.</th>
             <th class="col-product">DESCRIPCION</th>
             <th class="col-unit">PRECIO</th>
             <th class="col-subtotal">IMPORTE</th>
         </tr>
-        <tr class="dash-row">
-            <th colspan="4">------------------------------------------------------------</th>
-        </tr>
         </thead>
+        <tbody class="dash-row">
+            <tr><td colspan="4">------------------------------------------------------------</td></tr>
+        </tbody>
         <tbody>
         @foreach($details as $detail)
             @php
