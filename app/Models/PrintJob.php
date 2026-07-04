@@ -36,8 +36,15 @@ class PrintJob extends Model
             return 'No se pudo leer el contenido de esta impresión.';
         }
 
+        while (($position = strpos($payload, "\x1D\x76\x30")) !== false && strlen($payload) >= $position + 8) {
+            $widthBytes = ord($payload[$position + 4]) + (ord($payload[$position + 5]) << 8);
+            $height = ord($payload[$position + 6]) + (ord($payload[$position + 7]) << 8);
+            $payload = substr_replace($payload, '', $position, 8 + ($widthBytes * $height));
+        }
+
         $payload = str_replace([
             "\x1B\x40", "\x1B\x74\x02",
+            "\x1B\x61\x00", "\x1B\x61\x01",
             "\x1B\x45\x00", "\x1B\x45\x01",
             "\x1B\x21\x00", "\x1B\x21\x10",
             "\x1D\x56\x00", "\x1D\x56\x42\x10",

@@ -103,6 +103,16 @@ class PrintBridgeController extends Controller
             return back()->with('error', 'No se pudo reenviar el trabajo de impresión.');
         }
 
-        return back()->with('success', 'Trabajo reenviado a la estación de impresión.');
+        return back()->with('status', 'Trabajo reenviado a la estación de impresión.');
+    }
+
+    public function destroy(Request $request, int $job, PrintBridgeQueue $queue)
+    {
+        $branchId = (int) session('branch_id');
+        if (! $branchId || ! $queue->discard($branchId, $job)) {
+            return back()->with('error', 'No se pudo borrar el trabajo de impresión.');
+        }
+
+        return back()->with('status', 'Trabajo de impresión borrado correctamente.');
     }
 }

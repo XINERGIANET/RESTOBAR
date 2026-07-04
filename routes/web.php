@@ -563,4 +563,6 @@ Route::middleware('auth')->group(function () {
         ->name('print-bridge.fail');
     Route::post('/print-bridge/jobs/{job}/retry', [PrintBridgeController::class, 'retry'])
         ->name('print-bridge.retry');
+    Route::delete('/print-bridge/jobs/{job}', [PrintBridgeController::class, 'destroy'])
+        ->name('print-bridge.destroy');
 });

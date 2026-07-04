@@ -2590,7 +2590,7 @@ class OrderController extends Controller
             ], 422);
         }
 
-        $payload = $this->buildKitchenEscPosPayload((string) $validated['ticket_text']);
+        $payload = $this->buildKitchenEscPosPayload((string) $validated['ticket_text'], true);
         if ($this->shouldSkipDuplicateKitchenThermal($branchId, (string) $printer->name, $payload, 'comanda')) {
             return response()->json([
                 'success' => true,
@@ -2999,7 +2999,7 @@ class OrderController extends Controller
         return ! Cache::add($key, 1, now()->addSeconds(6));
     }
 
-    private function buildKitchenEscPosPayload(string $plainText): string
+    private function buildKitchenEscPosPayload(string $plainText, bool $includeLogo = false): string
     {
         $normalized = $this->normalizeKitchenAscii($plainText);
         $formatted = '';
@@ -3018,12 +3018,75 @@ class OrderController extends Controller
             }
         }
 
+        $logo = $includeLogo
+            ? $this->buildKitchenLogoEscPos(public_path('images/logo/mesa.jpeg'))
+            : '';
+
         return
             "\x1B\x40" .     // init
+            $logo .
             "\x1B\x74\x02" . // codepage PC850
             $formatted .
             "\n\n" .
             "\x1D\x56\x42\x10"; // cut
+    }
+
+    private function buildKitchenLogoEscPos(string $path): string
+    {
+        if (! extension_loaded('gd') || ! is_file($path)) {
+            Log::warning('Logo de comanda no disponible: '.$path);
+            return '';
+        }
+
+        $source = @imagecreatefromjpeg($path);
+        if (! $source) {
+            Log::warning('No se pudo leer el logo de comanda: '.$path);
+            return '';
+        }
+
+        $sourceWidth = imagesx($source);
+        $sourceHeight = imagesy($source);
+        $targetWidth = min(240, $sourceWidth);
+        $targetHeight = max(1, (int) round($sourceHeight * ($targetWidth / $sourceWidth)));
+        $image = imagecreatetruecolor($targetWidth, $targetHeight);
+        $white = imagecolorallocate($image, 255, 255, 255);
+        imagefill($image, 0, 0, $white);
+        imagecopyresampled($image, $source, 0, 0, 0, 0, $targetWidth, $targetHeight, $sourceWidth, $sourceHeight);
+        imagedestroy($source);
+
+        $widthBytes = (int) ceil($targetWidth / 8);
+        $raster = '';
+        for ($y = 0; $y < $targetHeight; $y++) {
+            for ($byteX = 0; $byteX < $widthBytes; $byteX++) {
+                $byte = 0;
+                for ($bit = 0; $bit < 8; $bit++) {
+                    $x = ($byteX * 8) + $bit;
+                    if ($x >= $targetWidth) continue;
+
+                    $rgb = imagecolorat($image, $x, $y);
+                    $red = ($rgb >> 16) & 0xFF;
+                    $green = ($rgb >> 8) & 0xFF;
+                    $blue = $rgb & 0xFF;
+                    $brightness = (int) round(($red * 0.299) + ($green * 0.587) + ($blue * 0.114));
+
+                    // El JPEG tiene fondo negro: se imprime el dibujo claro y se omite el fondo.
+                    if ($brightness > 55) {
+                        $byte |= 1 << (7 - $bit);
+                    }
+                }
+                $raster .= chr($byte);
+            }
+        }
+        imagedestroy($image);
+
+        $xL = $widthBytes & 0xFF;
+        $xH = ($widthBytes >> 8) & 0xFF;
+        $yL = $targetHeight & 0xFF;
+        $yH = ($targetHeight >> 8) & 0xFF;
+
+        return "\x1B\x61\x01"
+            . "\x1D\x76\x30\x00" . chr($xL) . chr($xH) . chr($yL) . chr($yH) . $raster
+            . "\n\x1B\x61\x00";
     }
 
     private function normalizeKitchenAscii(string $text): string

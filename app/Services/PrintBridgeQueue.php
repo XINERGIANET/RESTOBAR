@@ -140,6 +140,15 @@ class PrintBridgeQueue
             ]) > 0;
     }
 
+    public function discard(int $branchId, int $jobId): bool
+    {
+        return PrintJob::query()
+            ->where('branch_id', $branchId)
+            ->where('id', $jobId)
+            ->whereIn('status', ['pending', 'processing', 'failed'])
+            ->delete() > 0;
+    }
+
     public function unresolvedForBranch(int $branchId, int $limit = 20)
     {
         return PrintJob::query()
