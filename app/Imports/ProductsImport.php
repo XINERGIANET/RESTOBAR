@@ -6,6 +6,7 @@ use App\Models\Category;
 use App\Models\Product;
 use App\Models\ProductBranch;
 use App\Models\ProductType;
+use App\Models\PrinterBranch;
 use App\Models\TaxRate;
 use App\Models\Unit;
 use Illuminate\Support\Collection;
@@ -24,7 +25,7 @@ class ProductsImport implements ToCollection, WithStartRow, WithMultipleSheets
     // Columnas por índice (0-based):
     // A=0 Codigo | B=1 nombre_producto | C=2 abreviacion | D=3 nombre_categoria
     // E=4 tipo_menu | F=5 tipo_producto | G=6 kardex | H=7 precio
-    // I=8 precio_compra | J=9 stock | K=10 unidad
+    // I=8 precio_compra | J=9 stock | K=10 unidad | L=11 IMPRESORA
 
     public function __construct(int $branchId)
     {
@@ -73,6 +74,7 @@ class ProductsImport implements ToCollection, WithStartRow, WithMultipleSheets
         $precioCompra    = isset($row[8]) ? (float) $row[8] : 0.0;
         $stock           = isset($row[9]) ? (int) $row[9] : 0;
         $unidad          = isset($row[10]) ? trim((string) $row[10]) : '';
+        $nombreImpresora = isset($row[11]) ? trim((string) $row[11]) : '';
 
         // ── Validaciones requeridas ───────────────────────────────────────────
         if ($codigo === '') {
@@ -115,12 +117,18 @@ class ProductsImport implements ToCollection, WithStartRow, WithMultipleSheets
         // ── Tipo de producto ─────────────────────────────────────────────────
         $productType = $this->resolveProductType($tipoProducto);
 
+        $printer = $this->resolvePrinter($nombreImpresora);
+        if ($nombreImpresora !== '' && !$printer) {
+            $this->errors[] = "Fila {$rowNum}: Impresora '{$nombreImpresora}' no encontrada en la sucursal activa.";
+            return;
+        }
+
         $type = ($productType && $productType->isSupply()) ? 'INGREDENT' : 'PRODUCT';
 
         // ── Crear o actualizar ───────────────────────────────────────────────
         DB::transaction(function () use (
             $codigo, $nombre, $abreviacion, $category, $unit, $productType,
-            $type, $kardex, $precio, $precioCompra, $stock
+            $type, $kardex, $precio, $precioCompra, $stock, $printer
         ) {
             $existingProduct = DB::table('products')
                 ->join('product_branch', 'product_branch.product_id', '=', 'products.id')
@@ -142,15 +150,17 @@ class ProductsImport implements ToCollection, WithStartRow, WithMultipleSheets
                     'updated_at'      => now(),
                 ]);
 
-                ProductBranch::where('product_id', $existingProduct->id)
+                $productBranch = ProductBranch::where('product_id', $existingProduct->id)
                     ->where('branch_id', $this->branchId)
                     ->whereNull('deleted_at')
-                    ->update([
+                    ->firstOrFail();
+                $productBranch->update([
                         'price'          => $precio,
                         'purchase_price' => $precioCompra,
                         'stock'          => $stock,
                         'updated_at'     => now(),
                     ]);
+                $productBranch->printers()->sync($printer ? [$printer->id] : []);
 
                 $this->updated++;
             } else {
@@ -170,7 +180,7 @@ class ProductsImport implements ToCollection, WithStartRow, WithMultipleSheets
                     'recipe'           => false,
                 ]);
 
-                ProductBranch::create([
+                $productBranch = ProductBranch::create([
                     'product_id'       => $product->id,
                     'branch_id'        => $this->branchId,
                     'status'           => 'A',
@@ -186,6 +196,7 @@ class ProductsImport implements ToCollection, WithStartRow, WithMultipleSheets
                     'unit_sale'        => (string) $unit->id,
                     'duration_minutes' => 0,
                 ]);
+                $productBranch->printers()->sync($printer ? [$printer->id] : []);
 
                 $this->imported++;
             }
@@ -237,5 +248,17 @@ class ProductsImport implements ToCollection, WithStartRow, WithMultipleSheets
             ?? ProductType::where('branch_id', $this->branchId)
                 ->where('behavior', ProductType::BEHAVIOR_SELLABLE)
                 ->first();
+    }
+
+    private function resolvePrinter(string $nombre): ?PrinterBranch
+    {
+        if ($nombre === '') {
+            return null;
+        }
+
+        return PrinterBranch::query()
+            ->where('branch_id', $this->branchId)
+            ->whereRaw('LOWER(TRIM(name)) = ?', [strtolower($nombre)])
+            ->first();
     }
 }

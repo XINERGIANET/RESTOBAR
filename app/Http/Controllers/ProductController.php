@@ -390,6 +390,44 @@ class ProductController extends Controller
             ->with('status', 'Producto eliminado correctamente.');
     }
 
+    public function bulkDestroy(Request $request)
+    {
+        $validated = $request->validate([
+            'product_ids' => ['required', 'array', 'min:1', 'max:500'],
+            'product_ids.*' => ['required', 'integer', 'distinct'],
+        ], [
+            'product_ids.required' => 'Selecciona al menos un producto.',
+            'product_ids.min' => 'Selecciona al menos un producto.',
+        ]);
+
+        $branchId = (int) effective_branch_id();
+        if (!$branchId) {
+            return back()->withErrors(['product_ids' => 'No hay una sucursal activa en la sesión.']);
+        }
+
+        $products = Product::query()
+            ->whereIn('id', $validated['product_ids'])
+            ->whereHas(
+                'productBranches',
+                fn ($branchQuery) => $branchQuery->where('branch_id', $branchId)
+            )
+            ->get();
+
+        DB::transaction(fn () => $products->each->delete());
+
+        foreach ($products as $product) {
+            if ($product->image && Storage::disk('public')->exists($product->image)) {
+                Storage::disk('public')->delete($product->image);
+            }
+        }
+
+        $viewId = $request->input('view_id');
+
+        return redirect()
+            ->route('products.index', $viewId ? ['view_id' => $viewId] : [])
+            ->with('status', $products->count() . ' producto(s) eliminado(s) correctamente.');
+    }
+
     /**
      * Rellena el request con valores existentes del producto/productBranch cuando faltan o están vacíos.
      * Evita errores al editar solo un campo.
@@ -701,6 +739,9 @@ class ProductController extends Controller
 
     public function downloadTemplate()
     {
-        return Excel::download(new PlantillaProductosExport(), 'plantilla_productos.xlsx');
+        return Excel::download(
+            new PlantillaProductosExport((int) effective_branch_id()),
+            'plantilla_productos.xlsx'
+        );
     }
 }

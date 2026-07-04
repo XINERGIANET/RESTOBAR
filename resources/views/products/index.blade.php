@@ -30,7 +30,12 @@
     </script>
 
     <div x-data="{
-        openRow: null
+        openRow: null,
+        selectedIds: [],
+        pageIds: @js($products->pluck('id')->map(fn ($id) => (string) $id)->values()),
+        toggleAll() {
+            this.selectedIds = this.selectedIds.length === this.pageIds.length ? [] : [...this.pageIds];
+        }
     }">
         @php
             use Illuminate\Support\Facades\Route;
@@ -195,6 +200,21 @@
                     <span>Total</span>
                     <x-ui.badge size="sm" variant="light" color="info">{{ $products->total() }}</x-ui.badge>
                 </div>
+                <form id="bulk-delete-products-form" method="POST"
+                    action="{{ route('products.bulk-destroy') }}"
+                    @submit="if (!confirm('¿Eliminar los ' + selectedIds.length + ' productos seleccionados? Esta acción no se puede deshacer.')) $event.preventDefault()">
+                    @csrf
+                    @method('DELETE')
+                    @if ($viewId)
+                        <input type="hidden" name="view_id" value="{{ $viewId }}">
+                    @endif
+                    <button type="submit" :disabled="selectedIds.length === 0"
+                        class="inline-flex h-10 items-center gap-2 rounded-lg bg-red-600 px-4 text-sm font-semibold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50">
+                        <i class="ri-delete-bin-line"></i>
+                        <span>Eliminar seleccionados</span>
+                        <span x-show="selectedIds.length" x-text="'(' + selectedIds.length + ')'" x-cloak></span>
+                    </button>
+                </form>
             </div>
 
             <div
@@ -202,7 +222,13 @@
                 <table class="w-full min-w-[1100px]">
                     <thead style="background-color: #124731; color: #FFFFFF;">
                         <tr class="text-white">
-                            <th class="w-12 px-4 py-4 text-center first:rounded-tl-xl"></th>
+                            <th class="w-12 px-3 py-4 text-center first:rounded-tl-xl">
+                                <input type="checkbox" aria-label="Seleccionar todos los productos de esta página"
+                                    :checked="pageIds.length > 0 && selectedIds.length === pageIds.length"
+                                    @change="toggleAll()"
+                                    class="h-4 w-4 rounded border-white/60 text-red-600 focus:ring-red-500">
+                            </th>
+                            <th class="w-12 px-4 py-4 text-center"></th>
                             <th class="hidden md:table-cell px-5 py-3 text-left sm:px-6">
                                 <p class="font-semibold text-white text-theme-xs uppercase">Código</p>
                             </th>
@@ -230,6 +256,12 @@
                         @forelse ($products as $product)
                             <tr
                                 class="border-b border-gray-100 transition hover:bg-gray-50 dark:border-gray-800 dark:hover:bg-white/5">
+                                <td class="px-3 py-4 text-center">
+                                    <input type="checkbox" name="product_ids[]" value="{{ $product->id }}"
+                                        form="bulk-delete-products-form" x-model="selectedIds"
+                                        aria-label="Seleccionar {{ $product->description }}"
+                                        class="h-4 w-4 rounded border-gray-300 text-red-600 focus:ring-red-500">
+                                </td>
                                 <td class="px-4 py-4 text-center sticky-left">
                                     <button type="button"
                                         @click="openRow === {{ $product->id }} ? openRow = null : openRow = {{ $product->id }}"
@@ -336,7 +368,7 @@
                             </tr>
                             <tr x-show="openRow === {{ $product->id }}" x-cloak
                                 class="bg-gray-50/60 dark:bg-gray-800/40">
-                                <td colspan="8" class="px-6 py-4">
+                                <td colspan="9" class="px-6 py-4">
                                     @php
                                         $branchId = session('branch_id');
                                         $productBranch = $product->productBranches
@@ -390,7 +422,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="8" class="px-6 py-12">
+                                <td colspan="9" class="px-6 py-12">
                                     <div class="flex flex-col items-center gap-3 text-center text-sm text-gray-500">
                                         <div
                                             class="rounded-full bg-gray-100 p-3 text-gray-400 dark:bg-gray-800 dark:text-gray-300">

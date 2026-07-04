@@ -2,6 +2,7 @@
 
 namespace App\Exports;
 
+use App\Models\PrinterBranch;
 use Maatwebsite\Excel\Concerns\FromArray;
 use Maatwebsite\Excel\Concerns\WithColumnWidths;
 use Maatwebsite\Excel\Concerns\WithEvents;
@@ -15,6 +16,10 @@ use PhpOffice\PhpSpreadsheet\Style\Fill;
 // ─── Hoja principal: Productos ────────────────────────────────────────────────
 class PlantillaProductosSheet implements FromArray, WithTitle, WithColumnWidths, WithEvents
 {
+    public function __construct(private array $printerNames = [])
+    {
+    }
+
     public function title(): string
     {
         return 'Productos';
@@ -26,11 +31,11 @@ class PlantillaProductosSheet implements FromArray, WithTitle, WithColumnWidths,
             // Encabezados (fila 1)
             ['Codigo', 'nombre_producto', 'abreviacion', 'nombre_categoria',
              'tipo_menu', 'tipo_producto', 'kardex',
-             'precio', 'precio_compra', 'stock', 'unidad'],
+             'precio', 'precio_compra', 'stock', 'unidad', 'IMPRESORA'],
             // Fila de ejemplo (fila 2)
             ['PRD-001', 'Pollo a la brasa', 'POLLO', 'Platos a la carta',
              'VENTAS_PEDIDOS', 'Producto final', 'N',
-             '40.00', '15.00', '0', 'Unidad(es)'],
+             '40.00', '15.00', '0', 'Unidad(es)', $this->printerNames[0] ?? ''],
         ];
     }
 
@@ -39,7 +44,7 @@ class PlantillaProductosSheet implements FromArray, WithTitle, WithColumnWidths,
         return [
             'A' => 12, 'B' => 26, 'C' => 15, 'D' => 26,
             'E' => 18, 'F' => 18, 'G' => 10,
-            'H' => 12, 'I' => 14, 'J' => 10, 'K' => 18,
+            'H' => 12, 'I' => 14, 'J' => 10, 'K' => 18, 'L' => 24,
         ];
     }
 
@@ -50,14 +55,14 @@ class PlantillaProductosSheet implements FromArray, WithTitle, WithColumnWidths,
                 $sheet = $event->sheet->getDelegate();
 
                 // ── Estilo encabezados ──────────────────────────────────────
-                $sheet->getStyle('A1:K1')->applyFromArray([
+                $sheet->getStyle('A1:L1')->applyFromArray([
                     'font'      => ['bold' => true, 'color' => ['rgb' => 'FFFFFF']],
                     'fill'      => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => '1E40AF']],
                     'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER],
                 ]);
 
                 // ── Estilo fila de ejemplo ──────────────────────────────────
-                $sheet->getStyle('A2:K2')->applyFromArray([
+                $sheet->getStyle('A2:L2')->applyFromArray([
                     'font' => ['italic' => true, 'color' => ['rgb' => '6B7280']],
                     'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => 'F3F4F6']],
                 ]);
@@ -89,6 +94,19 @@ class PlantillaProductosSheet implements FromArray, WithTitle, WithColumnWidths,
                 $dv3->setAllowBlank(true);
                 $dv3->setShowDropDown(false);
                 $dv3->setFormula1('"S,N"');
+
+                if ($this->printerNames !== []) {
+                    $dv4 = $sheet->getDataValidation('L2:L500');
+                    $dv4->setType(DataValidation::TYPE_LIST);
+                    $dv4->setErrorStyle(DataValidation::STYLE_STOP);
+                    $dv4->setAllowBlank(true);
+                    $dv4->setShowDropDown(false);
+                    $dv4->setShowErrorMessage(true);
+                    $dv4->setErrorTitle('Impresora invÃ¡lida');
+                    $dv4->setError('Elige una impresora registrada en la hoja Referencia.');
+                    $lastPrinterRow = 29 + count($this->printerNames);
+                    $dv4->setFormula1("'Referencia'!\$A\$30:\$A\${$lastPrinterRow}");
+                }
             },
         ];
     }
@@ -97,6 +115,10 @@ class PlantillaProductosSheet implements FromArray, WithTitle, WithColumnWidths,
 // ─── Hoja secundaria: Referencia ──────────────────────────────────────────────
 class PlantillaReferenciaSheet implements FromArray, WithTitle, WithColumnWidths, WithEvents
 {
+    public function __construct(private array $printerNames = [])
+    {
+    }
+
     public function title(): string
     {
         return 'Referencia';
@@ -104,7 +126,7 @@ class PlantillaReferenciaSheet implements FromArray, WithTitle, WithColumnWidths
 
     public function array(): array
     {
-        return [
+        $rows = [
             ['VALORES VÁLIDOS', ''],
             ['', ''],
             ['tipo_menu', ''],
@@ -126,6 +148,14 @@ class PlantillaReferenciaSheet implements FromArray, WithTitle, WithColumnWidths
             ['Mililitro(s)', ''], ['Kilogramo(s)', ''], ['Gramo(s)', ''],
             ['Caja(s)', ''],      ['Paquete(s)', ''],
         ];
+
+        $rows[] = ['', ''];
+        $rows[] = ['IMPRESORA', 'Impresoras registradas en la sucursal activa'];
+        foreach ($this->printerNames as $printerName) {
+            $rows[] = [$printerName, ''];
+        }
+
+        return $rows;
     }
 
     public function columnWidths(): array
@@ -158,11 +188,22 @@ class PlantillaReferenciaSheet implements FromArray, WithTitle, WithColumnWidths
 // ─── Coordinador de múltiples hojas ──────────────────────────────────────────
 class PlantillaProductosExport implements WithMultipleSheets
 {
+    private array $printerNames;
+
+    public function __construct(int $branchId)
+    {
+        $this->printerNames = PrinterBranch::query()
+            ->where('branch_id', $branchId)
+            ->orderBy('name')
+            ->pluck('name')
+            ->all();
+    }
+
     public function sheets(): array
     {
         return [
-            new PlantillaProductosSheet(),
-            new PlantillaReferenciaSheet(),
+            new PlantillaProductosSheet($this->printerNames),
+            new PlantillaReferenciaSheet($this->printerNames),
         ];
     }
 }

@@ -172,6 +172,8 @@ Route::middleware('auth')->group(function () {
         ->names('categories')
         ->parameters(['categorias' => 'category'])
         ->only(['index', 'store', 'edit', 'update', 'destroy']);
+    Route::delete('/products/productos-eliminacion-masiva', [ProductController::class, 'bulkDestroy'])
+        ->name('products.bulk-destroy');
     Route::resource('/products/productos', ProductController::class)
         ->names('products')
         ->parameters(['productos' => 'product'])

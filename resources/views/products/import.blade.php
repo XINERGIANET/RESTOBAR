@@ -157,6 +157,7 @@
                             ['precio_compra','Opcional'],
                             ['stock','Opcional'],
                             ['unidad','Requerido'],
+                            ['IMPRESORA','Opcional'],
                         ] as [$col, $req])
                             <div class="px-3 py-2 flex items-center gap-1.5">
                                 <code class="text-blue-600 dark:text-blue-400 font-mono">{{ $col }}</code>
@@ -190,6 +191,7 @@
                 <li>Si el <strong>Codigo</strong> ya existe en esta sucursal, el producto se <strong>actualiza</strong>.</li>
                 <li>Si la <strong>categoría</strong> no existe, se crea automáticamente con el <strong>tipo_menu</strong> indicado.</li>
                 <li>La <strong>Unidad</strong> debe coincidir exactamente con los nombres de la hoja <em>Referencia</em> de la plantilla.</li>
+                <li>La <strong>IMPRESORA</strong> debe coincidir con una impresora registrada en la sucursal activa.</li>
                 <li>La fila de ejemplo (fila 2 de la plantilla) debe ser reemplazada con tus datos reales.</li>
             </ul>
         </div>
