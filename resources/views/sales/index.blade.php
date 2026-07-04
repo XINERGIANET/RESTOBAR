@@ -1,7 +1,36 @@
 @extends('layouts.app')
 
 @section('content')
-    <div x-data="{ printPreviewOpen: false, printPreviewTitle: '', printPreviewMeta: '', printPreviewContent: '' }">
+    @php
+        $printJobPreviews = collect($unresolvedPrintJobs ?? [])->mapWithKeys(fn ($job) => [
+            (string) $job->id => [
+                'title' => ucfirst((string) $job->kind),
+                'meta' => ($job->created_at?->format('d/m/Y H:i:s') ?? '') . ' · ' . $job->printer_name,
+                'content' => $job->readablePayload(),
+            ],
+        ])->all();
+    @endphp
+    <script>
+        window.salesPrintIndex = function () {
+            return {
+                printPreviewOpen: false,
+                printPreviewTitle: '',
+                printPreviewMeta: '',
+                printPreviewContent: '',
+                printJobPreviews: @js($printJobPreviews),
+                openPrintPreview(jobId) {
+                    const preview = this.printJobPreviews[String(jobId)];
+                    if (!preview) return;
+
+                    this.printPreviewTitle = preview.title || '';
+                    this.printPreviewMeta = preview.meta || '';
+                    this.printPreviewContent = preview.content || '';
+                    this.printPreviewOpen = true;
+                }
+            };
+        };
+    </script>
+    <div x-data="window.salesPrintIndex()">
         @php
             use Illuminate\Support\Facades\Route;
 
@@ -112,7 +141,7 @@
                                     <td class="max-w-[260px] truncate pr-3" title="{{ $printJob->last_error }}">{{ $printJob->last_error ?: '—' }}</td>
                                     <td class="py-2 text-right">
                                         <button type="button"
-                                            @click='printPreviewTitle = @js(ucfirst($printJob->kind)); printPreviewMeta = @js(($printJob->created_at?->format("d/m/Y H:i:s") ?? "") . " · " . $printJob->printer_name); printPreviewContent = @js($printJob->readablePayload()); printPreviewOpen = true'
+                                            @click="openPrintPreview({{ $printJob->id }})"
                                             class="mb-1 rounded-lg border border-amber-700 bg-white px-3 py-1.5 text-xs font-semibold text-amber-900 hover:bg-amber-100">
                                             <i class="ri-eye-line mr-1"></i>Ver
                                         </button>
