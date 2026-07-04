@@ -1,5 +1,16 @@
 @extends('layouts.app')
 
+@push('head')
+    <meta name="qz-sign-url" content="{{ route('qz.sign') }}">
+    <meta name="qz-certificate-url" content="{{ route('qz.certificate') }}">
+    <meta name="qz-signature-algorithm" content="{{ config('qz.signature_algorithm', 'SHA512') }}">
+    <script>
+        window.__qzSecondaryFirstPrinterNames = @json(config('qz.secondary_first_printer_names', []));
+        window.__qzTertiaryFirstPrinterNames = @json(config('qz.tertiary_first_printer_names', []));
+    </script>
+    @vite(['resources/js/qz-tray-init.js'])
+@endpush
+
 @section('content')
 @php
     $commandPreviews = $jobs->getCollection()->mapWithKeys(fn ($job) => [(string) $job->id => [
@@ -11,8 +22,11 @@
 <script>
 window.commandTicketsPage = () => ({
     open: false, title: '', meta: '', content: '', previews: @js($commandPreviews),
-    editOpen: false, editAction: '', editDate: '',
+    editOpen: false, editAction: '', editDate: '', printingJobId: null,
     updateDateUrl: @js(route('command-tickets.update-date', ['job' => '__JOB__'])),
+    reprintDataUrl: @js(route('command-tickets.reprint-data', ['job' => '__JOB__'])),
+    confirmReprintUrl: @js(route('command-tickets.confirm-reprint', ['job' => '__JOB__'])),
+    serverReprintUrl: @js(route('command-tickets.reprint', ['job' => '__JOB__'])),
     show(jobId) {
         const item = this.previews[String(jobId)];
         if (!item) return;
@@ -22,6 +36,41 @@ window.commandTicketsPage = () => ({
         this.editAction = this.updateDateUrl.replace('__JOB__', String(jobId));
         this.editDate = date;
         this.editOpen = true;
+    },
+    async reprint(jobId) {
+        if (this.printingJobId) return;
+        if (window.Swal) {
+            const answer = await Swal.fire({ title: '¿Volver a imprimir?', text: 'La comanda se enviará nuevamente a su impresora.', icon: 'question', showCancelButton: true, confirmButtonText: 'Sí, imprimir', cancelButtonText: 'Cancelar', confirmButtonColor: '#2563eb' });
+            if (!answer.isConfirmed) return;
+        }
+        this.printingJobId = jobId;
+        const csrf = document.querySelector('meta[name="csrf-token"]')?.content || '';
+        try {
+            const response = await fetch(this.reprintDataUrl.replace('__JOB__', String(jobId)), { headers: { Accept: 'application/json' }, credentials: 'same-origin' });
+            const data = await response.json();
+            if (!response.ok || !data?.payload_b64) throw new Error(data?.message || 'No se pudo cargar la comanda.');
+            const qzApi = window.qz;
+            const connected = qzApi && window.__qzConnectWithCertPairFallback && await window.__qzConnectWithCertPairFallback(qzApi, data.printer_name);
+            if (!connected) throw new Error('QZ Tray no está conectado.');
+            await qzApi.printers.find(data.printer_name);
+            const config = qzApi.configs.create(data.printer_name);
+            await qzApi.print(config, [{ type: 'raw', format: 'command', flavor: 'base64', data: data.payload_b64 }]);
+            await fetch(this.confirmReprintUrl.replace('__JOB__', String(jobId)), { method: 'POST', credentials: 'same-origin', headers: { Accept: 'application/json', 'X-CSRF-TOKEN': csrf } });
+            if (window.Swal) await Swal.fire({ toast: true, position: 'bottom-end', icon: 'success', title: 'Comanda reimpresa correctamente.', showConfirmButton: false, timer: 2500 });
+            window.location.reload();
+        } catch (qzError) {
+            console.warn('Reimpresión QZ no disponible; usando respaldo del servidor.', qzError);
+            const fallback = await fetch(this.serverReprintUrl.replace('__JOB__', String(jobId)), { method: 'POST', credentials: 'same-origin', headers: { Accept: 'application/json', 'X-CSRF-TOKEN': csrf } });
+            const fallbackData = await fallback.json().catch(() => ({}));
+            if (!fallback.ok || !fallbackData?.success) {
+                if (window.Swal) Swal.fire({ icon: 'error', title: 'No se pudo reimprimir', text: fallbackData?.message || qzError?.message || 'Error de impresión.' });
+                return;
+            }
+            if (window.Swal) await Swal.fire({ toast: true, position: 'bottom-end', icon: 'success', title: fallbackData.message || 'Comanda enviada a impresión.', showConfirmButton: false, timer: 2500 });
+            window.location.reload();
+        } finally {
+            this.printingJobId = null;
+        }
     }
 });
 </script>
@@ -61,7 +110,7 @@ window.commandTicketsPage = () => ({
                         @php
                             $state = ['printed'=>['Impresa','bg-emerald-100 text-emerald-700'],'pending'=>['Pendiente','bg-amber-100 text-amber-700'],'processing'=>['Procesando','bg-blue-100 text-blue-700'],'failed'=>['Con error','bg-red-100 text-red-700']][$job->status] ?? [$job->status,'bg-gray-100 text-gray-700'];
                         @endphp
-                        <tr class="hover:bg-gray-50"><td class="px-4 py-3 whitespace-nowrap"><div class="font-medium text-gray-800">{{ $job->created_at?->format('d/m/Y') }}</div><div class="text-xs text-gray-500">{{ $job->created_at?->format('H:i:s') }}</div></td><td class="px-4 py-3 font-semibold">{{ $job->printer_name }}</td><td class="px-4 py-3 text-center"><span class="rounded-full px-2.5 py-1 text-xs font-semibold {{ $state[1] }}">{{ $state[0] }}</span></td><td class="px-4 py-3 text-center">{{ $job->attempts }}</td><td class="max-w-[280px] truncate px-4 py-3 text-gray-500" title="{{ $job->last_error }}">{{ $job->last_error ?: '—' }}</td><td class="px-4 py-3"><div class="flex justify-center gap-2"><button type="button" @click="show({{ $job->id }})" class="rounded-lg border border-gray-300 px-3 py-2 font-semibold text-gray-700 hover:bg-gray-100"><i class="ri-eye-line"></i> Ver</button><button type="button" data-command-date="{{ $job->created_at?->format('Y-m-d\\TH:i') }}" @click="edit({{ $job->id }}, $el.dataset.commandDate)" class="rounded-lg bg-amber-500 px-3 py-2 font-semibold text-white hover:bg-amber-600"><i class="ri-calendar-edit-line"></i> Fecha</button><form method="POST" action="{{ route('command-tickets.reprint', $job->id) }}" class="js-swal-delete" data-swal-title="¿Volver a imprimir?" data-swal-text="La comanda se enviará nuevamente a {{ $job->printer_name }}." data-swal-icon="question" data-swal-confirm="Sí, imprimir">@csrf<button class="rounded-lg bg-blue-600 px-3 py-2 font-semibold text-white hover:bg-blue-700"><i class="ri-printer-line"></i> Reimprimir</button></form></div></td></tr>
+                        <tr class="hover:bg-gray-50"><td class="px-4 py-3 whitespace-nowrap"><div class="font-medium text-gray-800">{{ $job->created_at?->format('d/m/Y') }}</div><div class="text-xs text-gray-500">{{ $job->created_at?->format('H:i:s') }}</div></td><td class="px-4 py-3 font-semibold">{{ $job->printer_name }}</td><td class="px-4 py-3 text-center"><span class="rounded-full px-2.5 py-1 text-xs font-semibold {{ $state[1] }}">{{ $state[0] }}</span></td><td class="px-4 py-3 text-center">{{ $job->attempts }}</td><td class="max-w-[280px] truncate px-4 py-3 text-gray-500" title="{{ $job->last_error }}">{{ $job->last_error ?: '—' }}</td><td class="px-4 py-3"><div class="flex justify-center gap-2"><button type="button" @click="show({{ $job->id }})" class="rounded-lg border border-gray-300 px-3 py-2 font-semibold text-gray-700 hover:bg-gray-100"><i class="ri-eye-line"></i> Ver</button><button type="button" data-command-date="{{ $job->created_at?->format('Y-m-d\\TH:i') }}" @click="edit({{ $job->id }}, $el.dataset.commandDate)" class="rounded-lg bg-amber-500 px-3 py-2 font-semibold text-white hover:bg-amber-600"><i class="ri-calendar-edit-line"></i> Fecha</button><button type="button" @click="reprint({{ $job->id }})" :disabled="printingJobId === {{ $job->id }}" class="rounded-lg bg-blue-600 px-3 py-2 font-semibold text-white hover:bg-blue-700 disabled:cursor-wait disabled:opacity-60"><i class="ri-printer-line" :class="printingJobId === {{ $job->id }} ? 'animate-pulse' : ''"></i> <span x-text="printingJobId === {{ $job->id }} ? 'Imprimiendo...' : 'Reimprimir'"></span></button></div></td></tr>
                     @empty
                         <tr><td colspan="6" class="px-6 py-12 text-center text-gray-500"><i class="ri-file-list-3-line mb-2 block text-4xl text-gray-300"></i>No hay comandas para los filtros seleccionados.</td></tr>
                     @endforelse

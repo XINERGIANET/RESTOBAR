@@ -11,6 +11,7 @@
         window.__qzKitchenComandaDisableClientOnTouch = @json((bool) config('qz.kitchen_comanda_disable_client_qz_on_touch_devices', true));
         window.__kitchenLogoEscPosUrl = @json(route('orders.print.kitchen.logo-escpos'));
         window.__kitchenLogoImageUrl = @json(asset('images/logo/mesa.jpeg'));
+        window.__recordKitchenQzPrintUrl = @json(route('orders.print.kitchen.record-qz'));
         window.__clientOnLocalNetwork = @json((bool) ($clientOnLocalNetwork ?? false));
     </script>
     @vite(['resources/js/qz-tray-init.js'])
@@ -1852,6 +1853,24 @@
                         return kitchenLogoEscPosPromise;
                     }
 
+                    async function recordKitchenQzPrint(printerName, ticketText) {
+                        const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+                        const response = await fetch(window.__recordKitchenQzPrintUrl, {
+                            method: 'POST',
+                            credentials: 'same-origin',
+                            headers: {
+                                'Accept': 'application/json',
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': csrf
+                            },
+                            body: JSON.stringify({ printer_name: printerName, ticket_text: ticketText })
+                        });
+                        if (!response.ok) {
+                            const result = await response.json().catch(() => ({}));
+                            throw new Error(result?.message || 'No se pudo registrar la comanda impresa.');
+                        }
+                    }
+
                     async function printTicketWithQz(qzApi, printerName, plainText) {
                         const paperWidth = resolvePrinterWidthByName(printerName);
                         const paperMm = paperWidth === 80 ? 80 : 58;
@@ -2998,6 +3017,11 @@
                                     try {
                                         await qzApi.printers.find(pname);
                                         await printTicketWithQz(qzApi, pname, data);
+                                        try {
+                                            await recordKitchenQzPrint(pname, data);
+                                        } catch (historyError) {
+                                            console.warn('La comanda se imprimió, pero no se pudo registrar en el historial.', historyError);
+                                        }
                                     } catch (notFoundErr) {
                                         const msg = 'QZ no encontró la impresora "' + pname +
                                             '". Se intentará impresión por servidor.';

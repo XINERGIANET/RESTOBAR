@@ -79,6 +79,8 @@ Route::view('/signup', 'pages.auth.signup', ['title' => 'Sign Up'])
 Route::middleware('auth')->group(function () {
     Route::get('/comandas', [CommandTicketController::class, 'index'])->name('command-tickets.index');
     Route::patch('/comandas/{job}/fecha', [CommandTicketController::class, 'updateDate'])->name('command-tickets.update-date');
+    Route::get('/comandas/{job}/datos-reimpresion', [CommandTicketController::class, 'reprintData'])->name('command-tickets.reprint-data');
+    Route::post('/comandas/{job}/confirmar-reimpresion', [CommandTicketController::class, 'confirmReprint'])->name('command-tickets.confirm-reprint');
     Route::post('/comandas/{job}/reimprimir', [CommandTicketController::class, 'reprint'])->name('command-tickets.reprint');
     Route::resource('/admin/herramientas/empresas', CompanyController::class)
         ->names('admin.companies')
@@ -232,6 +234,9 @@ Route::middleware('auth')->group(function () {
         ->middleware('active.shift');
     Route::get('/Pedidos/imprimir-comanda/logo-escpos', [OrderController::class, 'kitchenLogoEscPos'])
         ->name('orders.print.kitchen.logo-escpos');
+    Route::post('/Pedidos/imprimir-comanda/registrar-qz', [OrderController::class, 'recordKitchenQzPrint'])
+        ->name('orders.print.kitchen.record-qz')
+        ->middleware('active.shift');
     Route::post('/Pedidos/imprimir-comanda/pdf', [OrderController::class, 'printKitchenTicketPdf'])
         ->name('orders.print.kitchen.pdf')
         ->middleware('active.shift');

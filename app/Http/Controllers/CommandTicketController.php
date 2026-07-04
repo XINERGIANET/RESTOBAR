@@ -53,25 +53,27 @@ class CommandTicketController extends Controller
             ->where('branch_id', $branchId)
             ->where('kind', 'comanda')
             ->findOrFail($job);
-        $newDate = Carbon::createFromFormat('Y-m-d\\TH:i', $validated['command_date']);
+        $newDate = Carbon::createFromFormat('Y-m-d\\TH:i', $validated['command_date'])->second(0);
         $payload = base64_decode((string) $printJob->payload_base64, true);
 
         if ($payload === false) {
             return back()->with('error', 'No se pudo leer el contenido de la comanda.');
         }
 
-        $replacement = 'Fecha: '.$newDate->format('d/m/Y H:i:s');
-        $updatedPayload = preg_replace(
-            '/(^|\\n)Fecha(?:\\/Hora)?:\\s*[^\\r\\n]*/i',
-            '$1'.$replacement,
-            $payload,
-            1,
-            $replacements
-        );
-
-        if ($updatedPayload === null || $replacements === 0) {
+        $datePosition = stripos($payload, 'Fecha/Hora:');
+        if ($datePosition === false) {
+            $datePosition = stripos($payload, 'Fecha:');
+        }
+        if ($datePosition === false) {
             return back()->with('error', 'No se encontró la fecha dentro del contenido de la comanda.');
         }
+
+        $remainingPayload = substr($payload, $datePosition);
+        $lineLength = strcspn($remainingPayload, "\r\n");
+        $replacement = 'Fecha: '.$newDate->format('d/m/Y H:i:s');
+        $updatedPayload = substr($payload, 0, $datePosition)
+            .$replacement
+            .substr($payload, $datePosition + $lineLength);
 
         $printJob->timestamps = false;
         $printJob->forceFill([
@@ -82,7 +84,7 @@ class CommandTicketController extends Controller
         return back()->with('status', 'Fecha de la comanda actualizada correctamente.');
     }
 
-    public function reprint(int $job, PrintBridgeQueue $queue)
+    public function reprint(Request $request, int $job, PrintBridgeQueue $queue)
     {
         $branchId = (int) effective_branch_id();
         $printJob = PrintJob::query()->where('branch_id', $branchId)->where('kind', 'comanda')->findOrFail($job);
@@ -91,16 +93,21 @@ class CommandTicketController extends Controller
 
         if (! $printer) {
             $queue->markFailed($branchId, $printJob->id, 'La impresora ya no está registrada en esta sucursal.');
+            if ($request->wantsJson()) return response()->json(['success' => false, 'message' => 'La impresora de esta comanda ya no está registrada.'], 422);
             return back()->with('error', 'La impresora de esta comanda ya no está registrada.');
         }
 
         if ($queue->shouldQueueToStation($printer, ! filled((string) $printer->ip))) {
             $queue->requeue($branchId, $printJob->id);
+            if ($request->wantsJson()) return response()->json(['success' => true, 'message' => 'Comanda enviada nuevamente a la cola de impresión.']);
             return back()->with('status', 'Comanda enviada nuevamente a la cola de impresión.');
         }
 
         $payload = base64_decode($printJob->payload_base64, true);
-        if ($payload === false) return back()->with('error', 'El contenido de la comanda no es válido.');
+        if ($payload === false) {
+            if ($request->wantsJson()) return response()->json(['success' => false, 'message' => 'El contenido de la comanda no es válido.'], 422);
+            return back()->with('error', 'El contenido de la comanda no es válido.');
+        }
 
         try {
             $service = app(ThermalNetworkPrintService::class);
@@ -110,10 +117,34 @@ class CommandTicketController extends Controller
                 $service->sendRawToWindowsPrinter((string) $printer->name, $payload, (int) config('local_network.thermal_timeout_seconds', 4) + 4);
             }
             $queue->markPrinted($branchId, $printJob->id);
+            if ($request->wantsJson()) return response()->json(['success' => true, 'message' => 'Comanda reimpresa correctamente.']);
             return back()->with('status', 'Comanda reimpresa correctamente.');
         } catch (\Throwable $e) {
             $queue->markFailed($branchId, $printJob->id, $e->getMessage());
+            if ($request->wantsJson()) return response()->json(['success' => false, 'message' => 'No se pudo reimprimir la comanda: '.$e->getMessage()], 500);
             return back()->with('error', 'No se pudo reimprimir la comanda: '.$e->getMessage());
         }
+    }
+
+    public function reprintData(int $job)
+    {
+        $branchId = (int) effective_branch_id();
+        $printJob = PrintJob::query()->where('branch_id', $branchId)->where('kind', 'comanda')->findOrFail($job);
+
+        return response()->json([
+            'success' => true,
+            'printer_name' => $printJob->printer_name,
+            'payload_b64' => $printJob->payload_base64,
+        ]);
+    }
+
+    public function confirmReprint(int $job, PrintBridgeQueue $queue)
+    {
+        $branchId = (int) effective_branch_id();
+        $printJob = PrintJob::query()->where('branch_id', $branchId)->where('kind', 'comanda')->findOrFail($job);
+        $printJob->increment('attempts');
+        $queue->markPrinted($branchId, $printJob->id);
+
+        return response()->json(['success' => true]);
     }
 }

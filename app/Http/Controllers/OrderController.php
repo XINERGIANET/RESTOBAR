@@ -2690,6 +2690,24 @@ class OrderController extends Controller
         ]);
     }
 
+    public function recordKitchenQzPrint(Request $request, PrintBridgeQueue $queue)
+    {
+        $validated = $request->validate([
+            'printer_name' => ['required', 'string', 'max:255'],
+            'ticket_text' => ['required', 'string'],
+        ]);
+        $branchId = (int) session('branch_id');
+        if (! $branchId) {
+            return response()->json(['success' => false, 'message' => 'Sin sucursal activa.'], 422);
+        }
+
+        $payload = $this->buildKitchenEscPosPayload((string) $validated['ticket_text'], true);
+        $job = $queue->push($branchId, (string) $validated['printer_name'], $payload, 'comanda');
+        $queue->markPrinted($branchId, $job->id);
+
+        return response()->json(['success' => true, 'job_id' => $job->id]);
+    }
+
     public function printPreAccountThermal(Request $request)
     {
         if (! config('local_network.thermal_print_enabled', true)) {
@@ -3079,7 +3097,7 @@ class OrderController extends Controller
         $black = imagecolorallocate($image, 0, 0, 0);
         imagefill($image, 0, 0, $black);
         // Compensa el margen físico izquierdo que aplican algunas ticketeras de 58 mm.
-        $logoX = min($targetWidth - $logoWidth, (int) floor(($targetWidth - $logoWidth) / 2) + 36);
+        $logoX = min($targetWidth - $logoWidth, (int) floor(($targetWidth - $logoWidth) / 2) + 48);
         imagecopyresampled($image, $source, $logoX, 0, 0, 0, $logoWidth, $targetHeight, $sourceWidth, $sourceHeight);
         imagedestroy($source);
 
