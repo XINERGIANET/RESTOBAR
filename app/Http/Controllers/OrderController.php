@@ -3078,7 +3078,8 @@ class OrderController extends Controller
         // El algoritmo inferior omite los píxeles oscuros; el relleno negro funciona como margen blanco impreso.
         $black = imagecolorallocate($image, 0, 0, 0);
         imagefill($image, 0, 0, $black);
-        $logoX = (int) floor(($targetWidth - $logoWidth) / 2);
+        // Compensa el margen físico izquierdo que aplican algunas ticketeras de 58 mm.
+        $logoX = min($targetWidth - $logoWidth, (int) floor(($targetWidth - $logoWidth) / 2) + 24);
         imagecopyresampled($image, $source, $logoX, 0, 0, 0, $logoWidth, $targetHeight, $sourceWidth, $sourceHeight);
         imagedestroy($source);
 
