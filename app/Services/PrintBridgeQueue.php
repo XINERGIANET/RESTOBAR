@@ -149,6 +149,30 @@ class PrintBridgeQueue
             ->delete() > 0;
     }
 
+    public function markPrinted(int $branchId, int $jobId): bool
+    {
+        return PrintJob::query()->where('branch_id', $branchId)->where('id', $jobId)->update([
+            'status' => 'printed', 'printed_at' => now(), 'claimed_at' => null,
+            'last_error' => null, 'updated_at' => now(),
+        ]) > 0;
+    }
+
+    public function markFailed(int $branchId, int $jobId, string $error): bool
+    {
+        return PrintJob::query()->where('branch_id', $branchId)->where('id', $jobId)->update([
+            'status' => 'failed', 'claimed_at' => null,
+            'last_error' => Str::limit(trim($error), 1000, ''), 'updated_at' => now(),
+        ]) > 0;
+    }
+
+    public function requeue(int $branchId, int $jobId): bool
+    {
+        return PrintJob::query()->where('branch_id', $branchId)->where('id', $jobId)->update([
+            'status' => 'pending', 'claimed_at' => null, 'printed_at' => null,
+            'last_error' => null, 'updated_at' => now(),
+        ]) > 0;
+    }
+
     public function unresolvedForBranch(int $branchId, int $limit = 20)
     {
         return PrintJob::query()

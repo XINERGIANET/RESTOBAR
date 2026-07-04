@@ -2598,6 +2598,8 @@ class OrderController extends Controller
                 'duplicate_skipped' => true,
             ]);
         }
+        $printQueue = app(PrintBridgeQueue::class);
+        $printJob = $printQueue->push($branchId, (string) $printer->name, $payload, 'comanda');
         $networkError = null;
         if (filled((string) $printer->ip)) {
             try {
@@ -2607,6 +2609,7 @@ class OrderController extends Controller
                     $payload,
                     (int) config('local_network.thermal_timeout_seconds', 4)
                 );
+                $printQueue->markPrinted($branchId, $printJob->id);
 
                 return response()->json([
                     'success' => true,
@@ -2623,12 +2626,14 @@ class OrderController extends Controller
             $branchId,
             $payload,
             'comanda',
-            $isRemoteRequest || $networkError !== null
+            $isRemoteRequest || $networkError !== null,
+            $printJob
         );
         if ($bridgeResponse) {
             return $bridgeResponse;
         }
         if ($isRemoteRequest) {
+            $printQueue->markFailed($branchId, $printJob->id, 'La impresora no está habilitada para el puente de impresión.');
             return response()->json([
                 'success' => false,
                 'message' => 'La impresora no está habilitada para el puente de impresión de esta sucursal.',
@@ -2642,6 +2647,7 @@ class OrderController extends Controller
                 throw $networkError ?: new \RuntimeException('No se pudo imprimir por IP.');
             } else {
                 if (! config('local_network.thermal_windows_local_enabled', true)) {
+                    $printQueue->markFailed($branchId, $printJob->id, 'La impresión USB local está deshabilitada.');
                     return response()->json([
                         'success' => false,
                         'message' => 'La ticketera no tiene IP y la impresión USB local está deshabilitada.',
@@ -2650,7 +2656,9 @@ class OrderController extends Controller
 
                 $printerService->sendRawToWindowsPrinter((string) $printer->name, $payload, $timeout + 4);
             }
+            $printQueue->markPrinted($branchId, $printJob->id);
         } catch (\Throwable $e) {
+            $printQueue->markFailed($branchId, $printJob->id, (string) $e->getMessage());
             Log::warning('Impresión comanda térmica: ' . $e->getMessage());
 
             return response()->json([
@@ -2958,13 +2966,13 @@ class OrderController extends Controller
     /**
      * Comanda / precuenta hacia BARRA2: cola persistente; la PC con QZ activa el puente.
      */
-    private function maybeQueuePrintBridge(PrinterBranch $printer, int $branchId, string $escposPayload, string $kind = 'comanda', bool $remoteRequest = false): ?\Illuminate\Http\JsonResponse
+    private function maybeQueuePrintBridge(PrinterBranch $printer, int $branchId, string $escposPayload, string $kind = 'comanda', bool $remoteRequest = false, ?\App\Models\PrintJob $existingJob = null): ?\Illuminate\Http\JsonResponse
     {
         $queue = app(PrintBridgeQueue::class);
         if (! $queue->shouldQueueToStation($printer, $remoteRequest)) {
             return null;
         }
-        $job = $queue->push($branchId, (string) $printer->name, $escposPayload, $kind);
+        $job = $existingJob ?: $queue->push($branchId, (string) $printer->name, $escposPayload, $kind);
         if ($kind === 'precuenta') {
             $msg = 'Precuenta en cola para la estación (QZ en la PC con BARRA2). En esa PC, inicie sesión y active el puente (página /print-bridge/worker o “escuchar en todas las pantallas”).';
 

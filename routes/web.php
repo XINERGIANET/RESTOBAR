@@ -16,6 +16,7 @@ use App\Http\Controllers\SalesController;
 use App\Http\Controllers\MovementTypeController;
 use App\Http\Controllers\DocumentTypeController;
 use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\CommandTicketController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\OperationsController;
@@ -76,6 +77,9 @@ Route::view('/signup', 'pages.auth.signup', ['title' => 'Sign Up'])
     ->name('signup');
 
 Route::middleware('auth')->group(function () {
+    Route::get('/comandas', [CommandTicketController::class, 'index'])->name('command-tickets.index');
+    Route::patch('/comandas/{job}/fecha', [CommandTicketController::class, 'updateDate'])->name('command-tickets.update-date');
+    Route::post('/comandas/{job}/reimprimir', [CommandTicketController::class, 'reprint'])->name('command-tickets.reprint');
     Route::resource('/admin/herramientas/empresas', CompanyController::class)
         ->names('admin.companies')
         ->parameters(['empresas' => 'company']);
