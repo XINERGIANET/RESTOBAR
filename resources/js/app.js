@@ -468,6 +468,12 @@ const bootAlpine = () => {
 };
 
 document.addEventListener('turbo:before-cache', () => {
+    // SweetAlert inserta el toast fuera del contenido de la vista. Cerrarlo evita
+    // que Turbo lo guarde o lo arrastre visualmente hacia la siguiente pantalla.
+    if (window.Swal && typeof window.Swal.close === 'function') {
+        window.Swal.close();
+    }
+
     if (window.Alpine && alpineBooted) {
         Alpine.destroyTree(document.body);
     }

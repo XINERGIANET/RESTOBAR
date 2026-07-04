@@ -294,29 +294,17 @@ body.swal2-shown #sidebar { z-index: 1 !important; }
     @if (session('status'))
     <script>
     (function() {
-        const showStatusToast = () => {
-            const message = @json(session('status'));
-            const key = 'toast:status';
-            if (window.sessionStorage && sessionStorage.getItem(key) === message) {
-                return;
-            }
-            if (window.Swal) {
-                Swal.fire({
-                    toast: true,
-                    position: 'bottom-end',
-                    icon: 'success',
-                    title: message,
-                    showConfirmButton: false,
-                    timer: 3500,
-                    timerProgressBar: true
-                });
-            }
-            if (window.sessionStorage) {
-                sessionStorage.setItem(key, message);
-            }
-        };
-        document.addEventListener('DOMContentLoaded', showStatusToast, { once: true });
-        document.addEventListener('turbo:load', showStatusToast);
+        if (!window.Swal) return;
+
+        Swal.fire({
+            toast: true,
+            position: 'bottom-end',
+            icon: 'success',
+            title: @json(session('status')),
+            showConfirmButton: false,
+            timer: 3500,
+            timerProgressBar: true
+        });
     })();
     </script>
     @endif
@@ -330,29 +318,17 @@ body.swal2-shown #sidebar { z-index: 1 !important; }
     @if (!empty($errorMessage))
     <script>
     (function() {
-        const showErrorToast = () => {
-            const message = @json($errorMessage);
-            const key = 'toast:error';
-            if (window.sessionStorage && sessionStorage.getItem(key) === message) {
-                return;
-            }
-            if (window.Swal) {
-                Swal.fire({
-                    toast: true,
-                    position: 'bottom-end',
-                    icon: 'error',
-                    title: message,
-                    showConfirmButton: false,
-                    timer: 4000,
-                    timerProgressBar: true
-                });
-            }
-            if (window.sessionStorage) {
-                sessionStorage.setItem(key, message);
-            }
-        };
-        document.addEventListener('DOMContentLoaded', showErrorToast, { once: true });
-        document.addEventListener('turbo:load', showErrorToast);
+        if (!window.Swal) return;
+
+        Swal.fire({
+            toast: true,
+            position: 'bottom-end',
+            icon: 'error',
+            title: @json($errorMessage),
+            showConfirmButton: false,
+            timer: 4000,
+            timerProgressBar: true
+        });
     })();
     </script>
     @endif

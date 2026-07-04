@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
 @section('content')
-    <div>
+    <div x-data="{ printPreviewOpen: false, printPreviewTitle: '', printPreviewMeta: '', printPreviewContent: '' }">
         @php
             use Illuminate\Support\Facades\Route;
 
@@ -111,6 +111,11 @@
                                     </td>
                                     <td class="max-w-[260px] truncate pr-3" title="{{ $printJob->last_error }}">{{ $printJob->last_error ?: '—' }}</td>
                                     <td class="py-2 text-right">
+                                        <button type="button"
+                                            @click='printPreviewTitle = @js(ucfirst($printJob->kind)); printPreviewMeta = @js(($printJob->created_at?->format("d/m/Y H:i:s") ?? "") . " · " . $printJob->printer_name); printPreviewContent = @js($printJob->readablePayload()); printPreviewOpen = true'
+                                            class="mb-1 rounded-lg border border-amber-700 bg-white px-3 py-1.5 text-xs font-semibold text-amber-900 hover:bg-amber-100">
+                                            <i class="ri-eye-line mr-1"></i>Ver
+                                        </button>
                                         @if($printJob->status === 'failed')
                                             <form method="POST" action="{{ route('print-bridge.retry', ['job' => $printJob->id]) }}">
                                                 @csrf
@@ -127,6 +132,25 @@
                 </div>
             </div>
         @endif
+
+        <div x-show="printPreviewOpen" x-cloak @keydown.escape.window="printPreviewOpen = false"
+            class="fixed inset-0 z-[1000001] flex items-center justify-center p-4">
+            <div class="absolute inset-0 bg-black/50" @click="printPreviewOpen = false"></div>
+            <div class="relative flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl">
+                <div class="flex items-start justify-between border-b border-gray-200 px-5 py-4">
+                    <div>
+                        <h3 class="font-bold text-gray-900">Contenido pendiente: <span x-text="printPreviewTitle"></span></h3>
+                        <p class="mt-1 text-xs text-gray-500" x-text="printPreviewMeta"></p>
+                    </div>
+                    <button type="button" @click="printPreviewOpen = false"
+                        class="flex h-9 w-9 items-center justify-center rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200"
+                        aria-label="Cerrar"><i class="ri-close-line text-xl"></i></button>
+                </div>
+                <div class="overflow-y-auto p-5">
+                    <pre class="whitespace-pre-wrap break-words rounded-xl bg-gray-950 p-5 font-mono text-sm leading-6 text-gray-100" x-text="printPreviewContent"></pre>
+                </div>
+            </div>
+        </div>
 
         <x-common.component-card title="Listado de ventas" desc="Gestiona las ventas registradas.">
             <div class="flex flex-col gap-4">
