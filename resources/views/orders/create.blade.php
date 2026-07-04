@@ -1295,8 +1295,19 @@
                         const btnPrecuenta = document.getElementById('btn-precuenta');
                         if (btnPrecuenta && !btnPrecuenta.dataset.boundPrecuenta) {
                             btnPrecuenta.dataset.boundPrecuenta = '1';
-                            btnPrecuenta.addEventListener('click', () => {
-                                printPreAccountTicket();
+                            btnPrecuenta.addEventListener('click', async () => {
+                                if (btnPrecuenta.dataset.printing === '1') return;
+                                btnPrecuenta.dataset.printing = '1';
+                                btnPrecuenta.disabled = true;
+                                const oldHtml = btnPrecuenta.innerHTML;
+                                btnPrecuenta.innerHTML = '<i class="ri-loader-4-line animate-spin"></i><span>Imprimiendo...</span>';
+                                try {
+                                    await printPreAccountTicket();
+                                } finally {
+                                    btnPrecuenta.dataset.printing = '0';
+                                    btnPrecuenta.disabled = false;
+                                    btnPrecuenta.innerHTML = oldHtml;
+                                }
                             });
                         }
                         if (new URLSearchParams(window.location.search).get('pre_account') === '1' && currentTable

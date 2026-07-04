@@ -1771,6 +1771,9 @@ es                        style="max-height: 80vh;">
                     return;
                 }
 
+                if (window.__processSaleInFlight) return;
+                window.__processSaleInFlight = true;
+
                 const btn = document.getElementById('checkout-button');
                 if (btn) {
                     btn.disabled = true;
@@ -1812,6 +1815,7 @@ es                        style="max-height: 80vh;">
                 } catch (err) {
                     showCobroNotification('Error', err.message || 'Error al procesar la venta.', 'error');
                 } finally {
+                    window.__processSaleInFlight = false;
                     if (btn) {
                         btn.disabled = false;
                         btn.innerHTML = '<i class="ri-bank-card-line text-base"></i><span>Cobrar</span>';

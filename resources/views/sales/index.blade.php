@@ -1133,15 +1133,27 @@
 
                 window.printThermalSaleReceipt = printThermalSaleReceipt;
 
-                document.addEventListener('click', function (e) {
+                document.addEventListener('click', async function (e) {
                     const btn = e.target.closest('[data-thermal-print-sale]');
                     if (!btn) {
                         return;
                     }
                     e.preventDefault();
+                    if (btn.dataset.printing === '1') return;
                     const id = parseInt(btn.getAttribute('data-thermal-print-sale'), 10);
                     if (id) {
-                        printThermalSaleReceipt(id);
+                        btn.dataset.printing = '1';
+                        btn.disabled = true;
+                        const icon = btn.querySelector('i');
+                        const oldClass = icon?.className || '';
+                        if (icon) icon.className = 'ri-loader-4-line animate-spin';
+                        try {
+                            await printThermalSaleReceipt(id);
+                        } finally {
+                            btn.dataset.printing = '0';
+                            btn.disabled = false;
+                            if (icon) icon.className = oldClass;
+                        }
                     }
                 });
 

@@ -242,7 +242,7 @@ export function configureQzSecurityForPair(pair) {
  * @param {object} qzApi instancia qz-tray
  * @param {string} [printerName] si es BARRA2, se fuerza orden secondary → primary sin conectar antes con primary.
  */
-export async function connectQzWithCertPairFallback(qzApi, printerName) {
+async function connectQzWithCertPairFallbackInternal(qzApi, printerName) {
     if (!qzApi) {
         return false;
     }
@@ -299,6 +299,25 @@ export async function connectQzWithCertPairFallback(qzApi, printerName) {
     return false;
 }
 
+export async function connectQzWithCertPairFallback(qzApi, printerName) {
+    if (qzApi?.websocket?.isActive?.()) {
+        const needsSecondary = printerRequiresSecondaryCertFirst(printerName);
+        if (!needsSecondary || window.__qzSelectedCertPair === 'secondary') {
+            return true;
+        }
+    }
+    if (window.__qzConnectionPromise) {
+        return await window.__qzConnectionPromise;
+    }
+
+    window.__qzConnectionPromise = connectQzWithCertPairFallbackInternal(qzApi, printerName);
+    try {
+        return await window.__qzConnectionPromise;
+    } finally {
+        window.__qzConnectionPromise = null;
+    }
+}
+
 /**
  * Compatibilidad: configura el primer par del orden (sin conectar).
  */
@@ -323,6 +342,23 @@ function initQzIfMetaPresent() {
     configureQzSecurity();
 }
 
+function warmQzConnection() {
+    if (window.__qzWarmupScheduled) return;
+    window.__qzWarmupScheduled = true;
+    const run = async () => {
+        const qzLib = getQz();
+        if (!qzLib || qzLib.websocket.isActive()) return;
+        const cfg = window.__qzConfig || {};
+        const printer = String(cfg.defaultPrinterName || cfg.printerName || 'BARRA2').trim();
+        await connectQzWithCertPairFallback(qzLib, printer).catch(() => false);
+    };
+    if ('requestIdleCallback' in window) {
+        window.requestIdleCallback(run, { timeout: 1200 });
+    } else {
+        window.setTimeout(run, 350);
+    }
+}
+
 window.__qzConnectWithCertPairFallback = connectQzWithCertPairFallback;
 window.__qzConfigureQzSecurityForPair = configureQzSecurityForPair;
 window.__qzResolveCertPairTryOrder = resolveCertPairTryOrder;
@@ -331,5 +367,10 @@ window.__qzPrinterRequiresSecondaryCertFirst = printerRequiresSecondaryCertFirst
 window.__qzMultiKitchenSecondaryFirstToken = MULTI_KITCHEN_SECONDARY_FIRST;
 
 initQzIfMetaPresent();
+warmQzConnection();
 
-document.addEventListener('turbo:load', initQzIfMetaPresent);
+document.addEventListener('turbo:load', () => {
+    initQzIfMetaPresent();
+    window.__qzWarmupScheduled = false;
+    warmQzConnection();
+});
