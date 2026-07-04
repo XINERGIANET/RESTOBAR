@@ -14,9 +14,9 @@
 
 @section('content')
     <div class="p-4 max-w-xl mx-auto" data-turbo="false">
-        <h1 class="text-lg font-bold text-slate-800 dark:text-white mb-2">Puente de impresión (BARRA2 / QZ)</h1>
+        <h1 class="text-lg font-bold text-slate-800 dark:text-white mb-2">Puente de impresión (todas las impresoras / QZ)</h1>
         <p class="text-sm text-slate-600 dark:text-slate-300 mb-4">
-            En la PC que tiene BARRA2 por USB y QZ Tray: puede dejar solo esta pestaña, o activar el puente para
+            En la PC que tiene las impresoras por USB y QZ Tray: puede dejar esta pestaña abierta o activar el puente para
             <strong>todas las pantallas</strong> del navegador (dashboard, pedidos, etc.) sin depender de esta URL.
         </p>
         <div class="flex flex-wrap gap-2 mb-4">
@@ -30,7 +30,7 @@
             </button>
         </div>
         <p class="text-xs text-slate-500 mb-2">Sucursal en sesión: <strong id="bridge-branch">—</strong> ·
-            Impresora: <strong>{{ $targetPrinter }}</strong></p>
+            Impresoras escuchadas: <strong>{{ $targetPrinter ?: implode(', ', $printerNames) }}</strong></p>
         <div id="bridge-status" class="rounded-lg border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-800/80 p-3 text-sm font-mono min-h-[3rem]">
             Iniciando…
         </div>
@@ -53,7 +53,7 @@
                 btnAll.addEventListener('click', function () {
                     try {
                         localStorage.setItem('xinergia_print_bridge_station', '1');
-                        localStorage.setItem('xinergia_print_bridge_printer', targetPrinter);
+                        localStorage.setItem('xinergia_print_bridge_printer', targetPrinter || '*');
                     } catch (e) {}
                     window.location.href = @json(url('/'));
                 });
@@ -77,7 +77,8 @@
                 if (!qzApi) {
                     throw new Error('QZ Tray no está cargado en la página');
                 }
-                const name = String(job.printer_name || targetPrinter).trim() || 'BARRA2';
+                const name = String(job.printer_name || targetPrinter).trim();
+                if (!name) throw new Error('El trabajo no indica una impresora de destino.');
                 if (typeof window.__qzApplyCertPairOverrideForPrinter === 'function') {
                     window.__qzApplyCertPairOverrideForPrinter(name);
                 }
@@ -93,12 +94,11 @@
                     size: { width: paperMm, height: 200 },
                     margins: 0,
                 });
-                const data = atob(String(job.b64 || ''));
                 await qzApi.print(config, [{
                     type: 'raw',
                     format: 'command',
-                    flavor: 'plain',
-                    data: data
+                    flavor: 'base64',
+                    data: String(job.b64 || '')
                 }]);
             }
 
@@ -115,7 +115,7 @@
                             'Accept': 'application/json',
                         },
                         body: JSON.stringify({
-                            printer_name: targetPrinter,
+                            printer_name: String(job.printer_name || targetPrinter),
                             job_id: String(job.id || ''),
                         }),
                     });
@@ -142,7 +142,7 @@
                         'Accept': 'application/json',
                     },
                     body: JSON.stringify({
-                        printer_name: targetPrinter,
+                        printer_name: String(window.__xinergiaWorkerPrinterName || targetPrinter),
                         job_id: String(jobId || ''),
                         error: String(error?.message || error || 'Error de impresión en QZ'),
                     }),
@@ -172,7 +172,7 @@
                     }
                     
                     const u = new URL(pullBase, window.location.origin);
-                    u.searchParams.set('printer_name', targetPrinter);
+                    if (targetPrinter) u.searchParams.set('printer_name', targetPrinter);
                     const r = await fetch(u.toString(), { 
                         credentials: 'same-origin', 
                         cache: 'no-store', 
@@ -185,6 +185,7 @@
                     const j = r.headers.get('content-type') && r.headers.get('content-type').includes('application/json')
                         ? await r.json() : null;
                     if (j && j.job && j.job.b64) {
+                        window.__xinergiaWorkerPrinterName = j.job.printer_name || targetPrinter;
                         const jobId = String(j.job.id || '').trim();
                         if (!jobId) {
                             log('Trabajo inválido recibido.');

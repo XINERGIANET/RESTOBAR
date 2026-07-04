@@ -21,7 +21,7 @@ class PrintBridgeQueue
 
     public function shouldQueueToStation(PrinterBranch $printer, bool $remoteRequest = false): bool
     {
-        if (! config('qz.enabled', true) || ! $this->isStationPrinterName((string) $printer->name)) {
+        if (! config('qz.enabled', true)) {
             return false;
         }
 
@@ -58,12 +58,15 @@ class PrintBridgeQueue
     }
 
     /** Reserva un trabajo. Una reserva abandonada vuelve a estar disponible luego de 90 segundos. */
-    public function peek(int $branchId, string $printerName): ?array
+    public function peek(int $branchId, ?string $printerName = null): ?array
     {
         return DB::transaction(function () use ($branchId, $printerName) {
             $job = PrintJob::query()
                 ->where('branch_id', $branchId)
-                ->whereRaw('LOWER(TRIM(printer_name)) = ?', [mb_strtolower(trim($printerName))])
+                ->when(filled($printerName), fn ($query) => $query->whereRaw(
+                    'LOWER(TRIM(printer_name)) = ?',
+                    [mb_strtolower(trim((string) $printerName))]
+                ))
                 ->where(function ($query) {
                     $query->where('status', 'pending')
                         ->orWhere(function ($stale) {
@@ -91,6 +94,7 @@ class PrintBridgeQueue
                 'b64' => $job->payload_base64,
                 'kind' => $job->kind,
                 'attempts' => $job->attempts,
+                'printer_name' => $job->printer_name,
             ];
         }, 3);
     }

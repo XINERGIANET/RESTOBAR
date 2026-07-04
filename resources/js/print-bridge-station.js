@@ -18,9 +18,10 @@ export function startPrintBridgeStationPoll() {
 
     const getPrinter = () => {
         try {
-            return localStorage.getItem('xinergia_print_bridge_printer') || 'BARRA2';
+            const stored = localStorage.getItem('xinergia_print_bridge_printer') || '*';
+            return stored === '*' ? '' : stored;
         } catch (e) {
-            return 'BARRA2';
+            return '';
         }
     };
 
@@ -30,7 +31,8 @@ export function startPrintBridgeStationPoll() {
         busy = true;
         try {
             const u = new URL(pullBase, window.location.origin);
-            u.searchParams.set('printer_name', getPrinter());
+            const selectedPrinter = getPrinter();
+            if (selectedPrinter) u.searchParams.set('printer_name', selectedPrinter);
             const r = await fetch(u.toString(), {
                 credentials: 'same-origin',
                 cache: 'no-store',
@@ -52,7 +54,8 @@ export function startPrintBridgeStationPoll() {
             if (!qzApi) {
                 throw new Error('QZ Tray no está disponible en esta PC');
             }
-            const name = String(j.job.printer_name || getPrinter()).trim() || 'BARRA2';
+            const name = String(j.job.printer_name || getPrinter()).trim();
+            if (!name) throw new Error('El trabajo no indica una impresora de destino.');
             if (typeof window.__qzConnectWithCertPairFallback === 'function') {
                 const ok = await window.__qzConnectWithCertPairFallback(qzApi, name);
                 if (!ok) {
@@ -64,12 +67,11 @@ export function startPrintBridgeStationPoll() {
                 size: { width: 80, height: 200 },
                 margins: 0,
             });
-            const data = atob(String(j.job.b64));
             await qzApi.print(config, [{
                 type: 'raw',
                 format: 'command',
-                flavor: 'plain',
-                data,
+                flavor: 'base64',
+                data: String(j.job.b64),
             }]);
 
             if (j.job.id) {

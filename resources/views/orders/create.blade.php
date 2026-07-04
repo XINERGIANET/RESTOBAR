@@ -2699,8 +2699,10 @@
                             if (!pId) return;
                             const pdefs = resolveQzPrinters(pId);
                             const pnamesRaw = pdefs.length ? pdefs.map(p => p.name) : resolveQzPrinterNames(pId);
-                            const pnames = filterByAreaPrinters(dedupeKitchenPrinterNameList(pnamesRaw),
-                                areaAllowedPrinterNames);
+                            const assignedNames = dedupeKitchenPrinterNameList(pnamesRaw);
+                            const areaMatches = filterByAreaPrinters(assignedNames, areaAllowedPrinterNames);
+                            const pnames = areaMatches.length ? areaMatches :
+                                (assignedNames.length ? assignedNames : areaAllowedPrinterNames);
                             if (!pnames.length) return;
                             // Si un producto está asignado a varias impresoras (pivote), se imprime en todas.
                             pnames.forEach((pname) => {
@@ -2715,8 +2717,10 @@
                             if (!pId || qty <= 0) return;
                             const pdefs = resolveQzPrinters(pId);
                             const pnamesRaw = pdefs.length ? pdefs.map(p => p.name) : resolveQzPrinterNames(pId);
-                            const pnames = filterByAreaPrinters(dedupeKitchenPrinterNameList(pnamesRaw),
-                                areaAllowedPrinterNames);
+                            const assignedNames = dedupeKitchenPrinterNameList(pnamesRaw);
+                            const areaMatches = filterByAreaPrinters(assignedNames, areaAllowedPrinterNames);
+                            const pnames = areaMatches.length ? areaMatches :
+                                (assignedNames.length ? assignedNames : areaAllowedPrinterNames);
                             if (!pnames.length) return;
                             pnames.forEach((pname) => {
                                 if (!canceledByPrinterAcc[pname]) canceledByPrinterAcc[pname] = [];
@@ -2770,54 +2774,6 @@
                                 }
                             });
                             return Array.from(m.values());
-                        })();
-                        (function collapseBarraPairBuckets() {
-                            const dedupeRows = (rows) => {
-                                const out = [];
-                                const seen = new Set();
-                                (Array.isArray(rows) ? rows : []).forEach((row) => {
-                                    const key = JSON.stringify({
-                                        pId: parseInt(row?.pId ?? row?.product_id ?? 0, 10) || 0,
-                                        name: String(row?.name || '').trim().toLowerCase(),
-                                        qty: Number(parseFloat(row?.qty ?? 0) || 0),
-                                        commandTime: String(row?.commandTime || '').trim(),
-                                        note: String(row?.note || '').trim(),
-                                        complements: normalizeComplements(row?.complements),
-                                        status: String(row?.status || '').trim().toUpperCase(),
-                                        reason: String(row?.reason || '').trim(),
-                                    });
-                                    if (seen.has(key)) {
-                                        return;
-                                    }
-                                    seen.add(key);
-                                    out.push(row);
-                                });
-                                return out;
-                            };
-                            const normalize = (raw) => String(raw || '').trim().toLowerCase().replace(/\s+/g, '');
-                            const barraKey = names.find((n) => normalize(n) === 'barra');
-                            const barra2Key = names.find((n) => {
-                                const t = normalize(n);
-                                return t === 'barra2' || t.startsWith('barra2');
-                            });
-                            if (!barraKey || !barra2Key) {
-                                return;
-                            }
-                            const defaultPrinter = String(window.__qzConfig?.defaultPrinterName || window.__qzConfig
-                                ?.printerName || '').trim();
-                            const preferBarra2 = (typeof window.__qzPrinterRequiresSecondaryCertFirst === 'function') ?
-                                window.__qzPrinterRequiresSecondaryCertFirst(defaultPrinter || barra2Key) :
-                                normalize(defaultPrinter) === 'barra2';
-                            const keep = preferBarra2 ? barra2Key : barraKey;
-                            const drop = preferBarra2 ? barraKey : barra2Key;
-                            if (drop !== keep) {
-                                byPrinter[keep] = dedupeRows((byPrinter[keep] || []).concat(byPrinter[drop] || []));
-                                canceledByPrinter[keep] = dedupeRows((canceledByPrinter[keep] || []).concat(
-                                    canceledByPrinter[drop] || []));
-                                delete byPrinter[drop];
-                                delete canceledByPrinter[drop];
-                                names = names.filter((n) => n !== drop);
-                            }
                         })();
                         if (!names.length) {
                             if (typeof showNotification === 'function') {
