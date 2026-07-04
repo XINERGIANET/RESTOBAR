@@ -2920,7 +2920,8 @@
                             const paperWidth = resolvePrinterWidthByName(pname);
                             const LINE_WIDTH = paperWidth === 80 ? 48 : 32;
                             const COL_QTY = paperWidth === 80 ? 6 : 5;
-                            const COL_NAME = LINE_WIDTH - COL_QTY;
+                            const COL_PRICE = paperWidth === 80 ? 10 : 9;
+                            const COL_NAME = LINE_WIDTH - COL_QTY - COL_PRICE;
                             const separator = '='.repeat(LINE_WIDTH) + '\n';
                             const orderNumber = String(table?.order_movement_number ?? '').trim();
                             const orderDate = String(table?.order_movement_date ?? '').trim();
@@ -2936,7 +2937,8 @@
                                 (clientLabel ? 'Cliente: ' + clientLabel + '\n' : '') +
                                 'Fecha: ' + new Date().toLocaleString() + '\n' +
                                 separator +
-                                padEnd('Cant', COL_QTY) + padEnd('Producto', COL_NAME) + '\n' +
+                                padEnd('Cant', COL_QTY) + padEnd('Producto', COL_NAME) + padStart('P. Unit.', COL_PRICE) +
+                                '\n' +
                                 separator;
                             lines.forEach((it) => {
                                 const qty = it.qty ?? 1;
@@ -2947,7 +2949,10 @@
                                     ?.courtesyQty ?? 0) || 0));
                                 const takeawayQty = Math.max(0, Math.min(parseFloat(qty) || 0, parseFloat(it
                                     ?.takeawayQty ?? 0) || 0));
-                                body += padEnd(qtyCol, COL_QTY) + padEnd(nm, COL_NAME) + '\n';
+                                const unitK = parseFloat(it?.price);
+                                const priceCol = !isNaN(unitK) && unitK >= 0 ? 'S/' + unitK.toFixed(2) : '-';
+                                body += padEnd(qtyCol, COL_QTY) + padEnd(nm, COL_NAME) + padStart(priceCol,
+                                    COL_PRICE) + '\n';
                                 if (complementsText) {
                                     body += 'Detalle: ' + complementsText + '\n';
                                 }
@@ -2971,7 +2976,7 @@
                                     const qtyCol = 'x' + (c.qty ?? 1);
                                     const complementsText = formatComplementsLabel(c?.complements);
                                     body += padEnd(qtyCol, COL_QTY) + padEnd('ANULADO ' + (c.name || 'Producto'),
-                                        COL_NAME) + '\n';
+                                        COL_NAME) + padStart('-', COL_PRICE) + '\n';
                                     if (complementsText) {
                                         body += 'Detalle: ' + complementsText + '\n';
                                     }
