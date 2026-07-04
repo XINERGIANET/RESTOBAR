@@ -3071,12 +3071,15 @@ class OrderController extends Controller
 
         $sourceWidth = imagesx($source);
         $sourceHeight = imagesy($source);
-        $targetWidth = min(240, $sourceWidth);
-        $targetHeight = max(1, (int) round($sourceHeight * ($targetWidth / $sourceWidth)));
+        $logoWidth = min(240, $sourceWidth);
+        $targetWidth = 384; // ancho imprimible estándar de una ticketera de 58 mm
+        $targetHeight = max(1, (int) round($sourceHeight * ($logoWidth / $sourceWidth)));
         $image = imagecreatetruecolor($targetWidth, $targetHeight);
-        $white = imagecolorallocate($image, 255, 255, 255);
-        imagefill($image, 0, 0, $white);
-        imagecopyresampled($image, $source, 0, 0, 0, 0, $targetWidth, $targetHeight, $sourceWidth, $sourceHeight);
+        // El algoritmo inferior omite los píxeles oscuros; el relleno negro funciona como margen blanco impreso.
+        $black = imagecolorallocate($image, 0, 0, 0);
+        imagefill($image, 0, 0, $black);
+        $logoX = (int) floor(($targetWidth - $logoWidth) / 2);
+        imagecopyresampled($image, $source, $logoX, 0, 0, 0, $logoWidth, $targetHeight, $sourceWidth, $sourceHeight);
         imagedestroy($source);
 
         $widthBytes = (int) ceil($targetWidth / 8);
