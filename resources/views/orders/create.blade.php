@@ -9,6 +9,8 @@
         window.__qzTertiaryFirstPrinterNames = @json(config('qz.tertiary_first_printer_names', []));
         window.__qzKitchenSkipClientQzWhenPrinterHasIp = @json((bool) config('qz.kitchen_skip_client_qz_when_printer_has_ip', true));
         window.__qzKitchenComandaDisableClientOnTouch = @json((bool) config('qz.kitchen_comanda_disable_client_qz_on_touch_devices', true));
+        window.__kitchenLogoEscPosUrl = @json(route('orders.print.kitchen.logo-escpos'));
+        window.__kitchenLogoImageUrl = @json(asset('images/logo/mesa.jpeg'));
         window.__clientOnLocalNetwork = @json((bool) ($clientOnLocalNetwork ?? false));
     </script>
     @vite(['resources/js/qz-tray-init.js'])
@@ -1826,6 +1828,30 @@
                      * RAW para térmicas; si falla (p. ej. Epson tinta), reintenta como HTML/pixel.
                      * Esto permite "imprimir en todos" aunque no todos acepten RAW.
                      */
+                    let kitchenLogoEscPosPromise = null;
+
+                    function kitchenLogoEscPosCommands() {
+                        if (!kitchenLogoEscPosPromise) {
+                            kitchenLogoEscPosPromise = fetch(window.__kitchenLogoEscPosUrl, {
+                                    headers: { 'Accept': 'application/json' },
+                                    credentials: 'same-origin'
+                                })
+                                .then(async response => {
+                                    const data = await response.json();
+                                    if (!response.ok || !data?.success || !data?.payload_b64) {
+                                        throw new Error(data?.message || 'No se pudo cargar el logo de la comanda.');
+                                    }
+                                    return atob(data.payload_b64);
+                                })
+                                .catch(error => {
+                                    kitchenLogoEscPosPromise = null;
+                                    console.warn('Logo ESC/POS de comanda no disponible.', error);
+                                    return '';
+                                });
+                        }
+                        return kitchenLogoEscPosPromise;
+                    }
+
                     async function printTicketWithQz(qzApi, printerName, plainText) {
                         const paperWidth = resolvePrinterWidthByName(printerName);
                         const paperMm = paperWidth === 80 ? 80 : 58;
@@ -1865,7 +1891,7 @@
                                 const line = rawLines[li];
                                 const trimmed = line.trim();
                                 const isSep = /^=+$/.test(trimmed);
-                                const isTableHeader = /^Cant\s+Producto\s+P\.\s*Unit\./i.test(trimmed);
+                                const isTableHeader = /^Cant\s+Producto/i.test(trimmed);
                                 const isProductRow = /^x\d/i.test(trimmed);
                                 const isHeader = li === 1 ||
                                     /^(Mesa|Mozo|Fecha\/Hora|Fecha|Area|Salon|Hora|Producto|Cant|Total|Subtotal)/.test(
@@ -1886,8 +1912,10 @@
                                     formattedContent += '\x1B\x21\x00' + line + '\n';
                                 }
                             }
+                            const logoCommands = await kitchenLogoEscPosCommands();
                             const ticketCommands =
                                 '\x1B\x40' + // ESC @ (init/reset)
+                                logoCommands + // logo mesa.jpeg centrado y convertido a ESC/POS
                                 '\x1B\x74\x02' + // ESC t 2 → code page PC850 (Latin-1, incluye español)
                                 formattedContent +
                                 '\n\n' +
@@ -1896,8 +1924,8 @@
                             await qzApi.print(config, [{
                                 type: 'raw',
                                 format: 'command',
-                                flavor: 'plain',
-                                data: ticketCommands,
+                                flavor: 'base64',
+                                data: btoa(ticketCommands),
                             }]);
                             return;
                         } catch (rawErr) {
@@ -1909,7 +1937,7 @@
                             .map((line) => {
                                 const t = String(line || '');
                                 const trimmed = t.trimStart();
-                                if (/^Cant\s+Producto\s+P\.\s*Unit\./i.test(trimmed) || /^x\d/i.test(trimmed)) {
+                                if (/^Cant\s+Producto/i.test(trimmed) || /^x\d/i.test(trimmed)) {
                                     return '<strong class="detail">' + escapeHtmlForQzPrint(t) + '</strong>';
                                 }
                                 if (trimmed.startsWith('Hora:') || trimmed.startsWith('Nota:')) {
@@ -1924,7 +1952,9 @@
                             'mm;margin:0;padding:0;}' +
                             'body{font-family:Segoe UI,Arial,sans-serif;}' +
                             'pre{white-space:pre-wrap;word-wrap:break-word;margin:0;padding:0;font-family:inherit;line-height:1.2;}' +
-                            '.meta{font-size:8pt;color:#555;}.detail{font-size:16pt;font-weight:700;line-height:1.3;}</style></head><body><pre>' +
+                            '.logo{display:block;width:36mm;max-height:32mm;object-fit:contain;margin:0 auto 2mm;filter:grayscale(1) invert(1);}' +
+                            '.meta{font-size:8pt;color:#555;}.detail{font-size:16pt;font-weight:700;line-height:1.3;}</style></head><body>' +
+                            '<img class="logo" src="' + escapeHtmlForQzPrint(window.__kitchenLogoImageUrl) + '"><pre>' +
                             htmlLines + '</pre></body></html>';
 
                         await qzApi.print(config, [{
@@ -2890,8 +2920,7 @@
                             const paperWidth = resolvePrinterWidthByName(pname);
                             const LINE_WIDTH = paperWidth === 80 ? 48 : 32;
                             const COL_QTY = paperWidth === 80 ? 6 : 5;
-                            const COL_PRICE = paperWidth === 80 ? 10 : 9;
-                            const COL_NAME = LINE_WIDTH - COL_QTY - COL_PRICE;
+                            const COL_NAME = LINE_WIDTH - COL_QTY;
                             const separator = '='.repeat(LINE_WIDTH) + '\n';
                             const orderNumber = String(table?.order_movement_number ?? '').trim();
                             const orderDate = String(table?.order_movement_date ?? '').trim();
@@ -2907,8 +2936,7 @@
                                 (clientLabel ? 'Cliente: ' + clientLabel + '\n' : '') +
                                 'Fecha: ' + new Date().toLocaleString() + '\n' +
                                 separator +
-                                padEnd('Cant', COL_QTY) + padEnd('Producto', COL_NAME) + padStart('P. Unit.', COL_PRICE) +
-                                '\n' +
+                                padEnd('Cant', COL_QTY) + padEnd('Producto', COL_NAME) + '\n' +
                                 separator;
                             lines.forEach((it) => {
                                 const qty = it.qty ?? 1;
@@ -2919,10 +2947,7 @@
                                     ?.courtesyQty ?? 0) || 0));
                                 const takeawayQty = Math.max(0, Math.min(parseFloat(qty) || 0, parseFloat(it
                                     ?.takeawayQty ?? 0) || 0));
-                                const unitK = parseFloat(it?.price);
-                                const priceCol = !isNaN(unitK) && unitK >= 0 ? 'S/' + unitK.toFixed(2) : '-';
-                                body += padEnd(qtyCol, COL_QTY) + padEnd(nm, COL_NAME) + padStart(priceCol,
-                                    COL_PRICE) + '\n';
+                                body += padEnd(qtyCol, COL_QTY) + padEnd(nm, COL_NAME) + '\n';
                                 if (complementsText) {
                                     body += 'Detalle: ' + complementsText + '\n';
                                 }
@@ -2946,7 +2971,7 @@
                                     const qtyCol = 'x' + (c.qty ?? 1);
                                     const complementsText = formatComplementsLabel(c?.complements);
                                     body += padEnd(qtyCol, COL_QTY) + padEnd('ANULADO ' + (c.name || 'Producto'),
-                                        COL_NAME) + padStart('-', COL_PRICE) + '\n';
+                                        COL_NAME) + '\n';
                                     if (complementsText) {
                                         body += 'Detalle: ' + complementsText + '\n';
                                     }

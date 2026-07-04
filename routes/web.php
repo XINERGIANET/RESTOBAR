@@ -230,6 +230,8 @@ Route::middleware('auth')->group(function () {
     Route::post('/Pedidos/imprimir-comanda', [OrderController::class, 'printKitchenTicketThermal'])
         ->name('orders.print.kitchen.thermal')
         ->middleware('active.shift');
+    Route::get('/Pedidos/imprimir-comanda/logo-escpos', [OrderController::class, 'kitchenLogoEscPos'])
+        ->name('orders.print.kitchen.logo-escpos');
     Route::post('/Pedidos/imprimir-comanda/pdf', [OrderController::class, 'printKitchenTicketPdf'])
         ->name('orders.print.kitchen.pdf')
         ->middleware('active.shift');

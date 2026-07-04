@@ -2673,6 +2673,23 @@ class OrderController extends Controller
         ]);
     }
 
+    public function kitchenLogoEscPos()
+    {
+        $payload = $this->buildKitchenLogoEscPos(public_path('images/logo/mesa.jpeg'));
+
+        if ($payload === '') {
+            return response()->json([
+                'success' => false,
+                'message' => 'No se pudo preparar el logo de la comanda.',
+            ], 422);
+        }
+
+        return response()->json([
+            'success' => true,
+            'payload_b64' => base64_encode($payload),
+        ]);
+    }
+
     public function printPreAccountThermal(Request $request)
     {
         if (! config('local_network.thermal_print_enabled', true)) {
@@ -3014,7 +3031,7 @@ class OrderController extends Controller
 
         foreach (explode("\n", $normalized) as $index => $line) {
             $trimmed = trim($line);
-            $isTableHeader = preg_match('/^Cant\s+Producto\s+P\.\s*Unit\./i', $trimmed) === 1;
+            $isTableHeader = preg_match('/^Cant\s+Producto/i', $trimmed) === 1;
             $isProductRow = preg_match('/^x\d/i', $trimmed) === 1;
 
             if ($isTableHeader || $isProductRow) {
