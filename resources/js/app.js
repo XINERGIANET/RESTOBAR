@@ -445,6 +445,14 @@ const initPage = () => {
 let alpineBooted = false;
 
 function tryStartPrintBridgeStation() {
+    if (document.body?.dataset?.authenticated !== 'true') {
+        if (window.__xinergiaPrintBridgeInterval) {
+            window.clearInterval(window.__xinergiaPrintBridgeInterval);
+            window.__xinergiaPrintBridgeInterval = null;
+        }
+        window.__xinergiaPrintBridgePollStarted = false;
+        return;
+    }
     try {
         if (localStorage.getItem('xinergia_print_bridge_station') !== '1') {
             return;

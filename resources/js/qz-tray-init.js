@@ -11,6 +11,10 @@ function getQz() {
     return window.qz || null;
 }
 
+function isAuthenticatedPage() {
+    return document.body?.dataset?.authenticated === 'true';
+}
+
 function readMeta(name) {
     const el = document.querySelector(`meta[name="${name}"]`);
     return el?.getAttribute('content')?.trim() || '';
@@ -327,6 +331,9 @@ export function configureQzSecurity() {
 }
 
 function initQzIfMetaPresent() {
+    if (!isAuthenticatedPage()) {
+        return;
+    }
     const cfg = window.__qzConfig || {};
     const signUrl = readMeta('qz-sign-url') || cfg.signUrl || '';
     const certUrl = readMeta('qz-certificate-url') || cfg.certificateUrl || '';
@@ -343,9 +350,11 @@ function initQzIfMetaPresent() {
 }
 
 function warmQzConnection() {
+    if (!isAuthenticatedPage()) return;
     if (window.__qzWarmupScheduled) return;
     window.__qzWarmupScheduled = true;
     const run = async () => {
+        if (!isAuthenticatedPage()) return;
         const qzLib = getQz();
         if (!qzLib || qzLib.websocket.isActive()) return;
         const cfg = window.__qzConfig || {};
@@ -370,6 +379,10 @@ initQzIfMetaPresent();
 warmQzConnection();
 
 document.addEventListener('turbo:load', () => {
+    if (!isAuthenticatedPage()) {
+        window.__qzWarmupScheduled = false;
+        return;
+    }
     initQzIfMetaPresent();
     window.__qzWarmupScheduled = false;
     warmQzConnection();

@@ -221,6 +221,7 @@ body.swal2-shown #sidebar { z-index: 1 !important; }
 
 <body class="min-h-screen flex flex-col"
     x-data="{ 'loaded': true }"
+    data-authenticated="true"
     data-is-mozo="@json($isMozo ?? false)"
     data-has-multiple-modules="@json($hasMultipleModules ?? false)"
     x-init="
