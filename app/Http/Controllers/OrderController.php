@@ -2608,7 +2608,7 @@ class OrderController extends Controller
             ], 422);
         }
 
-        $payload = $this->buildKitchenEscPosPayload((string) $validated['ticket_text'], true);
+        $payload = $this->buildKitchenEscPosPayload((string) $validated['ticket_text']);
         if ($this->shouldSkipDuplicateKitchenThermal($branchId, (string) $printer->name, $payload, 'comanda')) {
             return response()->json([
                 'success' => true,
@@ -2719,7 +2719,7 @@ class OrderController extends Controller
             return response()->json(['success' => false, 'message' => 'Sin sucursal activa.'], 422);
         }
 
-        $payload = $this->buildKitchenEscPosPayload((string) $validated['ticket_text'], true);
+        $payload = $this->buildKitchenEscPosPayload((string) $validated['ticket_text']);
         $job = $queue->push($branchId, (string) $validated['printer_name'], $payload, 'comanda');
         $queue->markPrinted($branchId, $job->id);
 

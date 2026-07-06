@@ -287,8 +287,19 @@
                         <div class="shrink-0 border-gray-300 px-2 sm:px-4 pt-3 pb-4">
                             <div class="flex items-center justify-between">
                             </div>
-                            <div id="categories-grid"
-                                class="flex flex-row flex-wrap gap-1.5 sm:gap-2 overflow-x-auto pb-3 overscroll-x-contain">
+                            <div class="flex items-start gap-2">
+                                <div id="categories-grid"
+                                    class="flex min-w-0 flex-1 flex-row flex-wrap gap-1.5 sm:gap-2 overflow-x-auto pb-3 overscroll-x-contain">
+                                </div>
+                                @if (empty($isCounterSale))
+                                    <button type="button" id="btn-enviar-mobile"
+                                        onclick="document.getElementById('btn-guardar')?.click()"
+                                        class="md:hidden sticky right-0 z-10 inline-flex h-10 shrink-0 items-center justify-center gap-1.5 rounded-xl bg-orange-500 px-4 text-sm font-extrabold text-white shadow-lg shadow-orange-500/30 ring-2 ring-orange-200 transition-all hover:bg-orange-600 active:scale-95"
+                                        aria-label="Enviar todo el pedido">
+                                        <i class="ri-send-plane-fill text-lg"></i>
+                                        <span>Enviar todo</span>
+                                    </button>
+                                @endif
                             </div>
                         </div>
                         <div class="px-2 sm:px-4 pt-3 pb-2 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -641,7 +652,7 @@
                             </button>
                             @if (empty($isCounterSale))
                                 <button type="button" id="btn-guardar" onclick="processOrder()"
-                                    class="py-2.5 px-4 rounded-xl bg-gray-500 text-white font-bold text-xs sm:text-sm shadow-lg hover:bg-gray-600 active:scale-95 transition-all flex justify-center items-center gap-2">
+                                    class="hidden md:flex py-2.5 px-4 rounded-xl bg-gray-500 text-white font-bold text-xs sm:text-sm shadow-lg hover:bg-gray-600 active:scale-95 transition-all justify-center items-center gap-2">
                                     <i class="ri-send-plane-2-line text-base"></i>
                                     <span>Enviar</span>
                                 </button>
@@ -1933,10 +1944,8 @@
                                     formattedContent += '\x1B\x21\x00' + line + '\n';
                                 }
                             }
-                            const logoCommands = await kitchenLogoEscPosCommands();
                             const ticketCommands =
                                 '\x1B\x40' + // ESC @ (init/reset)
-                                logoCommands + // logo mesa.jpeg centrado y convertido a ESC/POS
                                 '\x1B\x74\x02' + // ESC t 2 → code page PC850 (Latin-1, incluye español)
                                 formattedContent +
                                 '\n\n' +
@@ -1973,10 +1982,8 @@
                             'mm;margin:0;padding:0;}' +
                             'body{font-family:Segoe UI,Arial,sans-serif;}' +
                             'pre{white-space:pre-wrap;word-wrap:break-word;margin:0;padding:0;font-family:inherit;line-height:1.2;}' +
-                            '.logo{display:block;width:36mm;max-height:32mm;object-fit:contain;margin:0 auto 2mm;filter:grayscale(1) invert(1);}' +
                             '.meta{font-size:8pt;color:#555;}.detail{font-size:16pt;font-weight:700;line-height:1.3;}</style></head><body>' +
-                            '<img class="logo" src="' + escapeHtmlForQzPrint(window.__kitchenLogoImageUrl) + '"><pre>' +
-                            htmlLines + '</pre></body></html>';
+                            '<pre>' + htmlLines + '</pre></body></html>';
 
                         await qzApi.print(config, [{
                             type: 'pixel',
