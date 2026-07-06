@@ -576,7 +576,8 @@ class PettyCashController extends Controller
         }
 
         try {
-            DB::transaction(function () use ($request, $validated, $cash_register_id) {
+            $closedShiftId = null;
+            DB::transaction(function () use ($request, $validated, $cash_register_id, &$closedShiftId) {
                 $selectedShift = Shift::findOrFail($request->shift_id);
                 $shiftSnapshotData = [
                     'name' => $selectedShift->name,
@@ -698,6 +699,9 @@ class PettyCashController extends Controller
                 } elseif (str_contains($conceptName, 'cierre')) {
                     $openRelation = CashShiftRelation::where('branch_id', session('branch_id'))
                         ->where('status', '1')
+                        ->whereHas('cashMovementStart', function ($query) use ($cash_register_id) {
+                            $query->where('cash_register_id', $cash_register_id);
+                        })
                         ->latest('id')
                         ->first();
 
@@ -707,6 +711,7 @@ class PettyCashController extends Controller
                             'status' => '0',
                             'cash_movement_end_id' => $cashMovement->id,
                         ]);
+                        $closedShiftId = (int) $openRelation->id;
                     }
                 }
             });
@@ -715,8 +720,14 @@ class PettyCashController extends Controller
             if ($request->filled('view_id')) {
                 $params['view_id'] = $request->input('view_id');
             }
-            return redirect()->route('petty-cash.index', $params)
-                ->with('success', 'Movimiento registrado correctamente.');
+            $redirect = redirect()->route('petty-cash.index', $params)
+                ->with('success', $closedShiftId
+                    ? 'Caja cerrada correctamente. Ya puede revisar el PDF del cierre.'
+                    : 'Movimiento registrado correctamente.');
+            if ($closedShiftId) {
+                $redirect->with('closed_shift_id', $closedShiftId);
+            }
+            return $redirect;
         } catch (\Exception $e) {
             return back()->withErrors(['error' => 'Error al guardar: ' . $e->getMessage()])
                 ->withInput();

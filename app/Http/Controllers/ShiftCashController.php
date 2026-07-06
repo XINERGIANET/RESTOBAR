@@ -211,12 +211,30 @@ class ShiftCashController extends Controller
         $report = app(ShiftCashClosePdfService::class)->buildReport($shiftCash, $options);
 
         $printedAt = now();
+        $logoDataUri = null;
+        $logoPath = trim((string) ($shiftCash->branch?->logo ?? $shiftCash->branch?->company?->logo ?? ''));
+        if ($logoPath !== '') {
+            $urlPath = (string) (parse_url($logoPath, PHP_URL_PATH) ?: $logoPath);
+            $relativePath = ltrim($urlPath, '/\\');
+            $candidates = [public_path($relativePath)];
+            if (str_starts_with($relativePath, 'storage/')) {
+                $candidates[] = storage_path('app/public/'.substr($relativePath, strlen('storage/')));
+            }
+            foreach ($candidates as $candidate) {
+                if (is_file($candidate) && is_readable($candidate)) {
+                    $mime = mime_content_type($candidate) ?: 'image/png';
+                    $logoDataUri = 'data:'.$mime.';base64,'.base64_encode((string) file_get_contents($candidate));
+                    break;
+                }
+            }
+        }
         $viewData = [
             'shift' => $shiftCash,
             'report' => $report,
             'options' => $options,
             'printedAt' => $printedAt,
             'autoPrint' => false,
+            'logoDataUri' => $logoDataUri,
         ];
 
         $docName = 'cierre-caja-' . ($shiftCash->cashMovementEnd?->movement?->number ?? $shiftCash->id);
@@ -232,7 +250,9 @@ class ShiftCashController extends Controller
                 ->setOption('encoding', 'utf-8')
                 ->setOption('enable-local-file-access', true);
 
-            return $pdf->download($fileName);
+            return $request->boolean('inline')
+                ? $pdf->inline($fileName)
+                : $pdf->download($fileName);
         } catch (\Throwable $e) {
             Log::warning('PDF cierre de caja (Snappy): ' . $e->getMessage(), [
                 'exception' => $e,

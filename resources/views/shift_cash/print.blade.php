@@ -19,6 +19,9 @@
         .badge-danger { background: #fee2e2; color: #b91c1c; }
         .section { margin-bottom: 16px; page-break-inside: avoid; }
         .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .report-header { text-align: center; margin-bottom: 18px; padding-bottom: 14px; border-bottom: 2px solid #124731; }
+        .report-logo { display: block; max-width: 105px; max-height: 70px; margin: 0 auto 8px; object-fit: contain; }
+        .report-header h1 { color: #124731; }
         @media print {
             body { padding: 8px; }
         }
@@ -74,13 +77,18 @@
         </div>
     @endif
 
-    <h1>Cierre de caja</h1>
-    <p class="muted text-center">
-        Caja: {{ $shift->cashMovementStart?->cashRegister?->number ?? '-' }} ·
-        Empresa: {{ $shift->branch?->company?->legal_name ?? '-' }} ·
-        Sucursal: {{ $shift->branch?->legal_name ?? '-' }} ·
-        Impreso el {{ $printedAt->format('d/m/Y H:i:s') }}
-    </p>
+    <div class="report-header">
+        @if(!empty($logoDataUri))
+            <img src="{{ $logoDataUri }}" class="report-logo" alt="Logo de la sucursal">
+        @endif
+        <h1>Cierre de caja</h1>
+        <p style="margin:0 0 4px;font-size:14px;font-weight:700;">{{ $shift->branch?->legal_name ?? '-' }}</p>
+        <p class="muted text-center" style="margin:0;">
+            Empresa: {{ $shift->branch?->company?->legal_name ?? '-' }} &nbsp;|&nbsp;
+            Caja: {{ $shift->cashMovementStart?->cashRegister?->number ?? '-' }} &nbsp;|&nbsp;
+            Impreso el {{ $printedAt->format('d/m/Y H:i:s') }}
+        </p>
+    </div>
 
     <div class="section grid-2">
         <div>

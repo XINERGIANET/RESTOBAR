@@ -15,6 +15,7 @@
         window.__clientOnLocalNetwork = @json((bool) ($clientOnLocalNetwork ?? false));
         window.__receiptPrinterName = @json($receiptPrinter?->name);
         window.__receiptPrinterId = @json($receiptPrinter?->id);
+        window.__canEditOrderPrices = @json((bool) ($canEditOrderPrices ?? false));
     </script>
     @vite(['resources/js/qz-tray-init.js'])
 
@@ -3128,7 +3129,7 @@
                         if (!currentTable?.items || !serverProductBranches?.length) return;
                         let updated = false;
                         currentTable.items.forEach(item => {
-                            if (item.priceManual === true) {
+                            if (window.__canEditOrderPrices && item.priceManual === true) {
                                 return;
                             }
                             const pId = parseInt(item.pId || item.product_id, 10);
@@ -3943,6 +3944,7 @@
                     window.toggleTakeawayInput = toggleTakeawayInput;
 
                     function setItemUnitPrice(index, inputEl) {
+                        if (!window.__canEditOrderPrices) return;
                         if (!currentTable.items || !currentTable.items[index]) return;
                         let v = parseFloat(String(inputEl.value).replace(',', '.'));
                         if (isNaN(v) || v < 0) v = 0;
@@ -3958,6 +3960,7 @@
 
                     /** Lee inputs de P. unit. visibles y aplica al modelo (evita perder el cambio si se envía sin blur). */
                     function flushCartUnitPriceInputsFromDom() {
+                        if (!window.__canEditOrderPrices) return;
                         if (!currentTable?.items?.length) return;
                         let changed = false;
                         document.querySelectorAll('input[data-cart-unit-price-index]').forEach((el) => {
@@ -4159,7 +4162,8 @@
                                                                                                                                                                                                                                 data-cart-unit-price-index="${index}"
                                                                                                                                                                                                                                 onchange="setItemUnitPrice(${index}, this)"
                                                                                                                                                                                                                                 onblur="setItemUnitPrice(${index}, this)"
-                                                                                                                                                                                                                                class="w-[4.75rem] min-w-0 bg-transparent text-right text-xs font-bold tabular-nums text-slate-900 dark:text-white border-none p-0 focus:ring-0 focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" />
+                                                                                                                                                                                                                                ${window.__canEditOrderPrices ? '' : 'readonly aria-readonly="true" title="Edición de precio deshabilitada por la sucursal"'}
+                                                                                                                                                                                                                                class="w-[4.75rem] min-w-0 bg-transparent text-right text-xs font-bold tabular-nums ${window.__canEditOrderPrices ? 'text-slate-900 dark:text-white' : 'text-slate-500 dark:text-zinc-400 cursor-not-allowed'} border-none p-0 focus:ring-0 focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" />
                                                                                                                                                                                                                         </label>
                                                                                                                                                                                                                     </div>
                                                                                                                                                                                                                 </div>

@@ -109,6 +109,23 @@ class OrderController extends Controller
         return in_array($v, ['1', 'true', 'si', 'sí', 'yes', 'y', 'on'], true);
     }
 
+    private function canEditOrderPrices(?int $branchId): bool
+    {
+        if (! $branchId) return false;
+
+        $value = DB::table('parameters as p')
+            ->leftJoin('branch_parameters as bp', function ($join) use ($branchId) {
+                $join->on('bp.parameter_id', '=', 'p.id')
+                    ->where('bp.branch_id', $branchId)
+                    ->whereNull('bp.deleted_at');
+            })
+            ->whereNull('p.deleted_at')
+            ->where('p.description', 'Permitir editar precios en pedidos')
+            ->value(DB::raw('COALESCE(bp.value, p.value)'));
+
+        return in_array(mb_strtolower(trim((string) ($value ?? '0'))), ['1', 'true', 'si', 'sí', 'yes', 'on'], true);
+    }
+
     private function mozoProfileId(): ?int
     {
         return Profile::mozoProfileId();
@@ -1376,6 +1393,7 @@ class OrderController extends Controller
             'districts' => $districts,
             'turboCacheControl' => 'no-cache',
             'allowZeroStockSales' => (bool) ($branch?->allow_zero_stock_sales ?? true),
+            'canEditOrderPrices' => $this->canEditOrderPrices((int) $branchId),
             'recipeStockData' => $recipeStockData,
             'areaPrinterNames' => $areaPrinterNames,
             'receiptPrinter' => $this->receiptPrinterForBranch((int) $branchId),
@@ -1757,6 +1775,7 @@ class OrderController extends Controller
             'districts' => $districts,
             'turboCacheControl' => 'no-cache',
             'allowZeroStockSales' => (bool) ($branch?->allow_zero_stock_sales ?? true),
+            'canEditOrderPrices' => $this->canEditOrderPrices((int) $branchId),
             'recipeStockData' => $recipeStockData,
             'areaPrinterNames' => $areaPrinterNames,
             'receiptPrinter' => $this->receiptPrinterForBranch((int) $branchId),
@@ -2021,6 +2040,28 @@ class OrderController extends Controller
         $cancellations = (array) $request->input('cancellations', []);
         $branchId = session('branch_id');
         $branch = Branch::findOrFail($branchId);
+        $canEditOrderPrices = $this->canEditOrderPrices((int) $branchId);
+
+        if (! $canEditOrderPrices && ! empty($items)) {
+            $lockedProductBranches = ProductBranch::query()
+                ->with('taxRate')
+                ->where('branch_id', $branchId)
+                ->whereIn('product_id', collect($items)->map(fn ($item) => (int) ($item['product_id'] ?? $item['pId'] ?? 0))->filter())
+                ->get()
+                ->keyBy('product_id');
+
+            foreach ($items as &$item) {
+                $productId = (int) ($item['product_id'] ?? $item['pId'] ?? 0);
+                if ($lockedProductBranches->has($productId)) {
+                    $productBranch = $lockedProductBranches->get($productId);
+                    $item['price'] = (float) $productBranch->price;
+                    $item['tax_rate'] = (float) ($productBranch->taxRate?->tax_rate ?? 0);
+                    $item['priceManual'] = false;
+                }
+            }
+            unset($item);
+            $request->merge(['items' => $items]);
+        }
 
         $user = $request->user();
         $profileId = session('profile_id') ?? $user?->profile_id;
@@ -2087,8 +2128,21 @@ class OrderController extends Controller
         }
 
         // Subtotal: usar el enviado por el front o recalcular desde items
-        $subtotal = $request->has('subtotal') ? (float) $request->subtotal : 0;
-        if ($subtotal == 0 && ! empty($items)) {
+        $subtotal = $canEditOrderPrices && $request->has('subtotal') ? (float) $request->subtotal : 0;
+        $lockedTax = 0.0;
+        $lockedTotal = 0.0;
+        if (! $canEditOrderPrices) {
+            foreach ($items as $rawItem) {
+                $qty = (float) ($rawItem['quantity'] ?? $rawItem['qty'] ?? 1);
+                $courtesyQty = max(0, min($qty, (float) ($rawItem['courtesyQty'] ?? $rawItem['courtesy_quantity'] ?? 0)));
+                $lineTotal = ($qty - $courtesyQty) * (float) ($rawItem['price'] ?? 0);
+                $rate = max(0, (float) ($rawItem['tax_rate'] ?? 0)) / 100;
+                $lineSubtotal = $rate > 0 ? $lineTotal / (1 + $rate) : $lineTotal;
+                $subtotal += $lineSubtotal;
+                $lockedTax += $lineTotal - $lineSubtotal;
+                $lockedTotal += $lineTotal;
+            }
+        } elseif ($subtotal == 0 && ! empty($items)) {
             foreach ($items as $rawItem) {
                 $qty = (float) ($rawItem['quantity'] ?? $rawItem['qty'] ?? 1);
                 $price = (float) ($rawItem['price'] ?? 0);
@@ -2098,8 +2152,12 @@ class OrderController extends Controller
         $subtotal = round($subtotal, 6);
 
         // Tax y total: usar los enviados por el front o calcular (10% impuesto)
-        $tax = $request->has('tax') ? (float) $request->tax : round($subtotal * 0.10, 6);
-        $total = $request->has('total') ? (float) $request->total : round($subtotal + $tax, 6);
+        $tax = ! $canEditOrderPrices
+            ? $lockedTax
+            : ($request->has('tax') ? (float) $request->tax : round($subtotal * 0.10, 6));
+        $total = ! $canEditOrderPrices
+            ? $lockedTotal
+            : ($request->has('total') ? (float) $request->total : round($subtotal + $tax, 6));
         $tax = round($tax, 6);
         $total = round($total, 6);
 

@@ -177,6 +177,25 @@
 
         <x-common.page-breadcrumb pageTitle="Movimientos de Caja" />
 
+        @if (session('closed_shift_id'))
+            <div class="mb-5 flex flex-col gap-4 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between dark:border-emerald-500/30 dark:bg-emerald-500/10">
+                <div class="flex items-center gap-3">
+                    <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-emerald-600 text-white">
+                        <i class="ri-checkbox-circle-line text-xl"></i>
+                    </div>
+                    <div>
+                        <p class="font-bold text-emerald-900 dark:text-emerald-200">Caja cerrada correctamente</p>
+                        <p class="text-sm text-emerald-700 dark:text-emerald-300">Seleccione las secciones y revise el reporte completo del cierre.</p>
+                    </div>
+                </div>
+                <x-ui.button type="button" size="md" variant="primary"
+                    className="shrink-0 bg-[#124731] text-white"
+                    @click="$dispatch('open-closed-shift-pdf-modal')">
+                    <i class="ri-file-pdf-2-line"></i><span>Ver PDF de cierre</span>
+                </x-ui.button>
+            </div>
+        @endif
+
         <x-common.component-card title="Gestión de Movimientos" desc="Control de ingresos, egresos y traslados de fondos.">
 
             @php
@@ -687,6 +706,34 @@
                 </form>
             </div>
         </x-ui.modal>
+
+        @if (session('closed_shift_id'))
+            <x-ui.modal x-data="{ open: false }"
+                @open-closed-shift-pdf-modal.window="open = true"
+                @close-closed-shift-pdf-modal.window="open = false"
+                :isOpen="false" :showCloseButton="false" class="max-w-3xl">
+                <form id="closed-shift-pdf-form" method="GET">
+                    <div class="p-6 sm:p-8">
+                        <h3 class="text-lg font-semibold text-gray-800 dark:text-white/90">PDF del cierre de caja</h3>
+                        <p class="mt-1 text-sm text-gray-500">Elija las secciones que desea mostrar en el reporte.</p>
+                    </div>
+                    @include('shift_cash.modal_cash')
+                    <div class="flex items-center justify-end gap-3 p-6 sm:p-8">
+                        <x-ui.button type="button" size="md" variant="primary"
+                            @click="
+                                const form = document.getElementById('closed-shift-pdf-form');
+                                const qs = new URLSearchParams(new FormData(form));
+                                qs.set('inline', '1');
+                                window.open('{{ url('/caja/turno-caja/'.session('closed_shift_id').'/print') }}?' + qs.toString(), '_blank', 'noopener');
+                            ">
+                            <i class="ri-external-link-line"></i><span>Ver PDF completo</span>
+                        </x-ui.button>
+                        <x-ui.button type="button" size="md" variant="outline"
+                            @click="$dispatch('close-closed-shift-pdf-modal')">Cancelar</x-ui.button>
+                    </div>
+                </form>
+            </x-ui.modal>
+        @endif
 
     </div>
 @endsection
