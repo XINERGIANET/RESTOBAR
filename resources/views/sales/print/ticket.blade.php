@@ -454,7 +454,9 @@
     $docName = strtoupper($sale->documentType?->name ?? 'TICKET DE VENTA');
     $documentNameLower = mb_strtolower($docName, 'UTF-8');
     $isSaleTicket = str_contains($documentNameLower, 'ticket');
-    $showUnitColumn = str_contains($documentNameLower, 'boleta') || str_contains($documentNameLower, 'factura');
+    // Todo comprobante debe identificar la unidad de medida, sin depender
+    // del nombre configurado para Ticket, Boleta o Factura.
+    $showUnitColumn = true;
     $ticketSeries = $sale->salesMovement?->series ?? '001';
     if (!empty($sale->electronic_invoice_series) && preg_match('/^[A-Z]+(\d+)$/i', (string) $sale->electronic_invoice_series, $seriesMatches) === 1) {
         $ticketSeries = $seriesMatches[1];
@@ -532,7 +534,7 @@
             <th class="col-product"><strong>Prod.</strong></th>
             <th class="col-qty"><strong>Cant.</strong></th>
             @if($showUnitColumn)
-                <th class="col-measure"><strong>Unidad</strong></th>
+                <th class="col-measure"><strong>Unidad(es)</strong></th>
             @endif
             <th class="col-unit"><strong>P.Unit.</strong></th>
             <th class="col-subtotal"><strong>Subt.</strong></th>

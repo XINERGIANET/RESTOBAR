@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\ValidationException;
 use App\Models\BranchParameter;
 use App\Models\Branch;
 use App\Models\ParameterCategories;
@@ -16,6 +18,64 @@ use App\Models\PrinterBranch;
 
 class BranchParameterController extends Controller
 {
+    private function syncQzCertificateFiles(Request $request, int $branchId): void
+    {
+        $hasCertificate = $request->hasFile('qz_certificate_file');
+        $hasPrivateKey = $request->hasFile('qz_private_key_file');
+        if (! $hasCertificate && ! $hasPrivateKey) return;
+
+        if (! $hasCertificate || ! $hasPrivateKey) {
+            throw ValidationException::withMessages([
+                'qz_certificate_file' => 'Debe cargar juntos el certificado digital y la clave privada de QZ Tray.',
+            ]);
+        }
+
+        $certificateFile = $request->file('qz_certificate_file');
+        $privateKeyFile = $request->file('qz_private_key_file');
+        if (($certificateFile?->getSize() ?? 0) > 65536 || ($privateKeyFile?->getSize() ?? 0) > 65536) {
+            throw ValidationException::withMessages(['qz_certificate_file' => 'Cada archivo QZ debe pesar como máximo 64 KB.']);
+        }
+
+        $certificate = trim((string) file_get_contents($certificateFile->getRealPath()));
+        $privateKey = trim((string) file_get_contents($privateKeyFile->getRealPath()));
+        $certResource = openssl_x509_read($certificate);
+        $keyResource = openssl_pkey_get_private($privateKey);
+        if ($certResource === false || $keyResource === false) {
+            throw ValidationException::withMessages([
+                'qz_certificate_file' => 'Los archivos no contienen un certificado y una clave privada PEM válidos.',
+            ]);
+        }
+
+        $certPublic = openssl_pkey_get_public($certificate);
+        $certDetails = $certPublic !== false ? openssl_pkey_get_details($certPublic) : false;
+        $keyDetails = openssl_pkey_get_details($keyResource);
+        if (! $certDetails || ! $keyDetails || ($certDetails['key'] ?? '') !== ($keyDetails['key'] ?? '')) {
+            throw ValidationException::withMessages([
+                'qz_private_key_file' => 'La clave privada no corresponde al certificado digital seleccionado.',
+            ]);
+        }
+
+        $basePath = 'qz/branches/'.$branchId;
+        $certificatePath = $basePath.'/digital-certificate.pem';
+        $privateKeyPath = $basePath.'/private-key.pem';
+        if (! Storage::disk('local')->put($certificatePath, $certificate) ||
+            ! Storage::disk('local')->put($privateKeyPath, $privateKey)) {
+            throw ValidationException::withMessages(['qz_certificate_file' => 'No se pudieron guardar los archivos QZ.']);
+        }
+
+        foreach ([
+            'Certificado digital QZ Tray' => $certificatePath,
+            'Clave privada QZ Tray' => $privateKeyPath,
+        ] as $description => $path) {
+            $parameterId = Parameters::query()->where('description', $description)->value('id');
+            if (! $parameterId) continue;
+            BranchParameter::query()->updateOrCreate(
+                ['branch_id' => $branchId, 'parameter_id' => (int) $parameterId],
+                ['value' => $path, 'deleted_at' => null]
+            );
+        }
+    }
+
     /**
      * Sincroniza métodos de pago permitidos para la sucursal.
      * Vacío o "todos los activos" elimina filas del pivote (sin restricción = se muestran todos en POS).
@@ -186,12 +246,13 @@ class BranchParameterController extends Controller
 
         $parameters = $request->input('parameters');
 
-        if (is_array($parameters)) {
+        if (is_array($parameters) || $request->hasFile('qz_certificate_file') || $request->hasFile('qz_private_key_file')) {
             DB::beginTransaction();
             try {
                 $this->syncBranchPaymentMethodsFromRequest($request, (int) $branchId);
+                $this->syncQzCertificateFiles($request, (int) $branchId);
 
-                foreach ($parameters as $paramKey => $value) {
+                foreach ((array) $parameters as $paramKey => $value) {
                     $valorSeguro = $value ?? '';
                     $parameterIdForHook = null;
 
@@ -243,6 +304,9 @@ class BranchParameterController extends Controller
                 DB::commit();
 
                 return redirect()->back()->with('success', 'Parámetros actualizados correctamente.');
+            } catch (ValidationException $e) {
+                DB::rollBack();
+                throw $e;
             } catch (\Exception $e) {
                 DB::rollBack();
                 return redirect()->back()->with('error', 'Ocurrió un error al actualizar los parámetros: ' . $e->getMessage());
