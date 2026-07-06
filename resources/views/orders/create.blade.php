@@ -318,7 +318,7 @@
                         </div>
                         <div class="pt-2 sm:pt-3">
                             <div id="products-grid"
-                                class="px-2 sm:px-4 md:px-5 p-3 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-2 sm:gap-4 content-start pb-6">
+                                class="p-1 sm:p-3 sm:px-4 md:px-5 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-1.5 sm:gap-4 content-start pb-6">
                             </div>
                         </div>
                     </div>
@@ -2903,7 +2903,7 @@
                             const separator = '='.repeat(LINE_WIDTH) + '\n';
                             const commandNumber = Number.parseInt(table?.command_number, 10);
                             const comandaLabel = Number.isFinite(commandNumber) && commandNumber > 0
-                                ? 'COMANDA N° ' + String(commandNumber).padStart(6, '0')
+                                ? 'COMANDA ' + String(commandNumber).padStart(6, '0')
                                 : 'COMANDA: ' + (table?.order_movement_id ?? '-');
                             const comandaSub = String(pname || '').trim() || 'COCINA';
                             const clientLabel = String(table?.clientName || table?.client || '').trim();
@@ -3331,8 +3331,14 @@
                             const productBranch = findProductBranchByProductId(productId);
                             if (!prod || !productBranch) return;
                             const stockInfo = buildProductStockLabel(prod, productBranch);
-                            stockEl.textContent = stockInfo.label;
-                            stockEl.className = `mt-1 text-xs font-medium ${stockInfo.colorClass}`;
+                            stockEl.textContent = stockInfo.label.replace('.00', '');
+                            let badgeBg = 'bg-slate-50 border-slate-200 text-slate-700 dark:bg-slate-700 dark:border-slate-600 dark:text-slate-300';
+                            if (stockInfo.colorClass.includes('text-red')) {
+                                badgeBg = 'bg-red-50 border-red-200 text-red-600 dark:bg-red-900/30 dark:border-red-800 dark:text-red-400';
+                            } else if (stockInfo.colorClass.includes('text-amber')) {
+                                badgeBg = 'bg-orange-50 border-orange-200 text-orange-600 dark:bg-orange-900/30 dark:border-orange-800 dark:text-orange-400';
+                            }
+                            stockEl.className = `order-3 sm:order-none mt-1 sm:mt-0 sm:absolute sm:top-1 sm:right-1 px-1.5 sm:px-2 py-0.5 rounded-full text-[9px] sm:text-[11px] font-bold border ${badgeBg} whitespace-nowrap overflow-hidden text-ellipsis max-w-full sm:max-w-[90%] z-10 sm:shadow-sm`;
                         });
                     }
 
@@ -3422,7 +3428,7 @@
 
                             const el = document.createElement('div');
                             el.className =
-                                "group cursor-pointer transition-transform duration-200 hover:scale-105 h-full flex";
+                                "group cursor-pointer transition-transform duration-200 sm:hover:scale-105 h-full flex";
 
                             // Prevenir múltiples clics rápidos
                             let isAdding = false;
@@ -3454,20 +3460,20 @@
 
                             el.innerHTML =
                                 `
-                                <div class="relative rounded-2xl overflow-hidden p-3 bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 hover:border-[#124731] dark:hover:border-[#124731] hover:shadow-md transition-all duration-200 hover:-translate-y-0.5 flex flex-col items-center justify-center text-center h-full w-full">
-                                    <div data-product-stock-label="${Number(prod.id)}" class="absolute top-1 right-1 px-2 py-0.5 rounded-full text-[10px] sm:text-[11px] font-bold border ${badgeBg} whitespace-nowrap overflow-hidden text-ellipsis max-w-[90%] z-10 shadow-sm" title="${escapeHtml(stockInfo.label)}">
+                                <div class="relative rounded-xl sm:rounded-2xl overflow-hidden p-2 sm:p-3 bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 hover:border-[#124731] dark:hover:border-[#124731] hover:shadow-md transition-all duration-200 hover:-translate-y-0.5 flex flex-col items-center justify-center text-center h-full w-full">
+                                    <div data-product-stock-label="${Number(prod.id)}" class="order-3 sm:order-none mt-1 sm:mt-0 sm:absolute sm:top-1 sm:right-1 px-1.5 sm:px-2 py-0.5 rounded-full text-[9px] sm:text-[11px] font-bold border ${badgeBg} whitespace-nowrap overflow-hidden text-ellipsis max-w-full sm:max-w-[90%] z-10 sm:shadow-sm" title="${escapeHtml(stockInfo.label)}">
                                         ${escapeHtml(displayStock)}
                                     </div>
-                                    <div class="flex w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-[#124731] items-center justify-center shrink-0 overflow-hidden mb-2 mt-4 shadow-sm border border-[#124731]/10">
+                                    <div class="hidden sm:flex w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-[#124731] items-center justify-center shrink-0 overflow-hidden mb-2 mt-4 shadow-sm border border-[#124731]/10">
                                         ${hasImg
                                 ? `<img src="${imageUrl}" alt="${productName}" class="w-full h-full object-contain rounded-full object-cover object-center" loading="lazy" onerror="this.parentElement.innerHTML='<i class=\\'ri-restaurant-2-line text-xl sm:text-2xl text-white\\'></i>'">`
                                 : `<i class="ri-restaurant-2-line text-xl sm:text-2xl text-white"></i>`
                             }
                                     </div>
-                                    <h4 class="font-bold text-slate-800 dark:text-slate-200 text-xs sm:text-[13px] line-clamp-2 leading-tight mb-1" title="${productName}">
+                                    <h4 class="order-1 sm:order-none font-bold text-slate-800 dark:text-slate-200 text-[11px] sm:text-[13px] line-clamp-2 leading-tight mb-0.5 sm:mb-1" title="${productName}">
                                         ${productName}
                                     </h4>
-                                    <span class="text-sm sm:text-[15px] font-extrabold text-[#124731] dark:text-[#124731]">
+                                    <span class="order-2 sm:order-none text-xs sm:text-[15px] font-extrabold text-[#124731] dark:text-[#124731]">
                                         ${priceFormatted}
                                     </span>
                                 </div>
