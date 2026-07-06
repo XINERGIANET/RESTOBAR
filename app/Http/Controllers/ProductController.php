@@ -131,6 +131,20 @@ class ProductController extends Controller
         ])
         ->values();
 
+        $maxProd = Product::where('code', 'like', 'CH_%')
+            ->when($branchId, fn($q) => $q->whereHas('productBranches', fn($b) => $b->where('branch_id', $branchId)))
+            ->pluck('code')
+            ->map(fn($code) => (int) substr($code, 3))
+            ->max() ?? 0;
+        $nextProdCode = 'CH_' . str_pad($maxProd + 1, 3, '0', STR_PAD_LEFT);
+
+        $maxIngr = Product::where('code', 'like', 'IN_%')
+            ->when($branchId, fn($q) => $q->whereHas('productBranches', fn($b) => $b->where('branch_id', $branchId)))
+            ->pluck('code')
+            ->map(fn($code) => (int) substr($code, 3))
+            ->max() ?? 0;
+        $nextIngrCode = 'IN_' . str_pad($maxIngr + 1, 3, '0', STR_PAD_LEFT);
+
         return view('products.index', [
             'products' => $products,
             'categories' => $categories,
@@ -147,6 +161,8 @@ class ProductController extends Controller
             'suppliers' => $suppliers,
             'productTypeId' => $productTypeId,
             'categoryId' => $categoryId,
+            'nextProdCode' => $nextProdCode,
+            'nextIngrCode' => $nextIngrCode,
         ]);
     }
 
