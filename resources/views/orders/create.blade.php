@@ -4767,8 +4767,30 @@
                             return;
                         }
                         window.__processOrderInFlight = true;
+                        const mobileSendButton = document.getElementById('btn-enviar-mobile');
+                        const desktopSendButton = document.getElementById('btn-guardar');
+                        if (mobileSendButton) {
+                            mobileSendButton.disabled = true;
+                            mobileSendButton.classList.add('opacity-70', 'cursor-wait');
+                            mobileSendButton.innerHTML =
+                                '<i class="ri-loader-4-line text-lg animate-spin"></i><span>Enviando...</span>';
+                        }
+                        if (desktopSendButton) desktopSendButton.disabled = true;
+                        if (typeof window.showLoadingModal === 'function') {
+                            window.showLoadingModal();
+                        }
                         const releaseProcessOrder = () => {
                             window.__processOrderInFlight = false;
+                            if (typeof window.hideLoadingModal === 'function') {
+                                window.hideLoadingModal();
+                            }
+                            if (mobileSendButton) {
+                                mobileSendButton.disabled = false;
+                                mobileSendButton.classList.remove('opacity-70', 'cursor-wait');
+                                mobileSendButton.innerHTML =
+                                    '<i class="ri-send-plane-fill text-lg"></i><span>Enviar todo</span>';
+                            }
+                            if (desktopSendButton) desktopSendButton.disabled = false;
                         };
                         if (waiterPinEnabled && !isMozoProfile) {
                             const ok = await ensureWaiterPin();
@@ -4896,6 +4918,7 @@
                                     }
                                     sessionStorage.setItem('flash_success_message', data.message);
                                     goToIndexWithTurbo();
+                                    return;
                                 } else if (data && isMesaYaCobradaMessage(data.message)) {
                                     if (typeof showNotification === 'function') {
                                         showNotification('Aviso', data.message || 'Esta mesa ya fue cobrada.',
