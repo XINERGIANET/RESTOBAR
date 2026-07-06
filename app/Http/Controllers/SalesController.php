@@ -3187,11 +3187,14 @@ class SalesController extends Controller
 
         $printerWidthMm = (int) ($printer?->width ?? 58);
         $lineWidth = $printerWidthMm >= 80 ? 48 : 32;
+        $documentName = mb_strtolower((string) ($sale->documentType?->name ?? ''), 'UTF-8');
+        $showUnitColumn = str_contains($documentName, 'boleta') || str_contains($documentName, 'factura');
         $colQty = $printerWidthMm >= 80 ? 5 : 4;
+        $colMeasure = $showUnitColumn ? ($printerWidthMm >= 80 ? 7 : 4) : 0;
         $colPrice = $printerWidthMm >= 80 ? 9 : 7;
         $colAmount = $printerWidthMm >= 80 ? 9 : 7;
         $colGap = 2;
-        $colName = max(8, $lineWidth - $colQty - $colGap - $colPrice - $colAmount);
+        $colName = max(8, $lineWidth - $colQty - $colGap - $colMeasure - $colPrice - $colAmount);
         $sep = str_repeat('=', $lineWidth);
 
         $wrapText = function (string $text, int $length): array {
@@ -3260,6 +3263,7 @@ class SalesController extends Controller
         $lines[] = $this->thermalPadEnd('Cant.', $colQty)
             .str_repeat(' ', $colGap)
             .$this->thermalPadEnd('Descr.', $colName)
+            .($showUnitColumn ? $this->thermalPadEnd('Unidad', $colMeasure) : '')
             .$this->thermalPadStart('P.Unit.', $colPrice)
             .$this->thermalPadStart('Subt.', $colAmount);
         $lines[] = $sep;
@@ -3270,10 +3274,12 @@ class SalesController extends Controller
             $lineTotal = (float) $detail->amount;
             $unitPrice = $qty > 0 ? ($lineTotal / $qty) : 0.0;
             $descLines = $wrapText((string) ($detail->description ?? $detail->product?->description ?? '-'), $colName);
+            $measure = Str::ascii((string) ($detail->unit?->description ?: '-'));
 
             $lines[] = $this->thermalPadEnd($formatQty($qty), $colQty)
                 .str_repeat(' ', $colGap)
                 .$this->thermalPadEnd($descLines[0], $colName)
+                .($showUnitColumn ? $this->thermalPadEnd($measure, $colMeasure) : '')
                 .$this->thermalPadStart(number_format($unitPrice, 2, '.', ''), $colPrice)
                 .$this->thermalPadStart(number_format($lineTotal, 2, '.', ''), $colAmount);
 
@@ -3281,6 +3287,7 @@ class SalesController extends Controller
                 $lines[] = $this->thermalPadEnd('', $colQty)
                     .str_repeat(' ', $colGap)
                     .$this->thermalPadEnd($descLines[$i], $colName)
+                    .($showUnitColumn ? $this->thermalPadEnd('', $colMeasure) : '')
                     .$this->thermalPadStart('', $colPrice)
                     .$this->thermalPadStart('', $colAmount);
             }
