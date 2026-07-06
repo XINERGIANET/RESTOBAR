@@ -53,6 +53,22 @@ use Illuminate\Support\Facades\Log;
 
 class OrderController extends Controller
 {
+    private function receiptPrinterForBranch(?int $branchId): ?PrinterBranch
+    {
+        if (! $branchId) return null;
+
+        $printerId = DB::table('branch_parameters as bp')
+            ->join('parameters as p', 'p.id', '=', 'bp.parameter_id')
+            ->where('bp.branch_id', $branchId)
+            ->whereNull('bp.deleted_at')->whereNull('p.deleted_at')
+            ->where('p.description', 'Impresora de comprobantes y precuentas')
+            ->value('bp.value');
+
+        return $printerId
+            ? PrinterBranch::query()->where('branch_id', $branchId)->where('status', 'E')->find((int) $printerId)
+            : null;
+    }
+
     private function waiterPinEnabled(?int $branchId): bool
     {
         if (! $branchId) {
@@ -1340,6 +1356,7 @@ class OrderController extends Controller
             'allowZeroStockSales' => (bool) ($branch?->allow_zero_stock_sales ?? true),
             'recipeStockData' => $recipeStockData,
             'areaPrinterNames' => $areaPrinterNames,
+            'receiptPrinter' => $this->receiptPrinterForBranch((int) $branchId),
             'clientOnLocalNetwork' => LocalNetworkClient::isOnLocalNetwork($request),
             'afterPaymentIndexUrl' => route('orders.index', $viewIdForPos ? ['view_id' => $viewIdForPos] : []),
         ], $this->splitAccountViewData($pendingOrder)));
@@ -1720,6 +1737,7 @@ class OrderController extends Controller
             'allowZeroStockSales' => (bool) ($branch?->allow_zero_stock_sales ?? true),
             'recipeStockData' => $recipeStockData,
             'areaPrinterNames' => $areaPrinterNames,
+            'receiptPrinter' => $this->receiptPrinterForBranch((int) $branchId),
             'clientOnLocalNetwork' => LocalNetworkClient::isOnLocalNetwork($request),
             'isCounterSale' => true,
             'posStorageKey' => $posStorageKey,

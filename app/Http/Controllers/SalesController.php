@@ -1732,12 +1732,7 @@ class SalesController extends Controller
         // No requiere red local ni IP en la impresora (admite USB).
         $qzMode = $request->input('mode') === 'qz' || $request->boolean('qz_mode');
 
-        if (! $qzMode && ! LocalNetworkClient::isOnLocalNetwork($request)) {
-            return response()->json([
-                'success' => false,
-                'message' => 'La impresión por red desde el servidor solo está permitida dentro de la red del local. Si el sistema está en un VPS, usa QZ Tray en el equipo del establecimiento o conecta el VPS a la LAN/VPN del local.',
-            ], 403);
-        }
+        $isRemoteRequest = ! LocalNetworkClient::isOnLocalNetwork($request);
 
         try {
             $validated = $request->validate([
@@ -1808,6 +1803,22 @@ class SalesController extends Controller
             ? (string) $ticketText
             : $this->buildThermalTicketPlainTextApproved($movement, $request, $printer);
         $payload = $this->wrapEscPosPlainPayload($plain);
+
+        if (! $qzMode && $isRemoteRequest && $printer) {
+            $job = app(PrintBridgeQueue::class)->push(
+                $branchId,
+                (string) $printer->name,
+                $payload,
+                'comprobante'
+            );
+
+            return response()->json([
+                'success' => true,
+                'print_bridge' => true,
+                'print_job_id' => $job->id,
+                'message' => 'Comprobante enviado al puente de impresión para "'.$printer->name.'".',
+            ]);
+        }
 
         // Modo QZ: mismo ticket maquetado que la vista/PDF manual (wkhtmltopdf); fallback RAW si no hay PDF.
         if ($qzMode) {
@@ -1922,6 +1933,18 @@ class SalesController extends Controller
         $printerBaseQuery = PrinterBranch::query()
             ->where('branch_id', $branchId)
             ->where('status', 'E');
+
+        $configuredPrinterId = DB::table('branch_parameters as bp')
+            ->join('parameters as p', 'p.id', '=', 'bp.parameter_id')
+            ->where('bp.branch_id', $branchId)
+            ->whereNull('bp.deleted_at')
+            ->whereNull('p.deleted_at')
+            ->where('p.description', 'Impresora de comprobantes y precuentas')
+            ->value('bp.value');
+        if ($configuredPrinterId) {
+            $configured = (clone $printerBaseQuery)->where('id', (int) $configuredPrinterId)->first();
+            if ($configured) return $configured;
+        }
 
         $host = strtolower(trim(request()->getHost() ?: ''));
         $isLocalhost = in_array($host, ['localhost', '127.0.0.1', '::1']);

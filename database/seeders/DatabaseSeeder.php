@@ -16,6 +16,7 @@ class DatabaseSeeder extends Seeder
             SalesAndFinancesReportSeeder::class,
             AccountsReceivableMenuSeeder::class,
             CommandTicketsMenuSeeder::class,
+            ReceiptPrinterParameterSeeder::class,
         ]);
     }
 }

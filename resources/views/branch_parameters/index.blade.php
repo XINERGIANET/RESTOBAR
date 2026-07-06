@@ -137,6 +137,8 @@
                                             $descLower = mb_strtolower($desc, 'UTF-8');
                                             $isRequerirPinMozo = strcasecmp($desc, 'Requerir PIN a mozo') === 0;
                                             $isIgvDefecto = strcasecmp($desc, 'igv_defecto') === 0;
+                                            $isReceiptPrinterParam = str_contains($descLower, 'impresora') &&
+                                                (str_contains($descLower, 'comprobante') || str_contains($descLower, 'precuenta'));
                                             // Por descripción (evita confundir con ids de contraseñas si "METODOS DE PAGO" tiene mal el id)
                                             $isMetodosPagoParam = str_contains($descLower, 'metodo') && str_contains($descLower, 'pago');
                                             // Solo por descripción para evitar confundir parámetros mal rotulados en producción.
@@ -161,7 +163,17 @@
                                             $isIgvParam = $isIgvDefecto ||
                                                 (str_contains($descLower, 'igv') && str_contains($descLower, 'defecto'));
                                         @endphp
-                                        @if($isRequerirPinMozo)
+                                        @if($isReceiptPrinterParam)
+                                            <select name="parameters[{{ $paramKey }}]"
+                                                    class="w-full border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 px-3 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-colors shadow-sm">
+                                                <option value="">Seleccionar impresora...</option>
+                                                @foreach($printers ?? [] as $printer)
+                                                    <option value="{{ $printer->id }}" {{ (string) ($parameter->branch_value ?? '') === (string) $printer->id ? 'selected' : '' }}>
+                                                        {{ $printer->name }}{{ $printer->ip ? ' — '.$printer->ip : ' — USB/QZ' }}
+                                                    </option>
+                                                @endforeach
+                                            </select>
+                                        @elseif($isRequerirPinMozo)
                                             {{-- REQUERIR PIN A MOZO: 0 o 1 --}}
                                             <select name="parameters[{{ $paramKey }}]" 
                                                     class="w-full border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 px-3 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-colors shadow-sm">

@@ -12,6 +12,7 @@ use App\Models\DocumentType;
 use App\Models\TaxRate;
 use App\Models\PaymentMethod;
 use App\Models\Parameters;
+use App\Models\PrinterBranch;
 
 class BranchParameterController extends Controller
 {
@@ -135,6 +136,9 @@ class BranchParameterController extends Controller
         $igv = TaxRate::where('status', true)->get();
 
         $paymentMethods = PaymentMethod::where('status', true)->orderBy('order_num')->get();
+        $printers = $branchId
+            ? PrinterBranch::query()->where('branch_id', $branchId)->where('status', 'E')->orderBy('name')->get(['id', 'name', 'ip', 'width'])
+            : collect();
 
         $branchPaymentMethodIds = [];
         if ($branchId) {
@@ -168,6 +172,7 @@ class BranchParameterController extends Controller
             'igv' => $igv,
             'paymentMethods' => $paymentMethods,
             'branchPaymentMethodIds' => $branchPaymentMethodIds,
+            'printers' => $printers,
         ]);
     }
 

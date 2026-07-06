@@ -13,6 +13,8 @@
         window.__kitchenLogoImageUrl = @json(asset('images/logo/mesa.jpeg'));
         window.__recordKitchenQzPrintUrl = @json(route('orders.print.kitchen.record-qz'));
         window.__clientOnLocalNetwork = @json((bool) ($clientOnLocalNetwork ?? false));
+        window.__receiptPrinterName = @json($receiptPrinter?->name);
+        window.__receiptPrinterId = @json($receiptPrinter?->id);
     </script>
     @vite(['resources/js/qz-tray-init.js'])
 
@@ -2369,10 +2371,12 @@
                     }
 
                     function resolvePreAccountPrinterName() {
+                        const configuredPrinter = String(window.__receiptPrinterName || '').trim();
+                        if (configuredPrinter) return configuredPrinter;
                         try {
                             const localPrinter = String(localStorage.getItem('xinergia_local_printer_name') ||
                                 localStorage.getItem('xinergia_print_bridge_printer') || '').trim();
-                            if (localPrinter) return localPrinter;
+                            if (localPrinter && localPrinter !== '*') return localPrinter;
                         } catch (e) {}
                         const host = String(window.location.hostname || '').trim().toLowerCase();
                         const isLocalhost = ['localhost', '127.0.0.1', '::1'].includes(host);
@@ -2525,20 +2529,11 @@
                                 return;
                             } catch (e) {
                                 qzFailed = true;
-                                if (strictLocalQz) {
-                                    openPreAccountPdfTab();
-                                    return;
-                                }
                                 if (typeof showNotification === 'function') {
                                     showNotification('Impresión', 'QZ no disponible. Intentando impresora de red...',
                                         'warning');
                                 }
                             }
-                        }
-
-                        if (strictLocalQz) {
-                            openPreAccountPdfTab();
-                            return;
                         }
 
                         // Fallback: ticketera por red (server-side ESC/POS usando el endpoint de pedidos)
@@ -5002,7 +4997,9 @@
                         if (!movementId) return;
                         const qzApi = window.qz;
                         const sel = document.getElementById('cobro-thermal-printer');
-                        const printerId = sel && sel.value ? parseInt(sel.value, 10) : null;
+                        const printerId = sel && sel.value
+                            ? parseInt(sel.value, 10)
+                            : (parseInt(window.__receiptPrinterId, 10) || null);
                         const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
                         const printerName = resolvePreAccountPrinterName();
                         const strictLocalQz = requiresStrictLocalQz(printerName);
@@ -5106,21 +5103,10 @@
                             } catch (e) {
                                 qzFailed = true;
                                 console.warn('QZ Ticket:', e);
-                                if (strictLocalQz) {
-                                    openSaleTicketPdfTab(movementId);
-                                    return;
-                                }
-                                openSaleTicketPdfTab(movementId);
-                                return;
                             }
                         }
 
                         // Fallback: impresión TCP por red (requiere red local e IP en impresora)
-                        if (strictLocalQz) {
-                            openSaleTicketPdfTab(movementId);
-                            return;
-                        }
-
                         try {
                             const tr = await fetch(salesThermalPrintUrl, {
                                 method: 'POST',
