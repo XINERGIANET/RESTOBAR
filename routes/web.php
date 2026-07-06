@@ -85,6 +85,8 @@ Route::middleware('auth')->group(function () {
     Route::resource('/admin/herramientas/empresas', CompanyController::class)
         ->names('admin.companies')
         ->parameters(['empresas' => 'company']);
+    Route::delete('/admin/herramientas/empresas/{company}/sucursales/{branch}/limpiar-data', [BranchController::class, 'clearData'])
+        ->name('admin.companies.branches.clear-data');
     Route::resource('/admin/herramientas/empresas.sucursales', BranchController::class)
         ->names('admin.companies.branches')
         ->parameters(['empresas' => 'company', 'sucursales' => 'branch']);

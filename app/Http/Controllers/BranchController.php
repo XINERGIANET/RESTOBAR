@@ -1129,6 +1129,96 @@ class BranchController extends Controller
             ->with('status', 'Sucursal eliminada correctamente.');
     }
 
+    public function clearData(Request $request, Company $company, Branch $branch)
+    {
+        $branch = $this->resolveBranch($company, $branch);
+        $request->validate([
+            'confirmation_name' => ['required', 'string', function ($attribute, $value, $fail) use ($branch) {
+                if (trim((string) $value) !== trim((string) $branch->legal_name)) {
+                    $fail('El nombre de confirmación no coincide con la sucursal.');
+                }
+            }],
+        ]);
+
+        DB::transaction(function () use ($branch) {
+            $branchId = (int) $branch->id;
+            $orderIds = DB::table('order_movements')->where('branch_id', $branchId)->pluck('id');
+            $salesIds = DB::table('sales_movements')->where('branch_id', $branchId)->pluck('id');
+            $cashIds = DB::table('cash_movements')->where('branch_id', $branchId)->pluck('id');
+
+            $movementIds = collect()
+                ->merge(DB::table('order_movements')->where('branch_id', $branchId)->pluck('movement_id'))
+                ->merge(DB::table('sales_movements')->where('branch_id', $branchId)->pluck('movement_id'))
+                ->merge(DB::table('cash_movements')->where('branch_id', $branchId)->pluck('movement_id'))
+                ->filter()->unique()->values();
+
+            // Datos de crédito generados por ventas de esta sucursal.
+            $receivableIds = DB::table('account_receivable_payables')
+                ->where('branch_id', $branchId)
+                ->where('type', 'RECEIVABLE')
+                ->pluck('id');
+            DB::table('account_receivable_payable_details')
+                ->whereIn('account_receivable_payable_id', $receivableIds)
+                ->delete();
+            DB::table('account_receivable_payable_details')
+                ->whereIn('movement_id', $movementIds)
+                ->delete();
+            DB::table('account_receivable_payables')
+                ->whereIn('id', $receivableIds)
+                ->delete();
+            DB::table('account_receivable_payables')
+                ->whereIn('movement_id', $movementIds)
+                ->update(['movement_id' => null]);
+
+            DB::table('cash_shift_relations')->where('branch_id', $branchId)->delete();
+
+            $splitIds = DB::table('order_payment_splits')->whereIn('order_movement_id', $orderIds)->pluck('id');
+            DB::table('order_payment_split_details')->whereIn('order_payment_split_id', $splitIds)->delete();
+            DB::table('order_payment_splits')->whereIn('id', $splitIds)->delete();
+
+            // Las relaciones padre-hijo internas impiden un borrado masivo directo.
+            DB::table('order_movement_details')->whereIn('order_movement_id', $orderIds)->update(['parent_detail_id' => null]);
+            DB::table('sales_movement_details')->whereIn('sales_movement_id', $salesIds)->update(['parent_detail_id' => null]);
+            DB::table('order_movement_details')->whereIn('order_movement_id', $orderIds)->delete();
+            DB::table('sales_movement_details')->whereIn('sales_movement_id', $salesIds)->delete();
+            DB::table('cash_movement_details')->whereIn('cash_movement_id', $cashIds)->delete();
+
+            DB::table('order_movements')->whereIn('id', $orderIds)->delete();
+            DB::table('sales_movements')->whereIn('id', $salesIds)->delete();
+            DB::table('cash_movements')->whereIn('id', $cashIds)->delete();
+
+            DB::table('movements')
+                ->whereNotIn('id', $movementIds)
+                ->whereIn('parent_movement_id', $movementIds)
+                ->update(['parent_movement_id' => null]);
+            DB::table('kardex')->whereIn('movimiento_id', $movementIds)->delete();
+            DB::table('movements')->whereIn('id', $movementIds)->delete();
+
+            DB::table('print_jobs')->where('branch_id', $branchId)->delete();
+            DB::table('command_counters')->where('branch_id', $branchId)->delete();
+
+            DB::table('cash_registers')->where('branch_id', $branchId)->update([
+                'status' => 'C',
+                'updated_at' => now(),
+            ]);
+            DB::table('tables')->where('branch_id', $branchId)->update([
+                'situation' => 'libre',
+                'opened_at' => null,
+                'updated_at' => now(),
+            ]);
+        });
+
+        $redirectParams = array_filter([
+            'view_id' => $request->input('view_id'),
+            'company_view_id' => $request->input('company_view_id'),
+            'icon' => $request->input('icon'),
+        ]);
+
+        return redirect()
+            ->route('admin.companies.branches.index', array_merge([$company], $redirectParams))
+            ->with('status', 'La data operativa de la sucursal fue limpiada correctamente.');
+    }
+
     private function validateBranch(Request $request): array
     {
         $data = $request->validate([

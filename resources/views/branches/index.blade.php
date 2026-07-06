@@ -301,6 +301,29 @@
                                                 </div>
                                             @endif
                                         @endforeach
+                                        <form method="POST"
+                                            action="{{ route('admin.companies.branches.clear-data', [$company, $branch]) }}"
+                                            class="relative group"
+                                            onsubmit="const expected = @js($branch->legal_name); const entered = window.prompt('Esta acción borrará ventas, pedidos, caja y comandas.\n\nEscribe el nombre exacto de la sucursal para confirmar:\n' + expected); if (entered !== expected) { if (entered !== null) window.alert('El nombre no coincide. No se limpió ninguna data.'); return false; } this.querySelector('[name=confirmation_name]').value = entered; return true;">
+                                            @csrf
+                                            @method('DELETE')
+                                            <input type="hidden" name="confirmation_name" value="">
+                                            @if ($viewId)
+                                                <input type="hidden" name="view_id" value="{{ $viewId }}">
+                                            @endif
+                                            @if ($companyViewId)
+                                                <input type="hidden" name="company_view_id" value="{{ $companyViewId }}">
+                                            @endif
+                                            @if ($requestIcon)
+                                                <input type="hidden" name="icon" value="{{ $requestIcon }}">
+                                            @endif
+                                            <x-ui.button size="icon" variant="outline" type="submit"
+                                                className="bg-orange-500 text-white hover:bg-orange-600 ring-0 rounded-xl"
+                                                aria-label="Limpiar data de la sucursal">
+                                                <i class="ri-eraser-line"></i>
+                                            </x-ui.button>
+                                            <span class="pointer-events-none absolute top-full right-0 mt-2 whitespace-nowrap rounded-md bg-gray-900 px-2 py-1 text-xs text-white opacity-0 transition group-hover:opacity-100 z-50">Limpiar data</span>
+                                        </form>
                                     </div>
                                 </td>
                             </tr>
