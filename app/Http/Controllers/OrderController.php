@@ -53,6 +53,28 @@ use Illuminate\Support\Facades\Log;
 
 class OrderController extends Controller
 {
+    private function nextCommandNumber(int $branchId): int
+    {
+        DB::table('command_counters')->insertOrIgnore([
+            'branch_id' => $branchId,
+            'last_number' => 0,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $counter = DB::table('command_counters')
+            ->where('branch_id', $branchId)
+            ->lockForUpdate()
+            ->first();
+
+        $next = ((int) ($counter->last_number ?? 0)) + 1;
+        DB::table('command_counters')
+            ->where('branch_id', $branchId)
+            ->update(['last_number' => $next, 'updated_at' => now()]);
+
+        return $next;
+    }
+
     private function receiptPrinterForBranch(?int $branchId): ?PrinterBranch
     {
         if (! $branchId) return null;
@@ -2540,6 +2562,12 @@ class OrderController extends Controller
 
             app(KardexSyncService::class)->syncMovement($movement);
 
+            // Un solo correlativo por cada envío a cocina, compartido por todas
+            // las impresoras que reciben partes de la misma comanda.
+            $commandNumber = $request->boolean('has_kitchen_output')
+                ? $this->nextCommandNumber((int) $branchId)
+                : null;
+
             DB::commit();
 
             if ($request->expectsJson()) {
@@ -2548,6 +2576,7 @@ class OrderController extends Controller
                     'message' => 'Pedido guardado correctamente',
                     'movement_id' => $movement->id,
                     'order_movement_id' => $orderMovement->id,
+                    'command_number' => $commandNumber,
                     'client_person_id' => $clientPerson?->id,
                     'client_name' => $clientName,
                 ]);

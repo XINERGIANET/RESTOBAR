@@ -1876,7 +1876,8 @@
                                 'Content-Type': 'application/json',
                                 'X-CSRF-TOKEN': csrf
                             },
-                            body: JSON.stringify({ printer_name: printerName, ticket_text: ticketText })
+                            body: JSON.stringify({ printer_name: printerName, ticket_text: ticketText }),
+                            keepalive: true
                         });
                         if (!response.ok) {
                             const result = await response.json().catch(() => ({}));
@@ -2900,10 +2901,10 @@
                             const COL_PRICE = paperWidth === 80 ? 10 : 9;
                             const COL_NAME = LINE_WIDTH - COL_QTY - COL_PRICE;
                             const separator = '='.repeat(LINE_WIDTH) + '\n';
-                            const orderNumber = String(table?.order_movement_number ?? '').trim();
-                            const orderDate = String(table?.order_movement_date ?? '').trim();
-                            const comandaLabel = [`COMANDA: ${table?.order_movement_id}`, orderNumber].filter(Boolean).join(
-                                ': ');
+                            const commandNumber = Number.parseInt(table?.command_number, 10);
+                            const comandaLabel = Number.isFinite(commandNumber) && commandNumber > 0
+                                ? 'COMANDA N° ' + String(commandNumber).padStart(6, '0')
+                                : 'COMANDA: ' + (table?.order_movement_id ?? '-');
                             const comandaSub = String(pname || '').trim() || 'COCINA';
                             const clientLabel = String(table?.clientName || table?.client || '').trim();
                             const header = padCenter(comandaLabel, LINE_WIDTH) + '\n' +
@@ -2975,11 +2976,9 @@
                                     try {
                                         await qzApi.printers.find(pname);
                                         await printTicketWithQz(qzApi, pname, data);
-                                        try {
-                                            await recordKitchenQzPrint(pname, data);
-                                        } catch (historyError) {
+                                        recordKitchenQzPrint(pname, data).catch((historyError) => {
                                             console.warn('La comanda se imprimió, pero no se pudo registrar en el historial.', historyError);
-                                        }
+                                        });
                                     } catch (notFoundErr) {
                                         const msg = 'QZ no encontró la impresora "' + pname +
                                             '". Se intentará impresión por servidor.';
@@ -4833,6 +4832,8 @@
                             if (!it.commandTime) it.commandTime = timeString;
                         });
                         const kitchenDeltaItems = getKitchenDeltaItems(items, timeString);
+                        const hasKitchenOutput = kitchenDeltaItems.length > 0 || (currentTable.cancellations || [])
+                            .length > 0;
 
                         const totals = calculateTotalsFromItems(items);
                         const subtotal = totals.subtotal;
@@ -4860,6 +4861,7 @@
                             service_type: currentTable.service_type ?? 'IN_SITU',
                             order_movement_id: currentTable.order_movement_id ?? null,
                             cancellations: currentTable.cancellations || [],
+                            has_kitchen_output: hasKitchenOutput,
                         };
                         fetch('{{ route('orders.process') }}', {
                                 method: 'POST',
@@ -4888,11 +4890,11 @@
                                     currentTable.order_movement_id = data.order_movement_id ?? currentTable
                                         .order_movement_id ?? null;
                                     currentTable.movement_id = data.movement_id ?? currentTable.movement_id ?? null;
+                                    currentTable.command_number = data.command_number ?? currentTable.command_number ??
+                                        null;
                                     currentTable.person_id = data.client_person_id ?? currentTable.person_id ??
                                     null;
                                     currentTable.clientName = data.client_name ?? currentTable.clientName ?? '';
-                                    const hasKitchenOutput = kitchenDeltaItems.length > 0 || (currentTable
-                                        .cancellations || []).length > 0;
                                     let kitchenPrintedOk = true;
                                     try {
                                         if (hasKitchenOutput) {
@@ -4902,6 +4904,16 @@
                                     } catch (pzErr) {
                                         console.error('QZ Tray:', pzErr);
                                         kitchenPrintedOk = false;
+                                    }
+                                    // La impresión ya fue despachada. Cerrar inmediatamente el modal;
+                                    // mantenemos los botones bloqueados hasta completar la navegación.
+                                    if (typeof window.hideLoadingModal === 'function') {
+                                        window.hideLoadingModal();
+                                    }
+                                    if (mobileSendButton) {
+                                        mobileSendButton.classList.remove('cursor-wait');
+                                        mobileSendButton.innerHTML =
+                                            '<i class="ri-check-line text-lg"></i><span>Enviado</span>';
                                     }
                                     markCurrentItemsAsCommanded(timeString);
                                     // Limpiar cancelaciones ya persistidas
