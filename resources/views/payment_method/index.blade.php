@@ -68,15 +68,18 @@
         return '#FFFFFF';
     };
 
-    $isCreateOp = fn ($operation) => str_contains($operation->action ?? '', 'payment_methods.create')
-        || str_contains($operation->action ?? '', 'payment.methods.create')
-        || str_contains($operation->action ?? '', 'payment_methods.store')
-        || str_contains($operation->action ?? '', 'payment.methods.store')
-        || str_contains($operation->action ?? '', 'open-create-payment-method-modal');
-    $isEditOp = fn ($operation) => str_contains($operation->action ?? '', 'payment_methods.edit')
-        || str_contains($operation->action ?? '', 'payment.methods.edit')
-        || str_contains($operation->action ?? '', 'payment_methods.update')
-        || str_contains($operation->action ?? '', 'payment.methods.update');
+    $isCreateOp = function ($operation) {
+        $action = mb_strtolower((string) ($operation->action ?? ''));
+
+        return str_contains($action, 'create')
+            || str_contains($action, 'store')
+            || str_contains($action, 'open-create-payment-method-modal');
+    };
+    $isEditOp = function ($operation) {
+        $action = mb_strtolower((string) ($operation->action ?? ''));
+
+        return str_contains($action, 'edit') || str_contains($action, 'update');
+    };
 @endphp
 <x-common.page-breadcrumb pageTitle="{{ 'Métodos de pago' }}" />
 <x-common.component-card title="Listado de métodos de pago" desc="Gestiona los métodos de pago registrados en el sistema.">
@@ -305,4 +308,3 @@
 
 @include('payment_method.edit')
 @endsection
-
