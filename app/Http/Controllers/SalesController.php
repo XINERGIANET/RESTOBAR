@@ -3187,10 +3187,11 @@ class SalesController extends Controller
 
         $printerWidthMm = (int) ($printer?->width ?? 58);
         $lineWidth = $printerWidthMm >= 80 ? 48 : 32;
-        $documentName = mb_strtolower((string) ($sale->documentType?->name ?? ''), 'UTF-8');
-        $showUnitColumn = str_contains($documentName, 'boleta') || str_contains($documentName, 'factura');
+        // La unidad de medida se imprime en todos los comprobantes. No se
+        // condiciona al nombre porque algunas instalaciones usan abreviaturas.
+        $showUnitColumn = true;
         $colQty = $printerWidthMm >= 80 ? 5 : 4;
-        $colMeasure = $showUnitColumn ? ($printerWidthMm >= 80 ? 7 : 4) : 0;
+        $colMeasure = $showUnitColumn ? ($printerWidthMm >= 80 ? 10 : 4) : 0;
         $colPrice = $printerWidthMm >= 80 ? 9 : 7;
         $colAmount = $printerWidthMm >= 80 ? 9 : 7;
         $colGap = 2;
@@ -3263,7 +3264,7 @@ class SalesController extends Controller
         $lines[] = $this->thermalPadEnd('Cant.', $colQty)
             .str_repeat(' ', $colGap)
             .$this->thermalPadEnd('Descr.', $colName)
-            .($showUnitColumn ? $this->thermalPadEnd('Unidad', $colMeasure) : '')
+            .($showUnitColumn ? $this->thermalPadEnd($printerWidthMm >= 80 ? 'Unidad(es)' : 'Und.', $colMeasure) : '')
             .$this->thermalPadStart('P.Unit.', $colPrice)
             .$this->thermalPadStart('Subt.', $colAmount);
         $lines[] = $sep;

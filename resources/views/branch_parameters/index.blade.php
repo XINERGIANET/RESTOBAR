@@ -98,7 +98,7 @@
                 </div>
             @endif
 
-            <form action="{{ route('branch-parameter.store') }}" method="POST" class="mt-2">
+            <form action="{{ route('branch-parameter.store') }}" method="POST" enctype="multipart/form-data" class="mt-2">
                 @csrf
                 <input type="hidden" name="branch_payment_methods_include" value="1">
 
@@ -139,6 +139,8 @@
                                             $isIgvDefecto = strcasecmp($desc, 'igv_defecto') === 0;
                                             $isReceiptPrinterParam = str_contains($descLower, 'impresora') &&
                                                 (str_contains($descLower, 'comprobante') || str_contains($descLower, 'precuenta'));
+                                            $isQzCertificateParam = str_contains($descLower, 'certificado digital') && str_contains($descLower, 'qz');
+                                            $isQzPrivateKeyParam = str_contains($descLower, 'clave privada') && str_contains($descLower, 'qz');
                                             // Por descripción (evita confundir con ids de contraseñas si "METODOS DE PAGO" tiene mal el id)
                                             $isMetodosPagoParam = str_contains($descLower, 'metodo') && str_contains($descLower, 'pago');
                                             // Solo por descripción para evitar confundir parámetros mal rotulados en producción.
@@ -163,7 +165,22 @@
                                             $isIgvParam = $isIgvDefecto ||
                                                 (str_contains($descLower, 'igv') && str_contains($descLower, 'defecto'));
                                         @endphp
-                                        @if($isReceiptPrinterParam)
+                                        @if($isQzCertificateParam || $isQzPrivateKeyParam)
+                                            @php
+                                                $qzConfigured = !empty(trim((string) ($parameter->branch_value ?? '')));
+                                                $qzInputName = $isQzCertificateParam ? 'qz_certificate_file' : 'qz_private_key_file';
+                                                $qzAccept = $isQzCertificateParam ? '.txt,.pem,.crt,.cer' : '.txt,.pem,.key';
+                                            @endphp
+                                            <div class="space-y-3">
+                                                <div class="flex items-center gap-2 text-xs font-semibold {{ $qzConfigured ? 'text-emerald-600' : 'text-amber-600' }}">
+                                                    <i class="{{ $qzConfigured ? 'ri-checkbox-circle-line' : 'ri-alert-line' }}"></i>
+                                                    <span>{{ $qzConfigured ? 'Archivo configurado para esta sucursal' : 'Archivo pendiente de cargar' }}</span>
+                                                </div>
+                                                <input type="file" name="{{ $qzInputName }}" accept="{{ $qzAccept }}"
+                                                    class="block w-full rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-700 file:mr-3 file:rounded-md file:border-0 file:bg-[#124731] file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-white dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200">
+                                                <p class="text-xs text-gray-500">Por seguridad el contenido no se muestra. Para reemplazarlo, cargue ambos archivos QZ y guarde.</p>
+                                            </div>
+                                        @elseif($isReceiptPrinterParam)
                                             <select name="parameters[{{ $paramKey }}]"
                                                     class="w-full border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 px-3 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-colors shadow-sm">
                                                 <option value="">Seleccionar impresora...</option>
