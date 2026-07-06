@@ -43,6 +43,8 @@
                     'categories' => $categories ?? collect(),
                     'units' => $units ?? collect(),
                     'printers' => $printers ?? collect(),
+                    'promotionComponentProducts' => $promotionComponentProducts ?? [],
+                    'promotionGroupsInitial' => $promotionGroupsInitial ?? [],
                 ])
 
                 <div class="flex flex-wrap gap-3">

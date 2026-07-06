@@ -4,8 +4,8 @@ namespace App\Services;
 
 use App\Models\Kardex;
 use App\Models\Movement;
+use App\Models\Product;
 use App\Models\ProductBranch;
-use App\Models\Recipe;
 
 class KardexSyncService
 {
@@ -25,89 +25,19 @@ class KardexSyncService
         $productBranchPairs = [];
 
         if ($movement->orderMovement && in_array((string) ($movement->orderMovement->status ?? ''), ['PENDIENTE', 'P', 'FINALIZADO', 'F'], true)) {
-            $detailProductIds = $movement->orderMovement->details
-                ->map(fn ($detail) => (int) ($detail->product_id ?? 0))
-                ->filter(fn ($productId) => $productId > 0)
-                ->unique()
-                ->values()
-                ->all();
-
-            $recipesByProductId = $this->recipesByProductForBranch($detailProductIds, (int) $movement->branch_id);
-
             foreach ($movement->orderMovement->details as $detail) {
                 if ((string) ($detail->status ?? 'A') === 'C') {
                     continue;
                 }
 
-                $productId = (int) ($detail->product_id ?? 0);
-                $quantity = (float) ($detail->quantity ?? 0);
-                $unitId = (int) ($detail->unit_id ?? 0);
-
-                if ($productId <= 0 || $unitId <= 0 || $quantity <= 0) {
-                    continue;
-                }
-
-                $recipe = $recipesByProductId[$productId] ?? null;
-
-                // Si hay receta activa para el producto en esta sucursal, descontar ingredientes (no el producto final)
-                // para evitar doble conteo y mantener el stock basado en insumos.
-                if ($recipe && (float) ($recipe->yield_quantity ?? 0) > 0) {
-                    $yield = (float) $recipe->yield_quantity;
-                    foreach ($recipe->ingredients as $ingredient) {
-                        $ingredientProductId = (int) ($ingredient->product_id ?? 0);
-                        $ingredientUnitId = (int) ($ingredient->unit_id ?? 0);
-                        $ingredientQty = (float) ($ingredient->quantity ?? 0);
-
-                        if ($ingredientProductId <= 0 || $ingredientUnitId <= 0 || $ingredientQty <= 0) {
-                            continue;
-                        }
-
-                        $rawConsumption = ($ingredientQty / $yield) * $quantity;
-                        $consumption = $this->roundUpToQuarter($rawConsumption);
-                        if ($consumption <= 0) {
-                            continue;
-                        }
-
-                        $qtySigned = -$consumption;
-                        $this->createEntry($movement, [
-                            'detalle_id' => $detail->id,
-                            'producto_id' => $ingredientProductId,
-                            'unidad_id' => $ingredientUnitId,
-                            'cantidad' => $qtySigned,
-                            'preciounitario' => 0,
-                            'moneda' => (string) ($movement->orderMovement->currency ?? 'PEN'),
-                            'tipocambio' => (float) ($movement->orderMovement->exchange_rate ?? 1),
-                            'total' => 0,
-                        ]);
-
-                        $productBranchPairs[$this->pairKey($ingredientProductId, (int) $movement->branch_id)] = [
-                            'producto_id' => $ingredientProductId,
-                            'sucursal_id' => (int) $movement->branch_id,
-                        ];
-                    }
-
-                    continue;
-                }
-
-                // Sin receta: mantener el flujo actual (descontar el producto vendido)
-                $unitPrice = $quantity > 0 ? ((float) ($detail->amount ?? 0) / $quantity) : 0;
-                $qtySigned = -$quantity;
-
-                $this->createEntry($movement, [
-                    'detalle_id' => $detail->id,
-                    'producto_id' => $productId,
-                    'unidad_id' => $unitId,
-                    'cantidad' => $qtySigned,
-                    'preciounitario' => $unitPrice,
-                    'moneda' => (string) ($movement->orderMovement->currency ?? 'PEN'),
-                    'tipocambio' => (float) ($movement->orderMovement->exchange_rate ?? 1),
-                    'total' => $qtySigned * $unitPrice,
-                ]);
-
-                $productBranchPairs[$this->pairKey($productId, (int) $movement->branch_id)] = [
-                    'producto_id' => $productId,
-                    'sucursal_id' => (int) $movement->branch_id,
-                ];
+                $this->appendExpandedKardexEntries(
+                    $movement,
+                    $detail,
+                    (int) $movement->branch_id,
+                    (string) ($movement->orderMovement->currency ?? 'PEN'),
+                    (float) ($movement->orderMovement->exchange_rate ?? 1),
+                    $productBranchPairs
+                );
             }
 
             $this->rebuildStocksForPairs($productBranchPairs);
@@ -116,82 +46,15 @@ class KardexSyncService
         }
 
         if ($movement->salesMovement && $movement->status === 'A') {
-            $detailProductIds = $movement->salesMovement->details
-                ->map(fn ($detail) => (int) ($detail->product_id ?? 0))
-                ->filter(fn ($productId) => $productId > 0)
-                ->unique()
-                ->values()
-                ->all();
-
-            $recipesByProductId = $this->recipesByProductForBranch($detailProductIds, (int) $movement->branch_id);
-
             foreach ($movement->salesMovement->details as $detail) {
-                $productId = (int) ($detail->product_id ?? 0);
-                $quantity = (float) ($detail->quantity ?? 0);
-                $unitId = (int) ($detail->unit_id ?? 0);
-
-                if ($productId <= 0 || $unitId <= 0 || $quantity <= 0) {
-                    continue;
-                }
-
-                $recipe = $recipesByProductId[$productId] ?? null;
-
-                if ($recipe && (float) ($recipe->yield_quantity ?? 0) > 0) {
-                    $yield = (float) $recipe->yield_quantity;
-                    foreach ($recipe->ingredients as $ingredient) {
-                        $ingredientProductId = (int) ($ingredient->product_id ?? 0);
-                        $ingredientUnitId = (int) ($ingredient->unit_id ?? 0);
-                        $ingredientQty = (float) ($ingredient->quantity ?? 0);
-
-                        if ($ingredientProductId <= 0 || $ingredientUnitId <= 0 || $ingredientQty <= 0) {
-                            continue;
-                        }
-
-                        $rawConsumption = ($ingredientQty / $yield) * $quantity;
-                        $consumption = $this->roundUpToQuarter($rawConsumption);
-                        if ($consumption <= 0) {
-                            continue;
-                        }
-
-                        $qtySigned = -$consumption;
-                        $this->createEntry($movement, [
-                            'detalle_id' => $detail->id,
-                            'producto_id' => $ingredientProductId,
-                            'unidad_id' => $ingredientUnitId,
-                            'cantidad' => $qtySigned,
-                            'preciounitario' => 0,
-                            'moneda' => (string) ($movement->salesMovement->currency ?? 'PEN'),
-                            'tipocambio' => (float) ($movement->salesMovement->exchange_rate ?? 1),
-                            'total' => 0,
-                        ]);
-
-                        $productBranchPairs[$this->pairKey($ingredientProductId, (int) $movement->branch_id)] = [
-                            'producto_id' => $ingredientProductId,
-                            'sucursal_id' => (int) $movement->branch_id,
-                        ];
-                    }
-
-                    continue;
-                }
-
-                $unitPrice = $quantity > 0 ? ((float) ($detail->amount ?? 0) / $quantity) : 0;
-                $qtySigned = -$quantity;
-
-                $this->createEntry($movement, [
-                    'detalle_id' => $detail->id,
-                    'producto_id' => $productId,
-                    'unidad_id' => $unitId,
-                    'cantidad' => $qtySigned,
-                    'preciounitario' => $unitPrice,
-                    'moneda' => (string) ($movement->salesMovement->currency ?? 'PEN'),
-                    'tipocambio' => (float) ($movement->salesMovement->exchange_rate ?? 1),
-                    'total' => $qtySigned * $unitPrice,
-                ]);
-
-                $productBranchPairs[$this->pairKey($productId, (int) $movement->branch_id)] = [
-                    'producto_id' => $productId,
-                    'sucursal_id' => (int) $movement->branch_id,
-                ];
+                $this->appendExpandedKardexEntries(
+                    $movement,
+                    $detail,
+                    (int) $movement->branch_id,
+                    (string) ($movement->salesMovement->currency ?? 'PEN'),
+                    (float) ($movement->salesMovement->exchange_rate ?? 1),
+                    $productBranchPairs
+                );
             }
 
             $this->rebuildStocksForPairs($productBranchPairs);
@@ -322,6 +185,62 @@ class KardexSyncService
         ]);
     }
 
+    private function appendExpandedKardexEntries(
+        Movement $movement,
+        object $detail,
+        int $branchId,
+        string $currency,
+        float $exchangeRate,
+        array &$productBranchPairs
+    ): void {
+        $productId = (int) ($detail->product_id ?? 0);
+        $quantity = (float) ($detail->quantity ?? 0);
+        $unitId = (int) ($detail->unit_id ?? 0);
+
+        if ($productId <= 0 || $unitId <= 0 || $quantity <= 0) {
+            return;
+        }
+
+        $expandedRows = app(ProductCompositionService::class)->expandDetailToStockMap($branchId, $detail);
+        if (empty($expandedRows)) {
+            return;
+        }
+
+        $isDirectProductOnly = count($expandedRows) === 1
+            && (int) data_get(array_values($expandedRows)[0], 'product_id', 0) === $productId
+            && ! (bool) data_get(array_values($expandedRows)[0], 'strict', false);
+
+        $unitPrice = $quantity > 0 ? ((float) ($detail->amount ?? 0) / $quantity) : 0;
+
+        foreach ($expandedRows as $row) {
+            $targetProductId = (int) ($row['product_id'] ?? 0);
+            $targetQty = (float) ($row['quantity'] ?? 0);
+            if ($targetProductId <= 0 || $targetQty <= 0) {
+                continue;
+            }
+
+            $targetUnitId = (int) (Product::query()->where('id', $targetProductId)->value('base_unit_id') ?? $unitId);
+            $qtySigned = -$targetQty;
+            $rowUnitPrice = $isDirectProductOnly ? $unitPrice : 0;
+
+            $this->createEntry($movement, [
+                'detalle_id' => $detail->id,
+                'producto_id' => $targetProductId,
+                'unidad_id' => $targetUnitId,
+                'cantidad' => $qtySigned,
+                'preciounitario' => $rowUnitPrice,
+                'moneda' => $currency,
+                'tipocambio' => $exchangeRate,
+                'total' => $qtySigned * $rowUnitPrice,
+            ]);
+
+            $productBranchPairs[$this->pairKey($targetProductId, $branchId)] = [
+                'producto_id' => $targetProductId,
+                'sucursal_id' => $branchId,
+            ];
+        }
+    }
+
     private function resolveWarehouseSign(Movement $movement): int
     {
         $docName = strtolower((string) ($movement->documentType?->name ?? ''));
@@ -386,38 +305,4 @@ class KardexSyncService
         return $productId . ':' . $branchId;
     }
 
-    /**
-     * Resuelve recetas activas por producto para una sucursal.
-     *
-     * @return array<int, \App\Models\Recipe>
-     */
-    private function recipesByProductForBranch(array $productIds, int $branchId): array
-    {
-        $productIds = array_values(array_unique(array_filter(array_map('intval', $productIds), fn ($id) => $id > 0)));
-        if (empty($productIds) || $branchId <= 0) {
-            return [];
-        }
-
-        return Recipe::query()
-            ->where('branch_id', $branchId)
-            ->where('status', 'A')
-            ->whereIn('product_id', $productIds)
-            ->with(['ingredients'])
-            ->get()
-            ->keyBy('product_id')
-            ->all();
-    }
-
-    private function roundUpToQuarter(float $qty): float
-    {
-        if ($qty <= 0) {
-            return 0;
-        }
-
-        // Regla operativa: consumir en incrementos de 1/4 (0.25) y redondear hacia arriba
-        // para evitar que el inventario quede "inflado" por subconsumos.
-        $rounded = ceil($qty * 4) / 4;
-
-        return round($rounded, 6);
-    }
 }

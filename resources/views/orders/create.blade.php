@@ -1469,6 +1469,217 @@
 
                     // Stock de ingredientes por producto con receta activa: { "productId": { yield_quantity, ingredients[] } }
                     const recipeStockData = @json($recipeStockData ?? []);
+                    const promotionCatalog = @json($promotionCatalog ?? []);
+                    const recipeIngredientStockByProductId = (() => {
+                        const out = {};
+                        Object.values(recipeStockData || {}).forEach((recipe) => {
+                            (Array.isArray(recipe?.ingredients) ? recipe.ingredients : []).forEach((ingredient) => {
+                                const productId = parseInt(ingredient?.product_id, 10) || 0;
+                                if (!productId || out[String(productId)]) return;
+                                out[String(productId)] = {
+                                    product_id: productId,
+                                    name: String(ingredient?.name || 'Ingrediente').trim(),
+                                    stock: parseFloat(ingredient?.stock ?? 0) || 0,
+                                };
+                            });
+                        });
+                        return out;
+                    })();
+
+                    function getPromotionDefinition(productId) {
+                        return promotionCatalog[String(productId)] || null;
+                    }
+
+                    function normalizePromotionSelectionForProduct(productId, selection) {
+                        const definition = getPromotionDefinition(productId);
+                        if (!definition) return [];
+
+                        const sourceRows = Array.isArray(selection) ? selection : [];
+                        const rowsByGroup = {};
+                        sourceRows.forEach((row) => {
+                            const groupId = parseInt(row?.group_id, 10) || 0;
+                            const itemProductId = parseInt(row?.product_id, 10) || 0;
+                            const quantity = Math.max(0, parseFloat(row?.quantity) || 0);
+                            if (!groupId || !itemProductId || quantity <= 0) return;
+                            if (!Array.isArray(rowsByGroup[groupId])) rowsByGroup[groupId] = [];
+                            rowsByGroup[groupId].push({ group_id: groupId, product_id: itemProductId, quantity });
+                        });
+
+                        const normalized = [];
+                        (Array.isArray(definition.groups) ? definition.groups : []).forEach((group) => {
+                            const groupId = parseInt(group?.id, 10) || 0;
+                            const requiredQty = Math.max(0, parseFloat(group?.required_quantity) || 0);
+                            const allowed = new Set((Array.isArray(group?.items) ? group.items : []).map((item) => Number(item?.product_id || 0)).filter(Boolean));
+                            let groupRows = Array.isArray(rowsByGroup[groupId]) ? rowsByGroup[groupId].filter((row) => allowed.has(Number(row.product_id))) : [];
+                            if (!groupRows.length) {
+                                groupRows = (Array.isArray(group?.default_selection) ? group.default_selection : []).map((row) => ({
+                                    group_id: parseInt(row?.group_id, 10) || groupId,
+                                    product_id: parseInt(row?.product_id, 10) || 0,
+                                    quantity: Math.max(0, parseFloat(row?.quantity) || 0),
+                                })).filter((row) => row.product_id > 0 && row.quantity > 0);
+                            }
+                            const total = groupRows.reduce((sum, row) => sum + (parseFloat(row.quantity) || 0), 0);
+                            if (requiredQty > 0 && Math.abs(total - requiredQty) > 0.000001) {
+                                groupRows = (Array.isArray(group?.default_selection) ? group.default_selection : []).map((row) => ({
+                                    group_id: parseInt(row?.group_id, 10) || groupId,
+                                    product_id: parseInt(row?.product_id, 10) || 0,
+                                    quantity: Math.max(0, parseFloat(row?.quantity) || 0),
+                                })).filter((row) => row.product_id > 0 && row.quantity > 0);
+                            }
+                            groupRows.forEach((row) => normalized.push(row));
+                        });
+
+                        return normalized;
+                    }
+
+                    function getPromotionSelectionSignature(selection) {
+                        return JSON.stringify((Array.isArray(selection) ? selection : []).map((row) => ({
+                            group_id: parseInt(row?.group_id, 10) || 0,
+                            product_id: parseInt(row?.product_id, 10) || 0,
+                            quantity: Math.round((parseFloat(row?.quantity) || 0) * 1000000) / 1000000,
+                        })).sort((a, b) => (a.group_id - b.group_id) || (a.product_id - b.product_id) || (a.quantity - b.quantity)));
+                    }
+
+                    function getItemPromotionSelection(item) {
+                        const productId = parseInt(item?.pId ?? item?.product_id, 10) || 0;
+                        return normalizePromotionSelectionForProduct(productId, item?.promotionSelection || item?.promotion_selection || []);
+                    }
+
+                    function productNameById(productId) {
+                        const serverProd = (serverProducts || []).find((item) => Number(item.id) === Number(productId));
+                        if (serverProd?.name) return String(serverProd.name).trim();
+                        const ingredient = recipeIngredientStockByProductId[String(productId)];
+                        if (ingredient?.name) return String(ingredient.name).trim();
+                        return 'Producto';
+                    }
+
+                    function branchStockForProductId(productId) {
+                        const productBranch = findProductBranchByProductId(productId);
+                        if (productBranch) {
+                            return parseFloat(productBranch.stock ?? 0) || 0;
+                        }
+                        return parseFloat(recipeIngredientStockByProductId[String(productId)]?.stock ?? 0) || 0;
+                    }
+
+                    function mergeStockRequirementMaps(base, extra) {
+                        const out = { ...(base || {}) };
+                        Object.values(extra || {}).forEach((row) => {
+                            const productId = parseInt(row?.product_id, 10) || 0;
+                            if (!productId) return;
+                            const key = String(productId);
+                            if (!out[key]) {
+                                out[key] = {
+                                    product_id: productId,
+                                    quantity: 0,
+                                    strict: !!row?.strict,
+                                    name: row?.name || productNameById(productId),
+                                };
+                            }
+                            out[key].quantity += parseFloat(row?.quantity ?? 0) || 0;
+                            out[key].strict = !!out[key].strict || !!row?.strict;
+                        });
+                        return out;
+                    }
+
+                    function buildStockRequirementsForProduct(productId, quantity, promotionSelection = []) {
+                        const qty = Math.max(0, parseFloat(quantity) || 0);
+                        const prodId = parseInt(productId, 10) || 0;
+                        if (!prodId || qty <= 0) return {};
+
+                        const promotion = getPromotionDefinition(prodId);
+                        if (promotion) {
+                            let map = {};
+                            const normalizedSelection = normalizePromotionSelectionForProduct(prodId, promotionSelection);
+                            normalizedSelection.forEach((row) => {
+                                const componentQty = qty * (parseFloat(row?.quantity) || 0);
+                                map = mergeStockRequirementMaps(map, buildStockRequirementsForProduct(row?.product_id, componentQty, []));
+                            });
+                            return map;
+                        }
+
+                        const recipe = recipeStockData[String(prodId)];
+                        if (recipe && Array.isArray(recipe.ingredients) && recipe.ingredients.length > 0) {
+                            const yieldQty = parseFloat(recipe?.yield_quantity) || 1;
+                            let map = {};
+                            recipe.ingredients.forEach((ingredient) => {
+                                const ingredientProductId = parseInt(ingredient?.product_id, 10) || 0;
+                                const ingredientQty = parseFloat(ingredient?.quantity) || 0;
+                                if (!ingredientProductId || ingredientQty <= 0 || yieldQty <= 0) return;
+                                const rawConsumption = (ingredientQty / yieldQty) * qty;
+                                const rounded = rawConsumption <= 0 ? 0 : Math.round((Math.ceil(rawConsumption * 4) / 4) * 1000000) / 1000000;
+                                if (rounded <= 0) return;
+                                map = mergeStockRequirementMaps(map, {
+                                    [String(ingredientProductId)]: {
+                                        product_id: ingredientProductId,
+                                        quantity: rounded,
+                                        strict: true,
+                                        name: ingredient?.name || productNameById(ingredientProductId),
+                                    }
+                                });
+                            });
+                            return map;
+                        }
+
+                        return {
+                            [String(prodId)]: {
+                                product_id: prodId,
+                                quantity: qty,
+                                strict: false,
+                                name: productNameById(prodId),
+                            }
+                        };
+                    }
+
+                    function buildCartStockRequirementMap(excludeIndex = null, overrideItem = null) {
+                        let map = {};
+                        (currentTable?.items || []).forEach((item, index) => {
+                            if (excludeIndex !== null && index === excludeIndex) return;
+                            const productId = parseInt(item?.pId ?? item?.product_id, 10) || 0;
+                            const qty = getItemVirtualPendingQty(item);
+                            if (!productId || qty <= 0) return;
+                            map = mergeStockRequirementMaps(map, buildStockRequirementsForProduct(productId, qty, getItemPromotionSelection(item)));
+                        });
+                        if (overrideItem) {
+                            const productId = parseInt(overrideItem?.pId ?? overrideItem?.product_id, 10) || 0;
+                            const qty = getItemVirtualPendingQty(overrideItem);
+                            if (productId && qty > 0) {
+                                map = mergeStockRequirementMaps(map, buildStockRequirementsForProduct(productId, qty, getItemPromotionSelection(overrideItem)));
+                            }
+                        }
+                        return map;
+                    }
+
+                    function validateRequirementMap(requirementMap) {
+                        const issues = [];
+                        Object.values(requirementMap || {}).forEach((row) => {
+                            const productId = parseInt(row?.product_id, 10) || 0;
+                            if (!productId) return;
+                            const needed = parseFloat(row?.quantity) || 0;
+                            const stock = branchStockForProductId(productId);
+                            if (needed > stock + 0.000001) {
+                                issues.push({
+                                    product_id: productId,
+                                    name: row?.name || productNameById(productId),
+                                    needed,
+                                    stock,
+                                    strict: !!row?.strict,
+                                });
+                            }
+                        });
+                        return issues;
+                    }
+
+                    function ensureCartStockForCandidate(overrideItem, excludeIndex = null) {
+                        const issues = validateRequirementMap(buildCartStockRequirementMap(excludeIndex, overrideItem));
+                        if (!issues.length) return true;
+                        const issue = issues[0];
+                        showNotification(
+                            issue.strict ? 'Stock insuficiente (insumo)' : 'Stock insuficiente',
+                            `${issue.name}: disponible ${issue.stock.toFixed(2)}, requerido ${issue.needed.toFixed(2)}.`,
+                            'warning'
+                        );
+                        return false;
+                    }
 
                     /**
                      * Para un producto con receta, calcula el máximo de unidades vendibles
@@ -1629,16 +1840,24 @@
 
                     function getItemGroupingKey(item) {
                         const productId = parseInt(item?.pId ?? item?.product_id, 10) || 0;
+                        const promotionSignature = getPromotionSelectionSignature(getItemPromotionSelection(item));
                         return [
                             productId,
                             getComplementSignature(item?.complements),
-                            String(item?.note || '').trim()
+                            String(item?.note || '').trim(),
+                            promotionSignature,
                         ].join('::');
                     }
 
                     function formatComplementsLabel(list) {
                         const normalized = normalizeComplements(list);
                         return normalized.length ? normalized.join(', ') : '';
+                    }
+
+                    function formatPromotionSelectionLabel(item) {
+                        const rows = getItemPromotionSelection(item);
+                        if (!rows.length) return '';
+                        return rows.map((row) => `${parseFloat(row.quantity) || 0} x ${productNameById(row.product_id)}`).join(', ');
                     }
 
                     function getCurrentProductQtyInCart(productId, excludeIndex = null) {
@@ -1732,6 +1951,85 @@
                         });
 
                         return result.isConfirmed ? result.value : null;
+                    }
+
+                    async function promptPromotionSelection(prod, existingSelection = null) {
+                        const definition = getPromotionDefinition(prod?.id);
+                        if (!definition) return [];
+
+                        const baseSelection = normalizePromotionSelectionForProduct(prod.id, existingSelection || []);
+                        if (!definition?.allows_mix_and_match) {
+                            return baseSelection;
+                        }
+                        if (!window.Swal) {
+                            return baseSelection;
+                        }
+
+                        const html = (Array.isArray(definition.groups) ? definition.groups : []).map((group) => {
+                            const groupId = parseInt(group?.id, 10) || 0;
+                            const requiredQty = Math.max(0, parseFloat(group?.required_quantity) || 0);
+                            const itemsHtml = (Array.isArray(group?.items) ? group.items : []).map((item) => {
+                                const productId = parseInt(item?.product_id, 10) || 0;
+                                const row = baseSelection.find((sel) => Number(sel.group_id) === groupId && Number(sel.product_id) === productId);
+                                const qty = row ? (parseFloat(row.quantity) || 0) : 0;
+                                return `
+                                    <div class="grid grid-cols-[minmax(0,1fr)_110px] gap-3 items-center py-1">
+                                        <div class="text-sm text-slate-700">${escapeHtml(item?.product_name || 'Producto')}</div>
+                                        <input type="number" min="0" step="0.01" value="${qty}"
+                                            data-promo-group="${groupId}" data-promo-product="${productId}"
+                                            class="swal2-input !mt-0 !mb-0 !h-10 !w-full !px-3 !py-2 !text-sm" />
+                                    </div>
+                                `;
+                            }).join('');
+
+                            return `
+                                <div class="mb-3 rounded-xl border border-slate-200 bg-slate-50 p-3 text-left">
+                                    <div class="mb-2 flex items-center justify-between gap-3">
+                                        <div class="font-semibold text-slate-800">${escapeHtml(group?.name || 'Grupo')}</div>
+                                        <div class="text-xs font-bold text-slate-500">Debe sumar ${requiredQty}</div>
+                                    </div>
+                                    <div class="space-y-1">${itemsHtml}</div>
+                                </div>
+                            `;
+                        }).join('');
+
+                        const result = await Swal.fire({
+                            title: prod?.name || 'Configurar promoción',
+                            html: `<div class="max-h-[60vh] overflow-y-auto pr-1">${html}</div>`,
+                            width: 720,
+                            showCancelButton: true,
+                            confirmButtonText: 'Aplicar',
+                            cancelButtonText: 'Cancelar',
+                            focusConfirm: false,
+                            preConfirm: () => {
+                                const out = [];
+                                let validationMessage = '';
+                                (Array.isArray(definition.groups) ? definition.groups : []).forEach((group) => {
+                                    const groupId = parseInt(group?.id, 10) || 0;
+                                    const requiredQty = Math.max(0, parseFloat(group?.required_quantity) || 0);
+                                    const inputs = Array.from(document.querySelectorAll(`[data-promo-group="${groupId}"]`));
+                                    let total = 0;
+                                    inputs.forEach((input) => {
+                                        const productId = parseInt(input.getAttribute('data-promo-product'), 10) || 0;
+                                        const qty = Math.max(0, parseFloat(input.value) || 0);
+                                        total += qty;
+                                        if (productId && qty > 0) {
+                                            out.push({ group_id: groupId, product_id: productId, quantity: qty });
+                                        }
+                                    });
+                                    if (Math.abs(total - requiredQty) > 0.000001 && !validationMessage) {
+                                        validationMessage = `El grupo "${group?.name || 'Grupo'}" debe sumar ${requiredQty}.`;
+                                    }
+                                });
+                                if (validationMessage) {
+                                    Swal.showValidationMessage(validationMessage);
+                                    return false;
+                                }
+                                return out;
+                            }
+                        });
+
+                        return result.isConfirmed ? (result.value || []) : null;
                     }
 
                     /** Nombre de impresora QZ (printers_branch) asignado al producto en esta sucursal (primera ticketera). */
@@ -2661,6 +2959,50 @@
                         }
                         const areaAllowedPrinterNames = resolveAreaAllowedPrinterNames(table?.area_id);
 
+                        function expandKitchenRowsForItem(item, isCanceled = false) {
+                            const sourceProductId = parseInt(item?.pId ?? item?.product_id, 10) || 0;
+                            const sourceQty = Math.max(0, parseFloat(item?.qty ?? item?.qtyCanceled ?? item?.quantity ?? 0) || 0);
+                            if (!sourceProductId || sourceQty <= 0) return [];
+
+                            const promotion = getPromotionDefinition(sourceProductId);
+                            if (!promotion) {
+                                return [{
+                                    pId: sourceProductId,
+                                    name: String(item?.name ?? item?.description ?? 'Producto').trim(),
+                                    qty: sourceQty,
+                                    price: parseFloat(item?.price ?? 0) || 0,
+                                    complements: normalizeComplements(item?.complements),
+                                    note: String(item?.note ?? '').trim(),
+                                    courtesyQty: parseFloat(item?.courtesyQty ?? 0) || 0,
+                                    takeawayQty: parseFloat(item?.takeawayQty ?? 0) || 0,
+                                    reason: isCanceled ? String(item?.cancel_reason ?? item?.reason ?? item?.comment ?? '').trim() : '',
+                                    promotion_parent_name: '',
+                                }];
+                            }
+
+                            const selection = normalizePromotionSelectionForProduct(sourceProductId, item?.promotionSelection || item?.promotion_selection || []);
+                            const parentName = String(item?.name ?? item?.description ?? promotion.product_name ?? 'Promoción').trim();
+
+                            return selection.map((row) => {
+                                const componentProductId = parseInt(row?.product_id, 10) || 0;
+                                const componentQty = Math.max(0, sourceQty * (parseFloat(row?.quantity) || 0));
+                                if (!componentProductId || componentQty <= 0) return null;
+
+                                return {
+                                    pId: componentProductId,
+                                    name: productNameById(componentProductId),
+                                    qty: componentQty,
+                                    price: parseFloat(item?.price ?? 0) || 0,
+                                    complements: normalizeComplements(item?.complements),
+                                    note: String(item?.note ?? '').trim(),
+                                    courtesyQty: 0,
+                                    takeawayQty: 0,
+                                    reason: isCanceled ? String(item?.cancel_reason ?? item?.reason ?? item?.comment ?? '').trim() : '',
+                                    promotion_parent_name: parentName,
+                                };
+                            }).filter(Boolean);
+                        }
+
                         function mergeKitchenBucketsSharedCanon(activeSrc, cancelSrc) {
                             const canon = Object.create(null);
                             const touch = (raw) => {
@@ -2765,6 +3107,60 @@
                         }
                         const byPrinter = mergePrinterBucketsByNameCase(mergedBuckets.byPrinter);
                         const canceledByPrinter = mergePrinterBucketsByNameCase(mergedBuckets.canceledByPrinter);
+
+                        activeItems.forEach((it) => {
+                            const promotion = getPromotionDefinition(parseInt(it?.pId, 10) || 0);
+                            if (!promotion) return;
+
+                            Object.keys(byPrinter).forEach((printerName) => {
+                                byPrinter[printerName] = (byPrinter[printerName] || []).filter((row) => row !== it);
+                            });
+
+                            expandKitchenRowsForItem(it, false).forEach((row) => {
+                                const pId = parseInt(row?.pId, 10) || 0;
+                                if (!pId) return;
+                                const pdefs = resolveQzPrinters(pId);
+                                const pnamesRaw = pdefs.length ? pdefs.map((p) => p.name) : resolveQzPrinterNames(pId);
+                                const assignedNames = dedupeKitchenPrinterNameList(pnamesRaw);
+                                const areaMatches = filterByAreaPrinters(assignedNames, areaAllowedPrinterNames);
+                                const pnames = areaMatches.length ? areaMatches : (assignedNames.length ? assignedNames : areaAllowedPrinterNames);
+                                pnames.forEach((printerName) => {
+                                    if (!byPrinter[printerName]) byPrinter[printerName] = [];
+                                    byPrinter[printerName].push(row);
+                                });
+                            });
+                        });
+
+                        mergedCancellations.forEach((cancelItem) => {
+                            const sourceProductId = parseInt(cancelItem?.pId ?? cancelItem?.product_id, 10) || 0;
+                            const promotion = getPromotionDefinition(sourceProductId);
+                            if (!promotion) return;
+                            const sourceQty = parseFloat(cancelItem?.qtyCanceled ?? cancelItem?.quantity ?? 0) || 0;
+                            const sourceReason = String(cancelItem?.cancel_reason ?? cancelItem?.comment ?? '').trim();
+
+                            Object.keys(canceledByPrinter).forEach((printerName) => {
+                                canceledByPrinter[printerName] = (canceledByPrinter[printerName] || []).filter((row) => {
+                                    const rowProductId = parseInt(row?.pId ?? row?.product_id, 10) || 0;
+                                    const rowQty = parseFloat(row?.qty ?? row?.quantity ?? 0) || 0;
+                                    const rowReason = String(row?.reason ?? '').trim();
+                                    return !(rowProductId === sourceProductId && Math.abs(rowQty - sourceQty) < 0.000001 && rowReason === sourceReason);
+                                });
+                            });
+
+                            expandKitchenRowsForItem(cancelItem, true).forEach((row) => {
+                                const pId = parseInt(row?.pId, 10) || 0;
+                                if (!pId) return;
+                                const pdefs = resolveQzPrinters(pId);
+                                const pnamesRaw = pdefs.length ? pdefs.map((p) => p.name) : resolveQzPrinterNames(pId);
+                                const assignedNames = dedupeKitchenPrinterNameList(pnamesRaw);
+                                const areaMatches = filterByAreaPrinters(assignedNames, areaAllowedPrinterNames);
+                                const pnames = areaMatches.length ? areaMatches : (assignedNames.length ? assignedNames : areaAllowedPrinterNames);
+                                pnames.forEach((printerName) => {
+                                    if (!canceledByPrinter[printerName]) canceledByPrinter[printerName] = [];
+                                    canceledByPrinter[printerName].push(row);
+                                });
+                            });
+                        });
                         let names = (function() {
                             const m = new Map();
                             [...Object.keys(byPrinter), ...Object.keys(canceledByPrinter)].forEach((k) => {
@@ -2932,6 +3328,9 @@
                                 const priceCol = !isNaN(unitK) && unitK >= 0 ? 'S/' + unitK.toFixed(2) : '-';
                                 body += padEnd(qtyCol, COL_QTY) + padEnd(nm, COL_NAME) + padStart(priceCol,
                                     COL_PRICE) + '\n';
+                                if (it.promotion_parent_name) {
+                                    body += 'Promo: ' + String(it.promotion_parent_name).trim() + '\n';
+                                }
                                 if (complementsText) {
                                     body += 'Detalle: ' + complementsText + '\n';
                                 }
@@ -2956,6 +3355,9 @@
                                     const complementsText = formatComplementsLabel(c?.complements);
                                     body += padEnd(qtyCol, COL_QTY) + padEnd('ANULADO ' + (c.name || 'Producto'),
                                         COL_NAME) + padStart('-', COL_PRICE) + '\n';
+                                    if (c.promotion_parent_name) {
+                                        body += 'Promo: ' + String(c.promotion_parent_name).trim() + '\n';
+                                    }
                                     if (complementsText) {
                                         body += 'Detalle: ' + complementsText + '\n';
                                     }
@@ -3297,6 +3699,14 @@
                     }
 
                     function buildProductStockLabel(prod, productBranch) {
+                        const promotion = getPromotionDefinition(prod?.id);
+                        if (promotion) {
+                            const mixLabel = promotion?.allows_mix_and_match ? 'Promo mix' : 'Promo';
+                            return {
+                                label: mixLabel,
+                                colorClass: 'text-blue-600 dark:text-blue-300',
+                            };
+                        }
                         const stockVal = Number(productBranch?.stock);
                         const stockText = !isNaN(stockVal) ? stockVal.toFixed(2) : '0.00';
                         const availability = getRecipeAvailability(prod?.id);
@@ -3520,6 +3930,7 @@
                         // Asegurar que el ID del producto sea un número entero para la comparación
                         const productId = parseInt(prod.id, 10);
                         const hasRecipe = !!recipeStockData[String(productId)];
+                        const isPromotion = !!getPromotionDefinition(productId);
                         if (isNaN(productId) || productId <= 0) {
 
                             showNotification('ID de producto inválido', 'El ID del producto es inválido.', 'error');
@@ -3538,30 +3949,45 @@
                         }
                         const selectedComplements = normalizeComplements(detailSelection.complements);
                         const qtyRequested = Math.max(1, parseInt(detailSelection.qty, 10) || 1);
+                        const promotionSelection = isPromotion ? await promptPromotionSelection(prod) : [];
+                        if (isPromotion && !promotionSelection) {
+                            return;
+                        }
 
                         // Buscar si el producto ya existe en el carrito con la misma configuración.
                         const existing = currentTable.items.find(i => {
                             const itemPId = parseInt(i.pId, 10);
                             return !isNaN(itemPId) && itemPId === productId &&
                                 getComplementSignature(i.complements) === getComplementSignature(
-                                    selectedComplements);
+                                    selectedComplements) &&
+                                getPromotionSelectionSignature(getItemPromotionSelection(i)) === getPromotionSelectionSignature(
+                                    promotionSelection);
                         });
 
                         const productQtyInCart = getCurrentProductQtyInCart(productId);
                         const productVirtualQtyInCart = getCurrentProductVirtualQtyInCart(productId);
                         // Para productos con receta, no bloquear por el stock propio del producto
                         // (se controla vía ingredientes más abajo). Solo aplicar para productos sin receta.
-                        if (!hasRecipe && !allowZeroStockSales && (productQtyInCart + qtyRequested) > stock) {
+                        if (!isPromotion && !hasRecipe && !allowZeroStockSales && (productQtyInCart + qtyRequested) > stock) {
                             showNotification('Stock insuficiente', (prod.name || 'Producto') + ': solo hay ' + stock +
                                 ' disponible(s).', 'error');
                             return;
                         }
                         // Validación de ingredientes para productos con receta (siempre obligatoria)
-                        if (!checkRecipeStock(productId, productVirtualQtyInCart, qtyRequested)) return;
+                        if (!isPromotion && !checkRecipeStock(productId, productVirtualQtyInCart, qtyRequested)) return;
 
                         const st = currentTable.service_type || 'IN_SITU';
                         if (existing) {
                             // Si existe con la misma configuración, solo aumentar la cantidad
+                            const existingIndex = currentTable.items.indexOf(existing);
+                            const candidate = {
+                                ...existing,
+                                qty: (parseFloat(existing.qty) || 0) + qtyRequested,
+                                promotionSelection: promotionSelection,
+                            };
+                            if (!ensureCartStockForCandidate(candidate, existingIndex)) {
+                                return;
+                            }
                             existing.qty += qtyRequested;
                             if (st === 'TAKE_AWAY') {
                                 existing.takeawayQty = (parseFloat(existing.takeawayQty) || 0) + qtyRequested;
@@ -3571,8 +3997,18 @@
                                 existing.tax_rate = parseFloat(productBranch.tax_rate ?? 10);
                             }
                             existing.complements = selectedComplements;
+                            existing.promotionSelection = promotionSelection;
                         } else {
                             // Si no existe, agregarlo como nueva línea.
+                            const candidate = {
+                                pId: productId,
+                                qty: qtyRequested,
+                                savedQty: 0,
+                                promotionSelection: promotionSelection,
+                            };
+                            if (!ensureCartStockForCandidate(candidate, null)) {
+                                return;
+                            }
                             currentTable.items.push({
                                 pId: productId,
                                 name: prod.name || 'Sin nombre',
@@ -3583,7 +4019,8 @@
                                 delivered: false,
                                 courtesyQty: 0,
                                 takeawayQty: st === 'TAKE_AWAY' ? qtyRequested : 0,
-                                complements: selectedComplements
+                                complements: selectedComplements,
+                                promotionSelection: promotionSelection
                             });
                         }
                         saveDB();
@@ -3606,14 +4043,18 @@
                             const currentOtherQty = getCurrentProductQtyInCart(prodId, index);
                             const currentOtherVirtualQty = getCurrentProductVirtualQtyInCart(prodId, index);
                             const prodHasRecipe = !!recipeStockData[String(prodId)];
+                            const prodIsPromotion = !!getPromotionDefinition(prodId);
 
                             // Para productos con receta, la validación es por ingredientes (más abajo)
-                            if (!prodHasRecipe && !allowZeroStockSales && (currentOtherQty + newQty) > stock) {
+                            if (prodIsPromotion) {
+                                const candidate = { ...item, qty: newQty };
+                                if (!ensureCartStockForCandidate(candidate, index)) return;
+                            } else if (!prodHasRecipe && !allowZeroStockSales && (currentOtherQty + newQty) > stock) {
                                 showNotification('Stock insuficiente', (item.name || 'Producto') + ': solo hay ' + stock +
                                     ' disponible(s).', 'error');
                                 return;
                             }
-                            if (!checkRecipeStock(prodId, currentOtherVirtualQty, change)) return;
+                            if (!prodIsPromotion && !checkRecipeStock(prodId, currentOtherVirtualQty, change)) return;
 
                             item.qty = newQty;
                             if ((currentTable.service_type || '') === 'TAKE_AWAY') {
@@ -3670,15 +4111,22 @@
                             const currentOtherQty = getCurrentProductQtyInCart(prodId, index);
                             const currentOtherVirtualQty = getCurrentProductVirtualQtyInCart(prodId, index);
                             const prodHasRecipe = !!recipeStockData[String(prodId)];
+                            const prodIsPromotion = !!getPromotionDefinition(prodId);
 
                             // Para productos con receta, la validación es por ingredientes (más abajo)
-                            if (!prodHasRecipe && !allowZeroStockSales && (currentOtherQty + newQty) > stock) {
+                            if (prodIsPromotion) {
+                                const candidate = { ...item, qty: newQty };
+                                if (!ensureCartStockForCandidate(candidate, index)) {
+                                    inputEl.value = oldQty;
+                                    return;
+                                }
+                            } else if (!prodHasRecipe && !allowZeroStockSales && (currentOtherQty + newQty) > stock) {
                                 showNotification('Stock insuficiente', (item.name || 'Producto') + ': solo hay ' + stock +
                                     ' disponible(s).', 'error');
                                 inputEl.value = oldQty;
                                 return;
                             }
-                            if (!checkRecipeStock(prodId, currentOtherVirtualQty, newQty - oldQty)) {
+                            if (!prodIsPromotion && !checkRecipeStock(prodId, currentOtherVirtualQty, newQty - oldQty)) {
                                 inputEl.value = oldQty;
                                 return;
                             }
@@ -3790,6 +4238,25 @@
                         const qty = parseInt(item.qty, 10) || 1;
                         await updateQty(index, -qty);
                     }
+
+                    async function editPromotionSelection(index) {
+                        if (!currentTable.items || !currentTable.items[index]) return;
+                        const item = currentTable.items[index];
+                        if (lineLooksComandado(item)) {
+                            showNotification('No permitido', 'La composición de una promoción ya enviada no se puede editar. Agrega una nueva línea.', 'info');
+                            return;
+                        }
+                        const prod = serverProducts.find((p) => Number(p.id) === Number(item.pId));
+                        if (!prod || !getPromotionDefinition(item.pId)) return;
+                        const selection = await promptPromotionSelection(prod, getItemPromotionSelection(item));
+                        if (!selection) return;
+                        const candidate = { ...item, promotionSelection: selection };
+                        if (!ensureCartStockForCandidate(candidate, index)) return;
+                        item.promotionSelection = selection;
+                        saveDB();
+                        renderTicket();
+                    }
+                    window.editPromotionSelection = editPromotionSelection;
 
                     function openRemoveQuantityLineModal(index) {
                         if (!currentTable?.items || index < 0 || index >= currentTable.items.length) return;
@@ -4042,8 +4509,12 @@
                                 const noteText = typeof item.note === "string" ? item.note.trim() : "";
                                 const hasNote = noteText !== "";
                                 const complementsLabel = formatComplementsLabel(item.complements);
+                                const promotionLabel = formatPromotionSelectionLabel(item);
                                 const complementSummary = complementsLabel ?
                                     `<div class="mt-1 flex flex-wrap items-center gap-1.5"><span class="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300"><i class="ri-checkbox-circle-line"></i> ${escapeHtml(complementsLabel)}</span></div>` :
+                                    '';
+                                const promotionSummary = promotionLabel ?
+                                    `<div class="mt-1 flex flex-wrap items-center gap-1.5"><span class="inline-flex items-center gap-1 rounded-full bg-blue-500/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-blue-700 dark:bg-blue-500/15 dark:text-blue-300"><i class="ri-coupon-3-line"></i> ${escapeHtml(promotionLabel)}</span></div>` :
                                     '';
                                 const row = document.createElement('div');
                                 row.className =
@@ -4097,6 +4568,8 @@
                                     undefined && hasCourtesy);
                                 const noteBtnActive = hasNote || showNoteBox;
                                 const courtesyBtnActive = hasCourtesy || showCourtesyBox;
+                                const hasPromotion = promotionLabel !== '';
+                                const canEditPromotion = hasPromotion && !!getPromotionDefinition(item?.pId)?.allows_mix_and_match;
                                 const courtesyMinusDisabled = courtesyQty <= 0 ? ' disabled' : '';
                                 const courtesyMinusClass = courtesyQty <= 0 ? ' opacity-30 cursor-not-allowed' :
                                     ' hover:bg-slate-100 dark:hover:bg-zinc-700 font-bold';
@@ -4152,6 +4625,7 @@
                                                                                                                                                                                                                     ${stockWarningBadge}
                                                                                                                                                                                                                     ${takeawayBadge}
                                                                                                                                                                                                                     ${complementSummary}
+                                                                                                                                                                                                                    ${promotionSummary}
                                                                                                                                                                                                                     ${commandSummary}
                                                                                                                                                                                                                     <div class="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] sm:text-xs">
                                                                                                                                                                                                                         ${noteTime ? `<span class="text-slate-500 dark:text-zinc-400 font-medium tabular-nums">${noteTime}</span>` : ''}
@@ -4197,6 +4671,7 @@
                                                                                                                                                                                                                 <button type="button" onclick="toggleCourtesyInput(${index})" class="inline-flex shrink-0 items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium transition-colors ${courtesyBtnActive ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-500/15 dark:text-emerald-300' : 'text-slate-500 hover:bg-slate-100 hover:text-emerald-600 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-emerald-400'}">
                                                                                                                                                                                                                     <i class="${courtesyBtnActive ? 'ri-star-fill' : 'ri-star-line'}"></i> Cortesía
                                                                                                                                                                                                                 </button>
+                                                                                                                                                                                                                ${canEditPromotion ? `<button type="button" onclick="editPromotionSelection(${index})" class="inline-flex shrink-0 items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium text-blue-700 transition-colors hover:bg-blue-50 dark:text-blue-300 dark:hover:bg-zinc-800"><i class="ri-shuffle-line"></i> Promo</button>` : ''}
                                                                                                                                                                                                                 <button type="button" ${trashOnclick} class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-zinc-400 transition-colors hover:bg-red-500/10 hover:text-red-500 dark:text-zinc-500 dark:hover:text-red-400${trashHiddenMozo}" title="Quitar o anular cantidad">
                                                                                                                                                                                                                     <i class="ri-delete-bin-line text-lg"></i>
                                                                                                                                                                                                                 </button>

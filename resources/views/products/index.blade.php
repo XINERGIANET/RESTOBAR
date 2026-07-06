@@ -639,6 +639,8 @@
                         'categories' => $categories ?? collect(),
                         'units' => $units ?? collect(),
                         'suppliers' => $suppliers ?? collect(),
+                        'promotionComponentProducts' => $promotionComponentProducts ?? [],
+                        'promotionGroupsInitial' => old('promotion_groups', []),
                     ])
 
                     <div class="flex flex-wrap gap-3">

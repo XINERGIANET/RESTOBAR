@@ -24,7 +24,9 @@ class Product extends Model
         'classification',
         'features',
         'detail_options',
-        'recipe'
+        'recipe',
+        'is_promotion',
+        'promotion_mix_and_match',
     ];
 
     protected $casts = [
@@ -32,6 +34,8 @@ class Product extends Model
         'type' => 'string',
         'detail_options' => 'array',
         'recipe' => 'boolean',
+        'is_promotion' => 'boolean',
+        'promotion_mix_and_match' => 'boolean',
     ];
 
     public function category()
@@ -58,5 +62,10 @@ class Product extends Model
     {
         return $this->belongsToMany(Branch::class, 'product_branch', 'product_id', 'branch_id')
                     ->withPivot('price', 'stock'); 
+    }
+
+    public function promotionGroups()
+    {
+        return $this->hasMany(ProductPromotionGroup::class)->orderBy('sort_order')->orderBy('id');
     }
 }

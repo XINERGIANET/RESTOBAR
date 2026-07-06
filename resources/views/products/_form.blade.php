@@ -29,6 +29,17 @@
 
     $igvByBranchId = $igvByBranchId ?? [];
     $productTypesById = $productTypes->keyBy('id')->map(fn($pt) => ['id' => $pt->id, 'name' => $pt->name, 'behavior' => $pt->behavior]);
+    $promotionComponentProducts = collect($promotionComponentProducts ?? []);
+    $promotionComponentOptions = $promotionComponentProducts
+        ->map(fn($item) => [
+            'id' => (int) ($item['id'] ?? 0),
+            'description' => (string) ($item['description'] ?? ''),
+        ])
+        ->values()
+        ->all();
+    $promotionGroupsInitial = old('promotion_groups', $promotionGroupsInitial ?? []);
+    $isPromotionInit = old('is_promotion', $product->is_promotion ?? false);
+    $promotionMixInit = old('promotion_mix_and_match', $product->promotion_mix_and_match ?? false);
 
     // Con errores de validación: fusionar old() en productBranchesByBranchId para conservar lo que el usuario envió
     $productBranchesByBranchId = collect($productBranchesByBranchId ?? []);
@@ -80,6 +91,10 @@
     complementValue: '{{ old('complement', $product->complement ?? 'NO') }}',
     complementMode: '{{ old('complement_mode', $product->complement_mode ?? '') }}',
     classificationValue: '{{ old('classification', $product->classification ?? 'GOOD') }}',
+    isPromotion: @js((bool) $isPromotionInit),
+    promotionMixAndMatch: @js((bool) $promotionMixInit),
+    promotionGroups: @js($promotionGroupsInitial),
+    promotionComponentOptions: @js($promotionComponentOptions),
     complements: {{ \Illuminate\Support\Js::from(old('complements', [])) }},
     categoryId: @js(old('category_id', $product->category_id ?? null)),
     baseUnitId: @js(old('base_unit_id', $product->base_unit_id ?? null)),
@@ -215,10 +230,48 @@
                  this.code = this.nextProdCode;
              }
         }
+
+        if (!Array.isArray(this.promotionGroups)) {
+            this.promotionGroups = [];
+        }
+        this.promotionGroups = this.promotionGroups.map((group) => ({
+            name: group?.name ?? '',
+            required_quantity: group?.required_quantity ?? 1,
+            items: Array.isArray(group?.items) ? group.items.map((item) => ({
+                product_id: item?.product_id ?? '',
+                default_quantity: item?.default_quantity ?? 0,
+            })) : [],
+        }));
     },
 
     addComplement() { this.complements.push({ product: '', qty: 1 }); },
     removeComplement(i) { this.complements.splice(i, 1); },
+    addPromotionGroup() {
+        this.promotionGroups.push({
+            name: '',
+            required_quantity: 1,
+            items: [{ product_id: '', default_quantity: 1 }],
+        });
+    },
+    removePromotionGroup(index) {
+        this.promotionGroups.splice(index, 1);
+    },
+    addPromotionItem(groupIndex) {
+        if (!Array.isArray(this.promotionGroups[groupIndex].items)) {
+            this.promotionGroups[groupIndex].items = [];
+        }
+        this.promotionGroups[groupIndex].items.push({ product_id: '', default_quantity: 0 });
+    },
+    removePromotionItem(groupIndex, itemIndex) {
+        this.promotionGroups[groupIndex].items.splice(itemIndex, 1);
+    },
+    groupDefaultTotal(group) {
+        return (Array.isArray(group?.items) ? group.items : []).reduce((sum, item) => sum + (parseFloat(item?.default_quantity) || 0), 0);
+    },
+    productOptionLabel(productId) {
+        const item = this.promotionComponentOptions.find((opt) => Number(opt.id) === Number(productId));
+        return item ? item.description : 'Seleccione producto';
+    },
 
     handleProductTypeChange(e) {
         const id = e.target.value ? Number(e.target.value) : null;
@@ -361,6 +414,34 @@
                 @enderror
             </div>
 
+            <div x-show="showComplements" x-cloak>
+                <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">¿Es promoción? <span
+                        class="text-red-500">*</span></label>
+                <input type="hidden" name="is_promotion" :value="isPromotion ? 1 : 0">
+                <select x-model="isPromotion"
+                    class="dark:bg-dark-900 shadow-theme-xs focus:border-[#124731] focus:ring-[#124731]/10 dark:focus:border-[#124731] h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 focus:ring-3 focus:outline-hidden dark:border-gray-700 dark:bg-gray-900 dark:text-white/90">
+                    <option :value="false">No</option>
+                    <option :value="true">Sí</option>
+                </select>
+                @error('is_promotion')
+                    <p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ $message }}</p>
+                @enderror
+            </div>
+
+            <div x-show="showComplements && isPromotion" x-cloak>
+                <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">Permitir combinar al vender <span
+                        class="text-red-500">*</span></label>
+                <input type="hidden" name="promotion_mix_and_match" :value="promotionMixAndMatch ? 1 : 0">
+                <select x-model="promotionMixAndMatch"
+                    class="dark:bg-dark-900 shadow-theme-xs focus:border-[#124731] focus:ring-[#124731]/10 dark:focus:border-[#124731] h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 focus:ring-3 focus:outline-hidden dark:border-gray-700 dark:bg-gray-900 dark:text-white/90">
+                    <option :value="false">No</option>
+                    <option :value="true">Sí</option>
+                </select>
+                @error('promotion_mix_and_match')
+                    <p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ $message }}</p>
+                @enderror
+            </div>
+
             <div>
                 <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">Kardex <span
                         class="text-red-500">*</span></label>
@@ -447,6 +528,117 @@
             <input type="hidden" name="expiration_date" value="">
         </div>
     </template>
+
+    <div x-show="showComplements && isPromotion" x-cloak
+        class="mb-8 rounded-lg border border-blue-200 bg-blue-50 p-6 dark:border-blue-800 dark:bg-blue-900/20">
+        <div class="mb-4 flex items-start justify-between gap-4">
+            <div>
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Promoción</h3>
+                <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
+                    Define los grupos de productos que componen la promo. La suma por defecto de cada grupo debe cuadrar exactamente.
+                </p>
+            </div>
+            <x-ui.button type="button" size="sm" variant="primary" @click="addPromotionGroup()">
+                <i class="ri-add-line"></i>
+                <span>Agregar grupo</span>
+            </x-ui.button>
+        </div>
+
+        <div class="space-y-4">
+            <template x-if="promotionGroups.length === 0">
+                <div class="rounded-lg border border-dashed border-blue-300 bg-white/70 px-4 py-5 text-sm text-gray-500 dark:border-blue-700 dark:bg-gray-900/30 dark:text-gray-400">
+                    Crea al menos un grupo. Ejemplo: grupo "Cervezas" con cantidad requerida 3.
+                </div>
+            </template>
+
+            <template x-for="(group, groupIndex) in promotionGroups" :key="'promotion-group-' + groupIndex">
+                <div class="rounded-xl border border-blue-200 bg-white p-4 shadow-sm dark:border-blue-800 dark:bg-gray-900/50">
+                    <div class="grid gap-4 lg:grid-cols-[1fr_180px_auto]">
+                        <div>
+                            <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">Nombre del grupo</label>
+                            <input type="text" x-model="group.name" :name="`promotion_groups[${groupIndex}][name]`"
+                                placeholder="Ejemplo: Cervezas"
+                                class="dark:bg-dark-900 shadow-theme-xs focus:border-[#124731] focus:ring-[#124731]/10 dark:focus:border-[#124731] h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 focus:ring-3 focus:outline-hidden dark:border-gray-700 dark:bg-gray-900 dark:text-white/90">
+                        </div>
+                        <div>
+                            <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">Cantidad requerida</label>
+                            <input type="number" min="0.01" step="0.01" x-model.number="group.required_quantity"
+                                :name="`promotion_groups[${groupIndex}][required_quantity]`"
+                                class="dark:bg-dark-900 shadow-theme-xs focus:border-[#124731] focus:ring-[#124731]/10 dark:focus:border-[#124731] h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 focus:ring-3 focus:outline-hidden dark:border-gray-700 dark:bg-gray-900 dark:text-white/90">
+                        </div>
+                        <div class="flex items-end">
+                            <x-ui.button type="button" size="sm" variant="outline" @click="removePromotionGroup(groupIndex)">
+                                <i class="ri-delete-bin-line"></i>
+                                <span>Quitar</span>
+                            </x-ui.button>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 rounded-lg border border-gray-200 dark:border-gray-700">
+                        <div class="grid grid-cols-[minmax(0,1fr)_150px_auto] gap-3 border-b border-gray-200 bg-gray-50 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:border-gray-700 dark:bg-gray-800/70 dark:text-gray-300">
+                            <div>Producto permitido</div>
+                            <div>Cantidad por defecto</div>
+                            <div></div>
+                        </div>
+
+                        <div class="space-y-3 p-3">
+                            <template x-for="(item, itemIndex) in group.items" :key="'promotion-item-' + groupIndex + '-' + itemIndex">
+                                <div class="grid grid-cols-[minmax(0,1fr)_150px_auto] gap-3">
+                                    <div>
+                                        <select x-model="item.product_id" :name="`promotion_groups[${groupIndex}][items][${itemIndex}][product_id]`"
+                                            class="dark:bg-dark-900 shadow-theme-xs focus:border-[#124731] focus:ring-[#124731]/10 dark:focus:border-[#124731] h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 focus:ring-3 focus:outline-hidden dark:border-gray-700 dark:bg-gray-900 dark:text-white/90">
+                                            <option value="">Seleccione producto</option>
+                                            <template x-for="option in promotionComponentOptions" :key="'promotion-option-' + option.id">
+                                                <option :value="option.id" x-text="option.description"></option>
+                                            </template>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <input type="number" min="0" step="0.01" x-model.number="item.default_quantity"
+                                            :name="`promotion_groups[${groupIndex}][items][${itemIndex}][default_quantity]`"
+                                            class="dark:bg-dark-900 shadow-theme-xs focus:border-[#124731] focus:ring-[#124731]/10 dark:focus:border-[#124731] h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 focus:ring-3 focus:outline-hidden dark:border-gray-700 dark:bg-gray-900 dark:text-white/90">
+                                    </div>
+                                    <div class="flex items-center justify-end">
+                                        <x-ui.button type="button" size="sm" variant="outline" @click="removePromotionItem(groupIndex, itemIndex)">
+                                            <i class="ri-close-line"></i>
+                                        </x-ui.button>
+                                    </div>
+                                </div>
+                            </template>
+
+                            <div class="flex flex-wrap items-center justify-between gap-3 rounded-lg bg-slate-50 px-3 py-2 text-xs dark:bg-gray-800/50">
+                                <span class="font-medium text-gray-500 dark:text-gray-300">
+                                    Total por defecto:
+                                    <span class="font-semibold text-gray-800 dark:text-white" x-text="groupDefaultTotal(group).toFixed(2)"></span>
+                                </span>
+                                <x-ui.button type="button" size="sm" variant="outline" @click="addPromotionItem(groupIndex)">
+                                    <i class="ri-add-line"></i>
+                                    <span>Agregar producto</span>
+                                </x-ui.button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </template>
+        </div>
+
+        @error('promotion_groups')
+            <p class="mt-3 text-xs text-red-600 dark:text-red-400">{{ $message }}</p>
+        @enderror
+        @error('promotion_groups.*.required_quantity')
+            <p class="mt-3 text-xs text-red-600 dark:text-red-400">{{ $message }}</p>
+        @enderror
+        @error('promotion_groups.*.items')
+            <p class="mt-3 text-xs text-red-600 dark:text-red-400">{{ $message }}</p>
+        @enderror
+        @error('promotion_groups.*.items.*.product_id')
+            <p class="mt-3 text-xs text-red-600 dark:text-red-400">{{ $message }}</p>
+        @enderror
+        @error('promotion_groups.*.items.*.default_quantity')
+            <p class="mt-3 text-xs text-red-600 dark:text-red-400">{{ $message }}</p>
+        @enderror
+    </div>
+
     <!-- Configuración de suministro: stock y proveedor (sin precio de venta) -->
     <div x-show="showSupplyFields" x-cloak x-transition
         class="mb-8 p-6 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800">

@@ -13,6 +13,7 @@ use App\Models\ProductBranch;
 use App\Models\ProductType;
 use App\Models\TaxRate;
 use App\Models\Unit;
+use App\Services\ProductCompositionService;
 use App\Support\InsensitiveSearch;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -24,6 +25,10 @@ use Maatwebsite\Excel\Facades\Excel;
 
 class ProductController extends Controller
 {
+    public function __construct(private ProductCompositionService $productCompositionService)
+    {
+    }
+
     public function index(Request $request)
     {
         $search = $request->input('search');
@@ -64,7 +69,7 @@ class ProductController extends Controller
         }
 
         $products = Product::query()
-            ->with(['category', 'baseUnit', 'productBranches.branch', 'productBranches.taxRate'])
+            ->with(['category', 'baseUnit', 'productBranches.branch', 'productBranches.taxRate', 'promotionGroups.items.product'])
             ->when($branchId, function ($query) use ($branchId) {
                 $query->whereHas('productBranches', fn($q) => $q->where('branch_id', $branchId));
             })
@@ -144,6 +149,7 @@ class ProductController extends Controller
             ->map(fn($code) => (int) substr($code, 3))
             ->max() ?? 0;
         $nextIngrCode = 'IN_' . str_pad($maxIngr + 1, 3, '0', STR_PAD_LEFT);
+        $promotionComponentProducts = $this->promotionComponentProductsForBranch($branchId);
 
         return view('products.index', [
             'products' => $products,
@@ -163,6 +169,7 @@ class ProductController extends Controller
             'categoryId' => $categoryId,
             'nextProdCode' => $nextProdCode,
             'nextIngrCode' => $nextIngrCode,
+            'promotionComponentProducts' => $promotionComponentProducts,
         ]);
     }
 
@@ -207,23 +214,28 @@ class ProductController extends Controller
         $productType = ProductType::find($validated['product_type_id']);
         $productData = $this->prepareProductData($validated, $productType);
         $branchData = $this->prepareBranchData($validated, $productType);
+        $promotionGroups = $this->validatedPromotionGroups($validated);
 
         if ($imagePath !== null && $imagePath !== '') {
             $productData['image'] = is_string($imagePath) ? $imagePath : (string) $imagePath;
             Log::info('Image path added to data: ' . $productData['image']);
         }
 
-        $product = Product::create($productData);
+        $product = null;
+        DB::transaction(function () use ($request, $productData, $branchData, $promotionGroups, &$product) {
+            $product = Product::create($productData);
 
-        // Crear ProductBranch para la sucursal actual
-        $branchId = (int) ($request->input('branch_id') ?: $request->session()->get('branch_id'));
-        if ($branchId) {
-            $branchData['product_id'] = $product->id;
-            $branchData['branch_id'] = $branchId;
-            $branchData['status'] = 'A';
-            $productBranch = ProductBranch::create($branchData);
-            $this->syncProductBranchPrinters($productBranch, $request, $branchId);
-        }
+            $branchId = (int) ($request->input('branch_id') ?: $request->session()->get('branch_id'));
+            if ($branchId) {
+                $branchData['product_id'] = $product->id;
+                $branchData['branch_id'] = $branchId;
+                $branchData['status'] = 'A';
+                $productBranch = ProductBranch::create($branchData);
+                $this->syncProductBranchPrinters($productBranch, $request, $branchId);
+            }
+
+            $this->productCompositionService->syncPromotionGroups($product, $promotionGroups);
+        });
 
         $viewId = $request->input('view_id');
 
@@ -234,7 +246,7 @@ class ProductController extends Controller
 
     public function edit(Request $request, Product $product)
     {
-        $product->load(['category', 'productType', 'productBranches.printers']);
+        $product->load(['category', 'productType', 'productBranches.printers', 'promotionGroups.items.product']);
         $branchId = $request->session()->get('branch_id');
         $categoryBranchId = \effective_branch_id();
         $categories = Category::query()
@@ -314,6 +326,28 @@ class ProductController extends Controller
             'description' => trim($p->first_name . ' ' . $p->last_name) . ($p->document_number ? ' - ' . $p->document_number : ''),
         ])
         ->values();
+        $promotionComponentProducts = $this->promotionComponentProductsForBranch((int) $branchId, (int) $product->id);
+        $promotionGroupsInitial = old('promotion_groups');
+        if (! is_array($promotionGroupsInitial)) {
+            $promotionGroupsInitial = $product->promotionGroups
+                ->sortBy('sort_order')
+                ->values()
+                ->map(function ($group) {
+                    return [
+                        'name' => $group->name,
+                        'required_quantity' => round((float) ($group->required_quantity ?? 0), 6),
+                        'items' => $group->items
+                            ->sortBy('sort_order')
+                            ->values()
+                            ->map(fn ($item) => [
+                                'product_id' => (int) ($item->product_id ?? 0),
+                                'default_quantity' => round((float) ($item->default_quantity ?? 0), 6),
+                            ])
+                            ->all(),
+                    ];
+                })
+                ->all();
+        }
 
         return view('products.edit', [
             'product' => $product,
@@ -328,6 +362,8 @@ class ProductController extends Controller
             'productBranchesByBranchId' => $productBranchesByBranchId,
             'viewId' => $request->input('view_id'),
             'printers' => $printers,
+            'promotionComponentProducts' => $promotionComponentProducts,
+            'promotionGroupsInitial' => $promotionGroupsInitial,
         ]);
     }
 
@@ -339,6 +375,7 @@ class ProductController extends Controller
         $productType = ProductType::find($validated['product_type_id']);
         $productData = $this->prepareProductData($validated, $productType);
         $branchData = $this->prepareBranchData($validated, $productType);
+        $promotionGroups = $this->validatedPromotionGroups($validated);
 
         if ($request->hasFile('image')) {
             $file = $request->file('image');
@@ -363,26 +400,28 @@ class ProductController extends Controller
             }
         }
 
-        // Actualizar producto
-        $product->update($productData);
+        DB::transaction(function () use ($request, $validated, $product, $productData, $branchData, $promotionGroups) {
+            $product->update($productData);
 
-        // Actualizar o crear ProductBranch para la sucursal seleccionada
-        $branchId = (int) ($validated['branch_id'] ?? $request->session()->get('branch_id') ?? 0);
-        if ($branchId) {
-            $productBranch = $product->productBranches()
-                ->where('branch_id', $branchId)
-                ->first();
+            $branchId = (int) ($validated['branch_id'] ?? $request->session()->get('branch_id') ?? 0);
+            if ($branchId) {
+                $productBranch = $product->productBranches()
+                    ->where('branch_id', $branchId)
+                    ->first();
 
-            if ($productBranch) {
-                $productBranch->update($branchData);
-            } else {
-                $branchData['product_id'] = $product->id;
-                $branchData['branch_id'] = $branchId;
-                $branchData['status'] = 'E';
-                $productBranch = ProductBranch::create($branchData);
+                if ($productBranch) {
+                    $productBranch->update($branchData);
+                } else {
+                    $branchData['product_id'] = $product->id;
+                    $branchData['branch_id'] = $branchId;
+                    $branchData['status'] = 'E';
+                    $productBranch = ProductBranch::create($branchData);
+                }
+                $this->syncProductBranchPrinters($productBranch, $request, $branchId);
             }
-            $this->syncProductBranchPrinters($productBranch, $request, $branchId);
-        }
+
+            $this->productCompositionService->syncPromotionGroups($product, $promotionGroups);
+        });
 
         $viewId = $request->input('view_id');
 
@@ -450,16 +489,17 @@ class ProductController extends Controller
      */
     private function mergeRequestWithExistingProduct(Request $request, Product $product): array
     {
-        $product->load(['productBranches']);
+        $product->load(['productBranches', 'promotionGroups.items']);
         $branchId = (int) ($request->input('branch_id') ?: $request->session()->get('branch_id') ?: 0);
         $productBranch = $branchId ? $product->productBranches->firstWhere('branch_id', $branchId) : null;
 
         $merge = [];
-        $productFields = ['code', 'description', 'abbreviation', 'product_type_id', 'category_id', 'base_unit_id', 'kardex', 'status', 'complement', 'complement_mode', 'classification', 'features', 'recipe', 'favorite', 'duration_minutes', 'supplier_id'];
+        $productFields = ['code', 'description', 'abbreviation', 'product_type_id', 'category_id', 'base_unit_id', 'kardex', 'status', 'complement', 'complement_mode', 'classification', 'features', 'recipe', 'favorite', 'duration_minutes', 'supplier_id', 'is_promotion', 'promotion_mix_and_match'];
         foreach ($productFields as $key) {
             if (!$request->filled($key)) {
                 $val = $product->{$key} ?? null;
                 if ($key === 'recipe') $val = (bool) ($val ?? false);
+                if (in_array($key, ['is_promotion', 'promotion_mix_and_match'], true)) $val = (bool) ($val ?? false);
                 if ($key === 'complement_mode' && $val === null) $val = '';
                 $merge[$key] = $val;
             }
@@ -520,6 +560,27 @@ class ProductController extends Controller
             $merge['branch_id'] = $branchId;
         } elseif (!$request->filled('branch_id') && !$branchId && $product->productBranches->isNotEmpty()) {
             $merge['branch_id'] = (int) $product->productBranches->first()->branch_id;
+        }
+
+        if (! $request->has('promotion_groups')) {
+            $merge['promotion_groups'] = $product->promotionGroups
+                ->sortBy('sort_order')
+                ->values()
+                ->map(function ($group) {
+                    return [
+                        'name' => $group->name,
+                        'required_quantity' => round((float) ($group->required_quantity ?? 0), 6),
+                        'items' => $group->items
+                            ->sortBy('sort_order')
+                            ->values()
+                            ->map(fn ($item) => [
+                                'product_id' => (int) ($item->product_id ?? 0),
+                                'default_quantity' => round((float) ($item->default_quantity ?? 0), 6),
+                            ])
+                            ->all(),
+                    ];
+                })
+                ->all();
         }
 
         return $merge;
@@ -590,12 +651,20 @@ class ProductController extends Controller
             'features' => ['nullable', 'string'],
             'detail_options_lines' => ['nullable', 'string'],
             'recipe' => ['required', 'boolean'],
+            'is_promotion' => ['required', 'boolean'],
+            'promotion_mix_and_match' => ['required', 'boolean'],
             'branch_id' => ['required', 'integer', 'exists:branches,id'],
             'favorite' => ['required', 'string', 'in:S,N'],
             'duration_minutes' => ['nullable', 'integer', 'min:0'],
             'supplier_id' => ['nullable', 'integer'],
             'printer_ids' => ['nullable', 'array'],
             'printer_ids.*' => ['integer', 'exists:printers_branch,id'],
+            'promotion_groups' => ['nullable', 'array'],
+            'promotion_groups.*.name' => ['nullable', 'string', 'max:120'],
+            'promotion_groups.*.required_quantity' => ['nullable', 'numeric', 'min:0.01'],
+            'promotion_groups.*.items' => ['nullable', 'array'],
+            'promotion_groups.*.items.*.product_id' => ['nullable', 'integer', 'exists:products,id'],
+            'promotion_groups.*.items.*.default_quantity' => ['nullable', 'numeric', 'min:0'],
         ], $branchRules));
 
         if ($isSupply) {
@@ -609,6 +678,8 @@ class ProductController extends Controller
         if (isset($validated['image']) && empty($validated['image'])) {
             unset($validated['image']);
         }
+
+        $this->validatePromotionDefinition($validated, (int) ($excludeId ?? 0), (int) ($validated['branch_id'] ?? 0));
 
         return $validated;
     }
@@ -634,6 +705,8 @@ class ProductController extends Controller
             'features' => $validated['features'],
             'detail_options' => $this->parseDetailOptions($validated['detail_options_lines'] ?? null),
             'recipe' => (bool) $validated['recipe'],
+            'is_promotion' => (bool) ($validated['is_promotion'] ?? false),
+            'promotion_mix_and_match' => (bool) ($validated['promotion_mix_and_match'] ?? false),
         ];
     }
 
@@ -717,6 +790,138 @@ class ProductController extends Controller
     }
 
     // ─── Importación desde Excel ──────────────────────────────────────────────
+
+    private function validatedPromotionGroups(array $validated): array
+    {
+        if (! (bool) ($validated['is_promotion'] ?? false)) {
+            return [];
+        }
+
+        return collect($validated['promotion_groups'] ?? [])
+            ->map(function ($group) {
+                return [
+                    'name' => trim((string) ($group['name'] ?? '')),
+                    'required_quantity' => round((float) ($group['required_quantity'] ?? 0), 6),
+                    'items' => collect($group['items'] ?? [])
+                        ->map(fn ($item) => [
+                            'product_id' => (int) ($item['product_id'] ?? 0),
+                            'default_quantity' => round((float) ($item['default_quantity'] ?? 0), 6),
+                        ])
+                        ->filter(fn ($item) => $item['product_id'] > 0)
+                        ->values()
+                        ->all(),
+                ];
+            })
+            ->filter(fn ($group) => (float) ($group['required_quantity'] ?? 0) > 0)
+            ->values()
+            ->all();
+    }
+
+    private function validatePromotionDefinition(array $validated, int $excludeId = 0, int $branchId = 0): void
+    {
+        if (! (bool) ($validated['is_promotion'] ?? false)) {
+            return;
+        }
+
+        $groups = $this->validatedPromotionGroups($validated);
+        if (count($groups) === 0) {
+            throw ValidationException::withMessages([
+                'promotion_groups' => 'Debes configurar al menos un grupo para la promoción.',
+            ]);
+        }
+
+        $componentIds = [];
+        foreach ($groups as $groupIndex => $group) {
+            $required = round((float) ($group['required_quantity'] ?? 0), 6);
+            $items = collect($group['items'] ?? []);
+            if ($items->isEmpty()) {
+                throw ValidationException::withMessages([
+                    "promotion_groups.{$groupIndex}.items" => 'Cada grupo debe tener al menos un producto permitido.',
+                ]);
+            }
+
+            $defaultSum = round((float) $items->sum(fn ($item) => (float) ($item['default_quantity'] ?? 0)), 6);
+            if (abs($defaultSum - $required) > 0.000001) {
+                throw ValidationException::withMessages([
+                    "promotion_groups.{$groupIndex}.required_quantity" => 'La suma de cantidades por defecto debe coincidir con la cantidad requerida del grupo.',
+                ]);
+            }
+
+            foreach ($items as $itemIndex => $item) {
+                $productId = (int) ($item['product_id'] ?? 0);
+                if ($productId <= 0) {
+                    throw ValidationException::withMessages([
+                        "promotion_groups.{$groupIndex}.items.{$itemIndex}.product_id" => 'Selecciona un producto válido para la promoción.',
+                    ]);
+                }
+                if ($excludeId > 0 && $productId === $excludeId) {
+                    throw ValidationException::withMessages([
+                        "promotion_groups.{$groupIndex}.items.{$itemIndex}.product_id" => 'La promoción no puede incluirse a sí misma como componente.',
+                    ]);
+                }
+                $componentIds[] = $productId;
+            }
+        }
+
+        $componentIds = array_values(array_unique(array_filter(array_map('intval', $componentIds))));
+        if ($branchId > 0 && ! empty($componentIds)) {
+            $validIds = ProductBranch::query()
+                ->where('branch_id', $branchId)
+                ->whereIn('product_id', $componentIds)
+                ->pluck('product_id')
+                ->map(fn ($id) => (int) $id)
+                ->all();
+            if (count(array_diff($componentIds, $validIds)) > 0) {
+                throw ValidationException::withMessages([
+                    'promotion_groups' => 'Todos los productos de la promoción deben existir en la sucursal activa.',
+                ]);
+            }
+        }
+
+        $promotionComponents = Product::query()
+            ->whereIn('id', $componentIds)
+            ->where('is_promotion', true)
+            ->pluck('id')
+            ->all();
+        if (! empty($promotionComponents)) {
+            throw ValidationException::withMessages([
+                'promotion_groups' => 'Una promoción no puede usar otra promoción como componente.',
+            ]);
+        }
+    }
+
+    private function promotionComponentProductsForBranch(?int $branchId, ?int $excludeProductId = null): array
+    {
+        if (! $branchId) {
+            return [];
+        }
+
+        $sellableTypeIds = ProductType::query()
+            ->whereIn('behavior', [ProductType::BEHAVIOR_SELLABLE, ProductType::BEHAVIOR_BOTH])
+            ->pluck('id');
+
+        return Product::query()
+            ->where('type', 'PRODUCT')
+            ->where('is_promotion', false)
+            ->where(function ($q) use ($sellableTypeIds) {
+                $q->whereNull('product_type_id')
+                    ->orWhereIn('product_type_id', $sellableTypeIds);
+            })
+            ->when($excludeProductId, fn ($q) => $q->where('id', '!=', $excludeProductId))
+            ->whereHas('productBranches', fn ($q) => $q->where('branch_id', $branchId))
+            ->with(['productBranches' => fn ($q) => $q->where('branch_id', $branchId)])
+            ->orderBy('description')
+            ->get()
+            ->map(function (Product $product) {
+                $branch = $product->productBranches->first();
+                return [
+                    'id' => (int) $product->id,
+                    'description' => trim((string) $product->description) . ' | Stock: ' . number_format((float) ($branch?->stock ?? 0), 2) . ' | Precio: S/ ' . number_format((float) ($branch?->price ?? 0), 2),
+                ];
+            })
+            ->values()
+            ->all();
+    }
 
     public function importForm(Request $request)
     {

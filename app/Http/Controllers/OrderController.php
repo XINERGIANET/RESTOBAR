@@ -358,6 +358,7 @@ class OrderController extends Controller
                         'courtesyQty' => $courtesyQty,
                         'takeawayQty' => $takeawayQtyFull,
                         'complements' => collect($d->complements ?? [])->map(fn($item) => trim((string) $item))->filter()->values()->all(),
+                        'promotionSelection' => data_get($d->product_snapshot, 'promotion_selection', []),
                     ];
                 }
 
@@ -382,6 +383,7 @@ class OrderController extends Controller
                     'courtesyQty' => 0,
                     'takeawayQty' => $takeawayScaled,
                     'complements' => collect($d->complements ?? [])->map(fn($item) => trim((string) $item))->filter()->values()->all(),
+                    'promotionSelection' => data_get($d->product_snapshot, 'promotion_selection', []),
                 ];
             })
             ->filter()
@@ -1108,6 +1110,8 @@ class OrderController extends Controller
                     'img' => $imageUrl,
                     'category' => $product->category ? $product->category->description : 'Sin categoría',
                     'category_id' => $product->category_id,
+                    'is_promotion' => (bool) ($product->is_promotion ?? false),
+                    'promotion_mix_and_match' => (bool) ($product->promotion_mix_and_match ?? false),
                     'detail_options' => collect($product->detail_options ?? [])->map(fn($item) => trim((string) $item))->filter()->values()->all(),
                     'table_id' => $tableId,
                     'branch_id' => $branchId,
@@ -1206,10 +1210,12 @@ class OrderController extends Controller
         $pendingItems = collect($pendingItemsRaw)->groupBy(function ($item) {
             $complements = collect($item['complements'] ?? [])->map(fn($value) => trim((string) $value))->filter()->values()->all();
             sort($complements);
+            $promotionSignature = app(\App\Services\ProductCompositionService::class)->selectionSignature($item['promotionSelection'] ?? []);
             return implode('|', [
                 (int) ($item['pId'] ?? 0),
                 md5(json_encode($complements)),
                 trim((string) ($item['note'] ?? '')),
+                $promotionSignature,
             ]);
         })->map(function ($group) {
             $first = $group->first();
@@ -1243,6 +1249,7 @@ class OrderController extends Controller
                 'courtesyQty' => $group->sum('courtesyQty'),
                 'takeawayQty' => min($sumTakeaway, $sumQty),
                 'complements' => $first['complements'] ?? [],
+                'promotionSelection' => $first['promotionSelection'] ?? [],
             ];
         })->values()->all();
 
@@ -1254,17 +1261,20 @@ class OrderController extends Controller
                 'quantity' => (float) $d->quantity,
                 'comment' => $d->comment ?? '',
                 'complements' => collect($d->complements ?? [])->map(fn($item) => trim((string) $item))->filter()->values()->all(),
+                'promotionSelection' => data_get($d->product_snapshot, 'promotion_selection', []),
             ]))
             ->groupBy(function ($item) {
                 $complements = collect($item['complements'] ?? [])->map(fn($value) => trim((string) $value))->filter()->values()->all();
                 sort($complements);
-                return implode('|', [(int) ($item['product_id'] ?? 0), md5(json_encode($complements))]);
+                $promotionSignature = app(\App\Services\ProductCompositionService::class)->selectionSignature($item['promotionSelection'] ?? []);
+                return implode('|', [(int) ($item['product_id'] ?? 0), md5(json_encode($complements)), $promotionSignature]);
             })
             ->map(fn($group) => [
                 'description' => $group->first()['description'],
                 'quantity' => $group->sum('quantity'),
                 'comment' => $group->first()['comment'],
                 'complements' => $group->first()['complements'] ?? [],
+                'promotionSelection' => $group->first()['promotionSelection'] ?? [],
             ])
             ->values()
             ->all()
@@ -1330,6 +1340,7 @@ class OrderController extends Controller
 
         $viewIdForPos = $request->query('view_id');
         $recipeStockData = $this->buildRecipeStockData($branchId, $branch?->company_id);
+        $promotionCatalog = app(\App\Services\ProductCompositionService::class)->buildPromotionCatalog($branchId);
         $areaPrinterNames = $branchId
             ? Area::query()
             ->where('branch_id', $branchId)
@@ -1395,6 +1406,7 @@ class OrderController extends Controller
             'allowZeroStockSales' => (bool) ($branch?->allow_zero_stock_sales ?? true),
             'canEditOrderPrices' => $this->canEditOrderPrices((int) $branchId),
             'recipeStockData' => $recipeStockData,
+            'promotionCatalog' => $promotionCatalog,
             'areaPrinterNames' => $areaPrinterNames,
             'receiptPrinter' => $this->receiptPrinterForBranch((int) $branchId),
             'clientOnLocalNetwork' => LocalNetworkClient::isOnLocalNetwork($request),
@@ -1483,6 +1495,8 @@ class OrderController extends Controller
                     'img' => $imageUrl,
                     'category' => $product->category ? $product->category->description : 'Sin categoría',
                     'category_id' => $product->category_id,
+                    'is_promotion' => (bool) ($product->is_promotion ?? false),
+                    'promotion_mix_and_match' => (bool) ($product->promotion_mix_and_match ?? false),
                     'detail_options' => collect($product->detail_options ?? [])->map(fn($item) => trim((string) $item))->filter()->values()->all(),
                     'table_id' => null,
                     'branch_id' => $branchId,
@@ -1576,11 +1590,13 @@ class OrderController extends Controller
         $pendingItems = collect($pendingItemsRaw)->groupBy(function ($item) {
             $complements = collect($item['complements'] ?? [])->map(fn($value) => trim((string) $value))->filter()->values()->all();
             sort($complements);
+            $promotionSignature = app(\App\Services\ProductCompositionService::class)->selectionSignature($item['promotionSelection'] ?? []);
 
             return implode('|', [
                 (int) ($item['pId'] ?? 0),
                 md5(json_encode($complements)),
                 trim((string) ($item['note'] ?? '')),
+                $promotionSignature,
             ]);
         })->map(function ($group) {
             $first = $group->first();
@@ -1614,6 +1630,7 @@ class OrderController extends Controller
                 'courtesyQty' => $group->sum('courtesyQty'),
                 'takeawayQty' => min($sumTakeaway, $sumQty),
                 'complements' => $first['complements'] ?? [],
+                'promotionSelection' => $first['promotionSelection'] ?? [],
             ];
         })->values()->all();
 
@@ -1624,18 +1641,21 @@ class OrderController extends Controller
                 'quantity' => (float) $d->quantity,
                 'comment' => $d->comment ?? '',
                 'complements' => collect($d->complements ?? [])->map(fn($item) => trim((string) $item))->filter()->values()->all(),
+                'promotionSelection' => data_get($d->product_snapshot, 'promotion_selection', []),
             ]))
             ->groupBy(function ($item) {
                 $complements = collect($item['complements'] ?? [])->map(fn($value) => trim((string) $value))->filter()->values()->all();
                 sort($complements);
+                $promotionSignature = app(\App\Services\ProductCompositionService::class)->selectionSignature($item['promotionSelection'] ?? []);
 
-                return implode('|', [(int) ($item['product_id'] ?? 0), md5(json_encode($complements))]);
+                return implode('|', [(int) ($item['product_id'] ?? 0), md5(json_encode($complements)), $promotionSignature]);
             })
             ->map(fn($group) => [
                 'description' => $group->first()['description'],
                 'quantity' => $group->sum('quantity'),
                 'comment' => $group->first()['comment'],
                 'complements' => $group->first()['complements'] ?? [],
+                'promotionSelection' => $group->first()['promotionSelection'] ?? [],
             ])
             ->values()
             ->all()
@@ -2311,15 +2331,11 @@ class OrderController extends Controller
 
             if ($existingOrderMovement) {
                 // Antes de borrar y recrear detalles: snapshot para delta de stock/kardex (si no, previous queda en 0 y se vuelve a descontar todo).
-                $previousCommittedQtyByProduct = $existingOrderMovement->details()
+                $previousCommittedStockMap = $this->buildCommittedStockMapFromDetails($branchId, $existingOrderMovement->details()
                     ->where(function ($q) {
                         $q->whereNull('status')->orWhere('status', '!=', 'C');
                     })
-                    ->get(['product_id', 'quantity'])
-                    ->groupBy('product_id')
-                    ->map(function ($rows) {
-                        return (float) $rows->sum('quantity');
-                    });
+                    ->get());
 
                 // ACTUALIZAR pedido existente (aunque quede sin items, para registrar cancelaciones)
                 $existingOrderMovement->update([
@@ -2405,19 +2421,10 @@ class OrderController extends Controller
                     'branch_id' => $branchId,
                 ]);
 
-                $previousCommittedQtyByProduct = collect();
+                $previousCommittedStockMap = collect();
             }
 
-            $newCommittedQtyByProduct = collect($items)
-                ->groupBy(function ($rawItem) {
-                    return (int) ($rawItem['product_id'] ?? $rawItem['pId'] ?? 0);
-                })
-                ->map(function ($rows) {
-                    return (float) collect($rows)->sum(function ($rawItem) {
-                        return (float) ($rawItem['quantity'] ?? $rawItem['qty'] ?? 0);
-                    });
-                })
-                ->filter(fn($qty, $productId) => (int) $productId > 0);
+            $newCommittedStockMap = $this->buildCommittedStockMapFromItems($branchId, $items);
 
             if (empty($items)) {
                 $orderMovement->update(['status' => 'CANCELADO', 'finished_at' => now()]);
@@ -2461,68 +2468,6 @@ class OrderController extends Controller
                 $code = $rawItem['code'] ?? ($product?->code ?? (string) $productId);
                 $description = $rawItem['description'] ?? ($product?->description ?? ($rawItem['name'] ?? 'Producto'));
 
-                // Validar stock disponible si no se permite vender sin stock
-                $productBranch = ProductBranch::where('product_id', $productId)
-                    ->where('branch_id', $branchId)
-                    ->first();
-                $currentStock = (float) ($productBranch->stock ?? 0);
-                $previousCommittedQty = (float) ($previousCommittedQtyByProduct->get((int) $productId, 0));
-                $newCommittedQty = (float) ($newCommittedQtyByProduct->get((int) $productId, 0));
-                $deltaQty = $newCommittedQty - $previousCommittedQty;
-                $roundUpToQuarter = function (float $qty): float {
-                    if ($qty <= 0) {
-                        return 0.0;
-                    }
-                    return round(ceil($qty * 4) / 4, 6);
-                };
-
-                if ($deltaQty > 0) {
-                    $recipe = Recipe::query()
-                        ->where('branch_id', $branchId)
-                        ->where('product_id', (int) ($productId ?? 0))
-                        ->where('status', 'A')
-                        ->with(['ingredients'])
-                        ->first();
-
-                    // Si tiene receta, validar por ingredientes; si no, validar por producto final.
-                    if ($recipe && (float) ($recipe->yield_quantity ?? 0) > 0) {
-                        $yield = (float) $recipe->yield_quantity;
-                        foreach ($recipe->ingredients as $ingredient) {
-                            $ingredientProductId = (int) ($ingredient->product_id ?? 0);
-                            $ingredientQty = (float) ($ingredient->quantity ?? 0);
-                            if ($ingredientProductId <= 0 || $ingredientQty <= 0) {
-                                continue;
-                            }
-
-                            $rawConsumption = ($ingredientQty / $yield) * $deltaQty;
-                            $needed = $roundUpToQuarter($rawConsumption);
-                            if ($needed <= 0) {
-                                continue;
-                            }
-
-                            $ingredientBranch = ProductBranch::query()
-                                ->where('product_id', $ingredientProductId)
-                                ->where('branch_id', $branchId)
-                                ->first();
-                            $ingredientStock = (float) ($ingredientBranch?->stock ?? 0);
-                            if ($ingredientStock < $needed) {
-                                $ingredientName = Product::query()->where('id', $ingredientProductId)->value('description') ?? ('Ingrediente #' . $ingredientProductId);
-                                throw new \Exception(
-                                    "Stock insuficiente para el ingrediente \"{$ingredientName}\". " .
-                                        "Stock disponible: {$ingredientStock}, Requerido: {$needed}"
-                                );
-                            }
-                        }
-                    } else {
-                        if (! $branch->allow_zero_stock_sales && $currentStock < $deltaQty) {
-                            throw new \Exception(
-                                "Stock insuficiente para el producto \"{$description}\". " .
-                                    "Stock disponible: {$currentStock}, Cantidad solicitada: {$deltaQty}"
-                            );
-                        }
-                    }
-                }
-
                 $rawNote = trim((string) ($rawItem['note'] ?? ''));
                 $comment = $rawNote !== '' ? $rawNote : null;
                 $complements = collect($rawItem['complements'] ?? [])
@@ -2538,14 +2483,24 @@ class OrderController extends Controller
                 if (! $commandedAt) {
                     $commandedAt = now();
                 }
+                $promotionSelection = app(\App\Services\ProductCompositionService::class)->normalizePromotionSelection(
+                    (int) ($productId ?? 0),
+                    (array) ($rawItem['promotionSelection'] ?? $rawItem['promotion_selection'] ?? [])
+                );
 
                 $delivered = ! empty($rawItem['delivered']);
+                $productSnapshot = $product ? $product->toArray() : null;
+                if (is_array($productSnapshot) && ! empty($promotionSelection)) {
+                    $productSnapshot['promotion_selection'] = $promotionSelection;
+                    $productSnapshot['is_promotion'] = (bool) ($product->is_promotion ?? false);
+                    $productSnapshot['promotion_mix_and_match'] = (bool) ($product->promotion_mix_and_match ?? false);
+                }
                 OrderMovementDetail::create([
                     'order_movement_id' => $orderMovement->id,
                     'product_id' => $productId,
                     'code' => $code,
                     'description' => $description,
-                    'product_snapshot' => $product ? $product->toArray() : null,
+                    'product_snapshot' => $productSnapshot,
                     'unit_id' => $unitId,
                     'tax_rate_id' => $rawItem['tax_rate_id'] ?? null,
                     'tax_rate_snapshot' => $rawItem['tax_rate_snapshot'] ?? null,
@@ -2586,6 +2541,15 @@ class OrderController extends Controller
                 if (! is_array($productSnapshot) && $product) {
                     $productSnapshot = $product->toArray();
                 }
+                $promotionSelection = app(\App\Services\ProductCompositionService::class)->normalizePromotionSelection(
+                    (int) ($productId ?? 0),
+                    (array) ($rawCancel['promotionSelection'] ?? $rawCancel['promotion_selection'] ?? data_get($productSnapshot, 'promotion_selection', []))
+                );
+                if (is_array($productSnapshot) && ! empty($promotionSelection)) {
+                    $productSnapshot['promotion_selection'] = $promotionSelection;
+                    $productSnapshot['is_promotion'] = (bool) ($product?->is_promotion ?? data_get($productSnapshot, 'is_promotion', false));
+                    $productSnapshot['promotion_mix_and_match'] = (bool) ($product?->promotion_mix_and_match ?? data_get($productSnapshot, 'promotion_mix_and_match', false));
+                }
                 $cancelComplements = collect($rawCancel['complements'] ?? [])
                     ->map(fn($item) => trim((string) $item))
                     ->filter()
@@ -2614,8 +2578,8 @@ class OrderController extends Controller
             $this->applyCommittedStockDelta(
                 $branch,
                 (int) $branchId,
-                $previousCommittedQtyByProduct,
-                $newCommittedQtyByProduct
+                $previousCommittedStockMap,
+                $newCommittedStockMap
             );
 
             app(KardexSyncService::class)->syncMovement($movement);
@@ -4583,132 +4547,80 @@ class OrderController extends Controller
             ->first();
     }
 
-    private function applyCommittedStockDelta(Branch $branch, int $branchId, \Illuminate\Support\Collection $previousCommittedQtyByProduct, \Illuminate\Support\Collection $newCommittedQtyByProduct): void
+    private function buildCommittedStockMapFromItems(int $branchId, array $items): \Illuminate\Support\Collection
     {
-        $affectedProductIds = $previousCommittedQtyByProduct
+        $svc = app(\App\Services\ProductCompositionService::class);
+        $map = [];
+        foreach ($items as $item) {
+            $map = $svc->mergeStockMaps($map, $svc->expandRawItemToStockMap($branchId, is_array($item) ? $item : []));
+        }
+
+        return collect($map);
+    }
+
+    private function buildCommittedStockMapFromDetails(int $branchId, \Illuminate\Support\Collection $details): \Illuminate\Support\Collection
+    {
+        $svc = app(\App\Services\ProductCompositionService::class);
+        $map = [];
+        foreach ($details as $detail) {
+            $map = $svc->mergeStockMaps($map, $svc->expandDetailToStockMap($branchId, $detail));
+        }
+
+        return collect($map);
+    }
+
+    private function applyCommittedStockDelta(Branch $branch, int $branchId, \Illuminate\Support\Collection $previousCommittedStockMap, \Illuminate\Support\Collection $newCommittedStockMap): void
+    {
+        $affectedProductIds = $previousCommittedStockMap
             ->keys()
-            ->merge($newCommittedQtyByProduct->keys())
+            ->merge($newCommittedStockMap->keys())
             ->map(fn($productId) => (int) $productId)
             ->filter(fn($productId) => $productId > 0)
             ->unique()
-            ->values();
+            ->values()
+            ->all();
+
+        if (empty($affectedProductIds)) {
+            return;
+        }
+
+        sort($affectedProductIds);
+        $productBranches = ProductBranch::query()
+            ->where('branch_id', $branchId)
+            ->whereIn('product_id', $affectedProductIds)
+            ->lockForUpdate()
+            ->get()
+            ->keyBy('product_id');
 
         foreach ($affectedProductIds as $productId) {
-            $previousCommittedQty = (float) ($previousCommittedQtyByProduct->get($productId, 0));
-            $newCommittedQty = (float) ($newCommittedQtyByProduct->get($productId, 0));
-            $deltaQty = $newCommittedQty - $previousCommittedQty;
+            $previousRow = $previousCommittedStockMap->get((string) $productId, $previousCommittedStockMap->get($productId));
+            $newRow = $newCommittedStockMap->get((string) $productId, $newCommittedStockMap->get($productId));
+            $previousCommittedQty = (float) data_get($previousRow, 'quantity', 0);
+            $newCommittedQty = (float) data_get($newRow, 'quantity', 0);
+            $deltaQty = round($newCommittedQty - $previousCommittedQty, 6);
             if (abs($deltaQty) < 0.000001) {
                 continue;
             }
 
-            $roundUpToQuarter = function (float $qty): float {
-                if ($qty <= 0) {
-                    return 0.0;
-                }
-                return round(ceil($qty * 4) / 4, 6);
-            };
-            $roundDownToQuarter = function (float $qty): float {
-                if ($qty <= 0) {
-                    return 0.0;
-                }
-                return round(floor($qty * 4) / 4, 6);
-            };
+            $strict = (bool) data_get($previousRow, 'strict', false) || (bool) data_get($newRow, 'strict', false);
+            $productBranch = $productBranches->get($productId);
 
-            $recipe = Recipe::query()
-                ->where('branch_id', $branchId)
-                ->where('product_id', $productId)
-                ->where('status', 'A')
-                ->with(['ingredients'])
-                ->first();
-
-            if ($recipe && (float) ($recipe->yield_quantity ?? 0) > 0) {
-                $yield = (float) $recipe->yield_quantity;
-
-                $requiredByIngredientId = [];
-                foreach ($recipe->ingredients as $ingredient) {
-                    $ingredientProductId = (int) ($ingredient->product_id ?? 0);
-                    $ingredientQty = (float) ($ingredient->quantity ?? 0);
-                    if ($ingredientProductId <= 0 || $ingredientQty <= 0) {
-                        continue;
-                    }
-
-                    $raw = ($ingredientQty / $yield) * abs($deltaQty);
-                    $portion = $deltaQty > 0 ? $roundUpToQuarter($raw) : $roundDownToQuarter($raw);
-                    if ($portion <= 0) {
-                        continue;
-                    }
-
-                    // Delta positivo consume (resta), delta negativo devuelve (suma)
-                    $signed = $deltaQty > 0 ? $portion : -$portion;
-                    $requiredByIngredientId[$ingredientProductId] = ($requiredByIngredientId[$ingredientProductId] ?? 0) + $signed;
-                }
-
-                if (! empty($requiredByIngredientId)) {
-                    $ingredientIds = array_keys($requiredByIngredientId);
-                    sort($ingredientIds);
-
-                    $ingredientBranches = ProductBranch::query()
-                        ->where('branch_id', $branchId)
-                        ->whereIn('product_id', $ingredientIds)
-                        ->lockForUpdate()
-                        ->get()
-                        ->keyBy('product_id');
-
-                    foreach ($ingredientIds as $ingredientProductId) {
-                        $signedDelta = (float) $requiredByIngredientId[$ingredientProductId];
-                        if ($signedDelta <= 0) {
-                            continue;
-                        }
-                        $pb = $ingredientBranches->get($ingredientProductId);
-                        $name = Product::query()->where('id', $ingredientProductId)->value('description') ?? ('Ingrediente #' . $ingredientProductId);
-                        if (! $pb) {
-                            throw new \Exception("Ingrediente \"{$name}\" no disponible en esta sucursal.");
-                        }
-                        $current = (float) ($pb->stock ?? 0);
-                        if ($current < $signedDelta) {
-                            throw new \Exception("Stock insuficiente para \"{$name}\".");
-                        }
-                    }
-
-                    foreach ($ingredientIds as $ingredientProductId) {
-                        $pb = $ingredientBranches->get($ingredientProductId);
-                        if (! $pb) {
-                            continue;
-                        }
-                        $current = (float) ($pb->stock ?? 0);
-                        $signedDelta = (float) $requiredByIngredientId[$ingredientProductId];
-                        $newStock = $current - $signedDelta;
-                        $pb->update([
-                            'stock' => max(0, round($newStock, 6)),
-                        ]);
-                    }
-                }
-            } else {
-                $productBranch = ProductBranch::query()
-                    ->where('product_id', $productId)
-                    ->where('branch_id', $branchId)
-                    ->lockForUpdate()
-                    ->first();
-
-                if (! $productBranch) {
-                    $product = Product::find($productId);
-                    $productName = (string) ($product?->description ?? ('Producto #' . $productId));
-                    throw new \Exception("Producto {$productName} no disponible en esta sucursal.");
-                }
-
-                $currentStock = (float) ($productBranch->stock ?? 0);
-                $newStock = $currentStock - $deltaQty;
-
-                if (! $branch->allow_zero_stock_sales && $newStock < 0) {
-                    $product = Product::find($productId);
-                    $productName = (string) ($product?->description ?? ('Producto #' . $productId));
-                    throw new \Exception("Stock insuficiente para \"{$productName}\".");
-                }
-
-                $productBranch->update([
-                    'stock' => max(0, round($newStock, 6)),
-                ]);
+            if (! $productBranch) {
+                $productName = Product::query()->where('id', $productId)->value('description') ?? ('Producto #' . $productId);
+                throw new \Exception("Producto {$productName} no disponible en esta sucursal.");
             }
+
+            $currentStock = (float) ($productBranch->stock ?? 0);
+            $newStock = $currentStock - $deltaQty;
+
+            if ($deltaQty > 0 && ($strict || ! $branch->allow_zero_stock_sales) && $currentStock < $deltaQty) {
+                $productName = Product::query()->where('id', $productId)->value('description') ?? ('Producto #' . $productId);
+                throw new \Exception("Stock insuficiente para \"{$productName}\".");
+            }
+
+            $productBranch->update([
+                'stock' => max(0, round($newStock, 6)),
+            ]);
         }
     }
 
@@ -4759,21 +4671,17 @@ class OrderController extends Controller
                 throw new \Exception('No se encontró la sucursal del pedido para revertir stock.');
             }
 
-            $previousCommittedQtyByProduct = $orderMovement->details()
+            $previousCommittedStockMap = $this->buildCommittedStockMapFromDetails($branchId, $orderMovement->details()
                 ->where(function ($q) {
                     $q->whereNull('status')->orWhere('status', '!=', 'C');
                 })
-                ->get(['product_id', 'quantity'])
-                ->groupBy('product_id')
-                ->map(function ($rows) {
-                    return (float) $rows->sum('quantity');
-                });
+                ->get());
 
             // Al cerrar mesa se revierte todo lo comprometido del pedido pendiente.
             $this->applyCommittedStockDelta(
                 $branch,
                 $branchId,
-                $previousCommittedQtyByProduct,
+                $previousCommittedStockMap,
                 collect()
             );
 
