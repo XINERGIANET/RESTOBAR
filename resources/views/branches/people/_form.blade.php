@@ -139,7 +139,7 @@
             return '';
         },
         setInputValue(name, value) {
-            const input = document.querySelector(`[name="${name}"]`);
+            const input = document.querySelector('[name=' + name + ']');
             if (!input) return;
             input.value = value ?? '';
             input.dispatchEvent(new Event('input', { bubbles: true }));
@@ -210,8 +210,7 @@
     }"
     x-init="init()"
 >
-    @if(false)
-         x-data="{
+    <div class="hidden" x-data="{
             dniQuery: @js(old('document_number', $person->document_number ?? '')),
             dniLoading: false,
             dniError: '',
@@ -270,7 +269,7 @@
         <div class="flex gap-2">
             <input
                 type="text"
-                name="document_number"
+                disabled
                 x-model="dniQuery"
                 @keydown.enter.prevent="searchDni()"
                 maxlength="11"
@@ -280,6 +279,7 @@
             <button
                 type="button"
                 @click="searchDni()"
+                disabled
                 :disabled="dniLoading"
                 class="shrink-0 inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow hover:bg-blue-700 active:scale-95 disabled:opacity-60 transition-all"
             >
@@ -289,7 +289,7 @@
             </button>
         </div>
         <p x-show="dniError" x-text="dniError" class="mt-1 text-xs text-red-500"></p>
-    @endif
+    </div>
 
     <div>
         <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">
