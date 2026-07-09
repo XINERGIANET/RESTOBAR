@@ -5,6 +5,8 @@
     $selectedRoleIds = old('roles', $selectedRoleIds ?? []);
     $selectedProfileId = old('profile_id', $selectedProfileId ?? null);
     $userName = old('user_name', $userName ?? null);
+    $initialPersonType = old('person_type', $person->person_type ?? 'DNI');
+    $initialDocumentNumber = old('document_number', $person->document_number ?? '');
     $initialDefaultViewId = old(
         'default_view_id',
         isset($person) ? $person->user?->profile?->default_view_id : null
@@ -40,9 +42,14 @@
         selectedRoleIds: JSON.parse($el.dataset.selectedRoles || '[]'),
         selectedProfileId: JSON.parse($el.dataset.selectedProfile || 'null') || '',
         selectedDefaultViewId: @js($initialDefaultViewId),
+        personType: @js($initialPersonType),
+        documentNumber: @js($initialDocumentNumber),
+        documentLoading: false,
+        documentError: '',
         roleToAdd: '',
         userRoleId: 1,
         init() {
+            this.onPersonTypeChange();
             if (!this.provinceId && this.districtId) {
                 const district = this.districts.find(d => d.id == this.districtId);
                 if (district) {
@@ -93,13 +100,117 @@
         },
         onProvinceChange() {
             this.districtId = '';
+        },
+        onPersonTypeChange() {
+            this.documentError = '';
+            if (String(this.personType).toUpperCase() === 'RUC') {
+                if (this.documentNumber.length > 11) {
+                    this.documentNumber = this.documentNumber.slice(0, 11);
+                }
+                return;
+            }
+            if (this.documentNumber.length > 8) {
+                this.documentNumber = this.documentNumber.slice(0, 8);
+            }
+        },
+        normalizeText(value) {
+            return String(value || '')
+                .normalize('NFD')
+                .replace(/[\u0300-\u036f]/g, '')
+                .trim()
+                .toUpperCase();
+        },
+        normalizeGender(value) {
+            const normalized = this.normalizeText(value);
+            if (normalized === 'M' || normalized === 'MASCULINO') return 'MASCULINO';
+            if (normalized === 'F' || normalized === 'FEMENINO') return 'FEMENINO';
+            return normalized ? 'OTRO' : '';
+        },
+        formatApiDateToIso(value) {
+            if (!value) return '';
+            const raw = String(value).trim();
+            if (/^\d{2}\/\d{2}\/\d{4}$/.test(raw)) {
+                const [day, month, year] = raw.split('/');
+                return `${year}-${month}-${day}`;
+            }
+            if (/^\d{4}-\d{2}-\d{2}/.test(raw)) {
+                return raw.slice(0, 10);
+            }
+            return '';
+        },
+        setInputValue(name, value) {
+            const input = document.querySelector(`[name="${name}"]`);
+            if (!input) return;
+            input.value = value ?? '';
+            input.dispatchEvent(new Event('input', { bubbles: true }));
+            input.dispatchEvent(new Event('change', { bubbles: true }));
+        },
+        setLocationByNames(departmentName, provinceName, districtName) {
+            const normalizedDepartment = this.normalizeText(departmentName);
+            const normalizedProvince = this.normalizeText(provinceName);
+            const normalizedDistrict = this.normalizeText(districtName);
+
+            const department = this.departments.find(item => this.normalizeText(item.name) === normalizedDepartment);
+            this.departmentId = department ? String(department.id) : '';
+
+            const matchingProvinces = this.provinces.filter(item => String(item.parent_location_id) === String(this.departmentId));
+            const province = matchingProvinces.find(item => this.normalizeText(item.name) === normalizedProvince);
+            this.provinceId = province ? String(province.id) : '';
+
+            const matchingDistricts = this.districts.filter(item => String(item.parent_location_id) === String(this.provinceId));
+            const district = matchingDistricts.find(item => this.normalizeText(item.name) === normalizedDistrict);
+            this.districtId = district ? String(district.id) : '';
+        },
+        async searchDocument() {
+            const document = this.documentNumber.trim();
+            const isRuc = String(this.personType).toUpperCase() === 'RUC';
+            const expectedLength = isRuc ? 11 : 8;
+
+            if (document.length !== expectedLength) {
+                this.documentError = isRuc
+                    ? 'Debe ingresar un RUC de 11 dígitos.'
+                    : 'Debe ingresar un DNI de 8 dígitos.';
+                return;
+            }
+
+            this.documentLoading = true;
+            this.documentError = '';
+
+            try {
+                const endpoint = isRuc ? `/api/ruc/${encodeURIComponent(document)}` : `/api/dni/${encodeURIComponent(document)}`;
+                const response = await fetch(endpoint, {
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                });
+                const data = await response.json();
+
+                if (!response.ok) {
+                    this.documentError = data.error || 'No se encontraron datos para el documento.';
+                    return;
+                }
+
+                if (isRuc) {
+                    this.setInputValue('first_name', data.razon_social || '');
+                    this.setInputValue('last_name', '');
+                    this.setInputValue('address', data.direccion || '');
+                    this.setInputValue('fecha_nacimiento', this.formatApiDateToIso(data.fecha_inscripcion));
+                    this.setInputValue('genero', '');
+                    this.setLocationByNames(data.departamento, data.provincia, data.distrito);
+                } else {
+                    this.setInputValue('first_name', data.nombres || '');
+                    this.setInputValue('last_name', [data.apellido_paterno, data.apellido_materno].filter(Boolean).join(' '));
+                    this.setInputValue('fecha_nacimiento', this.formatApiDateToIso(data.fecha_nacimiento));
+                    this.setInputValue('genero', this.normalizeGender(data.genero));
+                }
+            } catch (error) {
+                this.documentError = 'No se pudo consultar el documento en este momento.';
+            } finally {
+                this.documentLoading = false;
+            }
         }
     }"
     x-init="init()"
 >
-    @if($hidePinAndRoles)
-    {{-- Buscador DNI/RUC modo POS --}}
-    <div class="col-span-4 mb-1"
+    @if(false)
          x-data="{
             dniQuery: @js(old('document_number', $person->document_number ?? '')),
             dniLoading: false,
@@ -178,7 +289,6 @@
             </button>
         </div>
         <p x-show="dniError" x-text="dniError" class="mt-1 text-xs text-red-500"></p>
-    </div>
     @endif
 
     <div>
@@ -188,39 +298,53 @@
         </label>
         <select
             name="person_type"
+            x-model="personType"
+            @change="onPersonTypeChange()"
             @unless($hidePinAndRoles) required @endunless
             class="dark:bg-dark-900 shadow-theme-xs focus:border-[#124731] focus:ring-[#124731]/10 dark:focus:border-[#124731] h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 focus:ring-3 focus:outline-hidden dark:border-gray-700 dark:bg-gray-900 dark:text-white/90"
         >
-            <option value="">Seleccione tipo</option>
-            <option value="DNI" @selected(old('person_type', $person->person_type ?? '') === 'DNI')>DNI</option>
-            <option value="RUC" @selected(old('person_type', $person->person_type ?? '') === 'RUC')>RUC</option>
-            <option value="CARNET DE EXTRANGERIA" @selected(old('person_type', $person->person_type ?? '') === 'CARNET DE EXTRANGERIA')>CARNET DE EXTRANGERIA</option>
-            <option value="PASAPORTE" @selected(old('person_type', $person->person_type ?? '') === 'PASAPORTE')>PASAPORTE</option>
+            <option value="DNI">DNI</option>
+            <option value="RUC">RUC</option>
+            <option value="CARNET DE EXTRANGERIA">CARNET DE EXTRANGERIA</option>
+            <option value="PASAPORTE">PASAPORTE</option>
         </select>
         @error('person_type')
             <p class="mt-1 text-xs text-error-500">{{ $message }}</p>
         @enderror
     </div>
 
-    @if(!$hidePinAndRoles)
     <div>
-        <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">
+        <label class="mb-1.5 block text-sm font-semibold text-blue-700 dark:text-blue-400">
             Documento
-            <span class="text-red-500">*</span>
+            @unless($hidePinAndRoles)<span class="text-red-500">*</span>@endunless
         </label>
-        <input
-            type="text"
-            name="document_number"
-            value="{{ old('document_number', $person->document_number ?? '') }}"
-            required
-            placeholder="Ingrese el documento"
-            class="dark:bg-dark-900 shadow-theme-xs focus:border-[#124731] focus:ring-[#124731]/10 dark:focus:border-[#124731] h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 placeholder:text-gray-400 focus:ring-3 focus:outline-hidden dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30"
-        />
+        <div class="flex gap-2">
+            <input
+                type="text"
+                name="document_number"
+                x-model.trim="documentNumber"
+                @keydown.enter.prevent="searchDocument()"
+                :maxlength="String(personType).toUpperCase() === 'RUC' ? 11 : 8"
+                @unless($hidePinAndRoles) required @endunless
+                placeholder="Ingrese el documento"
+                class="dark:bg-dark-900 shadow-theme-xs focus:border-[#124731] focus:ring-[#124731]/10 dark:focus:border-[#124731] h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 placeholder:text-gray-400 focus:ring-3 focus:outline-hidden dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30"
+            />
+            <button
+                type="button"
+                @click="searchDocument()"
+                :disabled="documentLoading"
+                class="shrink-0 inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow hover:bg-blue-700 active:scale-95 disabled:opacity-60 transition-all"
+            >
+                <i x-show="!documentLoading" class="ri-search-line"></i>
+                <i x-show="documentLoading" class="ri-loader-4-line animate-spin"></i>
+                <span x-text="documentLoading ? 'Buscando...' : 'Buscar'"></span>
+            </button>
+        </div>
+        <p x-show="documentError" x-text="documentError" class="mt-1 text-xs text-red-500"></p>
         @error('document_number')
             <p class="mt-1 text-xs text-error-500">{{ $message }}</p>
         @enderror
     </div>
-    @endif
     <div>
         <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">Nombres</label>
         <input
@@ -490,4 +614,3 @@
         </template>
     @endunless
 </div>
-
