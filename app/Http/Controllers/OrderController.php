@@ -126,6 +126,36 @@ class OrderController extends Controller
         return in_array(mb_strtolower(trim((string) ($value ?? '0'))), ['1', 'true', 'si', 'sí', 'yes', 'on'], true);
     }
 
+    private function allowsZeroStockSales(?int $branchId, ?Branch $branch = null): bool
+    {
+        if (! $branchId) {
+            return (bool) ($branch?->allow_zero_stock_sales ?? true);
+        }
+
+        $value = DB::table('parameters as p')
+            ->leftJoin('branch_parameters as bp', function ($join) use ($branchId) {
+                $join->on('bp.parameter_id', '=', 'p.id')
+                    ->where('bp.branch_id', $branchId)
+                    ->whereNull('bp.deleted_at');
+            })
+            ->whereNull('p.deleted_at')
+            ->where('p.status', 1)
+            ->whereRaw('LOWER(p.description) LIKE ?', ['%permitir%'])
+            ->whereRaw('LOWER(p.description) LIKE ?', ['%stock%'])
+            ->where(function ($query) {
+                $query->where('p.description', 'like', '%0%')
+                    ->orWhereRaw('LOWER(p.description) LIKE ?', ['%cero%']);
+            })
+            ->value(DB::raw('COALESCE(bp.value, p.value)'));
+
+        if ($value !== null && $value !== '') {
+            $normalized = mb_strtolower(trim((string) $value), 'UTF-8');
+            return in_array($normalized, ['1', 'true', 'si', 'sÃ­', 'sí', 'yes', 'on'], true);
+        }
+
+        return (bool) ($branch?->allow_zero_stock_sales ?? true);
+    }
+
     private function mozoProfileId(): ?int
     {
         return Profile::mozoProfileId();
@@ -1403,7 +1433,7 @@ class OrderController extends Controller
             'provinces' => $provinces,
             'districts' => $districts,
             'turboCacheControl' => 'no-cache',
-            'allowZeroStockSales' => (bool) ($branch?->allow_zero_stock_sales ?? true),
+            'allowZeroStockSales' => $this->allowsZeroStockSales((int) $branchId, $branch),
             'canEditOrderPrices' => $this->canEditOrderPrices((int) $branchId),
             'recipeStockData' => $recipeStockData,
             'promotionCatalog' => $promotionCatalog,
@@ -1794,7 +1824,7 @@ class OrderController extends Controller
             'provinces' => $provinces,
             'districts' => $districts,
             'turboCacheControl' => 'no-cache',
-            'allowZeroStockSales' => (bool) ($branch?->allow_zero_stock_sales ?? true),
+            'allowZeroStockSales' => $this->allowsZeroStockSales((int) $branchId, $branch),
             'canEditOrderPrices' => $this->canEditOrderPrices((int) $branchId),
             'recipeStockData' => $recipeStockData,
             'areaPrinterNames' => $areaPrinterNames,
@@ -4613,7 +4643,7 @@ class OrderController extends Controller
             $currentStock = (float) ($productBranch->stock ?? 0);
             $newStock = $currentStock - $deltaQty;
 
-            if ($deltaQty > 0 && ($strict || ! $branch->allow_zero_stock_sales) && $currentStock < $deltaQty) {
+            if ($deltaQty > 0 && ($strict || ! $this->allowsZeroStockSales($branchId, $branch)) && $currentStock < $deltaQty) {
                 $productName = Product::query()->where('id', $productId)->value('description') ?? ('Producto #' . $productId);
                 throw new \Exception("Stock insuficiente para \"{$productName}\".");
             }

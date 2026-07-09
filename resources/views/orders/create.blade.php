@@ -1453,6 +1453,7 @@
 
                     // Datos de productos, categorías y productBranches desde el servidor.
                     const serverProductBranches = @json($productBranches ?? []);
+                    const allowZeroStockSales = @json($allowZeroStockSales ?? true);
                     const areaPrinterNames = @json($areaPrinterNames ?? []);
                     @php
                         $serverCategoriesPayload = collect($categories ?? [])
@@ -1656,7 +1657,7 @@
                             if (!productId) return;
                             const needed = parseFloat(row?.quantity) || 0;
                             const stock = branchStockForProductId(productId);
-                            if (needed > stock + 0.000001) {
+                            if ((row?.strict || !allowZeroStockSales) && needed > stock + 0.000001) {
                                 issues.push({
                                     product_id: productId,
                                     name: row?.name || productNameById(productId),
