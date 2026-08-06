@@ -132,37 +132,73 @@
                     
                     @forelse ($shift_cash as $shift)
                         @php
-                            $ingresosTotal = 0;
-                            $egresosTotal = 0;
-                            $desgloseIngresos = [];
-                            $desgloseEgresos = [];
+                            $startCm = $shift->cashMovementStart;
+                            $endCm = $shift->cashMovementEnd;
+                            $regId = $startCm?->cash_register_id;
+                            $from = $startCm?->created_at ?? $shift->started_at;
+                            $to = $endCm?->created_at ?? $shift->ended_at ?? now();
 
-                            if($shift->movements) {
-                                foreach($shift->movements as $mov) {
-                                    if($mov->id == $shift->cash_movement_start_id || $mov->id == $shift->cash_movement_end_id) {
-                                        continue; 
+                            $excludeIds = array_values(array_filter([
+                                $shift->cash_movement_end_id,
+                            ]));
+
+                            $shiftMovements = \App\Models\CashMovements::query()
+                                ->with(['paymentConcept', 'details.paymentMethod'])
+                                ->whereNotIn('id', $excludeIds)
+                                ->where(function($q) use ($shift, $regId, $from, $to) {
+                                    $q->where('shift_id', $shift->id);
+                                    if ($regId && $from) {
+                                        $q->orWhere(function($q2) use ($regId, $from, $to) {
+                                            $q2->where('cash_register_id', $regId)
+                                               ->whereBetween('created_at', [
+                                                   \Carbon\Carbon::parse($from)->startOfSecond(),
+                                                   \Carbon\Carbon::parse($to)->endOfSecond()
+                                               ]);
+                                        });
                                     }
+                                })
+                                ->orderBy('id')
+                                ->get();
 
-                                    if ($mov->paymentConcept && $mov->details) {
-                                        $tipo = $mov->paymentConcept->type; 
-                                        foreach($mov->details as $detail) {
-                                            $metodo = $detail->paymentMethod->name ?? ($detail->payment_method ?? 'Otros');
-                                            $monto = $detail->amount;
+                            $conceptGroups = [];
+                            foreach ($shiftMovements as $mov) {
+                                $conceptName = $mov->paymentConcept?->description ?? 'Otros';
+                                $conceptType = $mov->paymentConcept?->type ?? 'I';
 
-                                            if ($tipo == 'I') {
-                                                $ingresosTotal += $monto;
-                                                if (!isset($desgloseIngresos[$metodo])) $desgloseIngresos[$metodo] = 0;
-                                                $desgloseIngresos[$metodo] += $monto;
-                                            } elseif ($tipo == 'E') {
-                                                $egresosTotal += $monto;
-                                                if (!isset($desgloseEgresos[$metodo])) $desgloseEgresos[$metodo] = 0;
-                                                $desgloseEgresos[$metodo] += $monto;
-                                            }
+                                if (!isset($conceptGroups[$conceptName])) {
+                                    $conceptGroups[$conceptName] = [
+                                        'name' => $conceptName,
+                                        'type' => $conceptType,
+                                        'methods' => []
+                                    ];
+                                }
+
+                                if ($mov->details && $mov->details->count() > 0) {
+                                    foreach ($mov->details as $detail) {
+                                        $methodName = $detail->paymentMethod->name ?? ($detail->payment_method ?? 'Otros');
+                                        $amount = (float) $detail->amount;
+
+                                        if (!isset($conceptGroups[$conceptName]['methods'][$methodName])) {
+                                            $conceptGroups[$conceptName]['methods'][$methodName] = 0;
                                         }
+                                        $conceptGroups[$conceptName]['methods'][$methodName] += $amount;
                                     }
+                                } elseif ((float) $mov->total > 0) {
+                                    $methodName = 'Efectivo';
+                                    if (!isset($conceptGroups[$conceptName]['methods'][$methodName])) {
+                                        $conceptGroups[$conceptName]['methods'][$methodName] = 0;
+                                    }
+                                    $conceptGroups[$conceptName]['methods'][$methodName] += (float) $mov->total;
                                 }
                             }
-                            $neto = $ingresosTotal - $egresosTotal;
+
+                            $getConceptIcon = function($name, $type) {
+                                $nameLower = mb_strtolower($name);
+                                if (str_contains($nameLower, 'apertura')) return '📻';
+                                if (str_contains($nameLower, 'pago de cliente') || str_contains($nameLower, 'venta')) return '🛒';
+                                if ($type === 'E' || str_contains($nameLower, 'egreso') || str_contains($nameLower, 'gasto')) return '⬇️';
+                                return '⬆️';
+                            };
                         @endphp
 
                         <tbody x-data="{ expanded: false }" class="divide-y divide-gray-100 dark:divide-gray-800">
@@ -207,52 +243,32 @@
 
                                 {{-- 3. DETALLE (INGRESOS/EGRESOS) --}}
                                 <td class="px-5 py-4">
-                                    <div class="flex flex-col gap-2 w-64 text-xs">
-                                        @if($ingresosTotal > 0)
-                                            <div>
-                                                <div class="flex justify-between font-bold text-emerald-600 mb-1 border-b border-emerald-100 pb-0.5">
-                                                    <span><i class="ri-arrow-up-line"></i> Ingresos:</span>
-                                                    <span>$ {{ number_format($ingresosTotal, 2) }}</span>
+                                    @if(count($conceptGroups) > 0)
+                                        <div class="flex flex-col gap-2.5 text-xs">
+                                            @foreach($conceptGroups as $cName => $cData)
+                                                @php
+                                                    $icon = $getConceptIcon($cName, $cData['type']);
+                                                    $isEgreso = ($cData['type'] === 'E' || str_contains(mb_strtolower($cName), 'egreso'));
+                                                @endphp
+                                                <div>
+                                                    <div class="font-bold text-gray-800 dark:text-gray-200 flex items-center gap-1">
+                                                        <span>{{ $icon }}</span>
+                                                        <span>{{ $cName }}:</span>
+                                                    </div>
+                                                    <div class="pl-4 space-y-0.5 text-gray-600 dark:text-gray-300">
+                                                        @foreach($cData['methods'] as $mName => $mAmount)
+                                                            <div>
+                                                                <span>{{ $mName }}:</span>
+                                                                <span>{{ $isEgreso ? '-' : '' }}{{ number_format($mAmount, 2) }}</span>
+                                                            </div>
+                                                        @endforeach
+                                                    </div>
                                                 </div>
-                                                <div class="pl-2 space-y-0.5">
-                                                    @foreach($desgloseIngresos as $metodo => $monto)
-                                                        <div class="flex justify-between text-gray-500 dark:text-gray-400">
-                                                            <span>{{ $metodo }}:</span>
-                                                            <span>{{ number_format($monto, 2) }}</span>
-                                                        </div>
-                                                    @endforeach
-                                                </div>
-                                            </div>
-                                        @endif
-
-                                        @if($egresosTotal > 0)
-                                            <div>
-                                                <div class="flex justify-between font-bold text-red-500 mb-1 border-b border-red-100 pb-0.5">
-                                                    <span><i class="ri-arrow-down-line"></i> Egresos:</span>
-                                                    <span>$ {{ number_format($egresosTotal, 2) }}</span>
-                                                </div>
-                                                <div class="pl-2 space-y-0.5">
-                                                    @foreach($desgloseEgresos as $metodo => $monto)
-                                                        <div class="flex justify-between text-gray-500 dark:text-gray-400">
-                                                            <span>{{ $metodo }}:</span>
-                                                            <span>{{ number_format($monto, 2) }}</span>
-                                                        </div>
-                                                    @endforeach
-                                                </div>
-                                            </div>
-                                        @endif
-
-                                        @if($ingresosTotal == 0 && $egresosTotal == 0)
-                                            <span class="text-gray-400 italic">Sin movimientos operativos</span>
-                                        @else
-                                            <div class="border-t border-dashed border-gray-300 pt-1 mt-1">
-                                                <div class="flex justify-between font-bold text-gray-700 dark:text-gray-200">
-                                                    <span>Balance:</span>
-                                                    <span class="{{ $neto >= 0 ? 'text-emerald-600' : 'text-red-500' }}">$ {{ number_format($neto, 2) }}</span>
-                                                </div>
-                                            </div>
-                                        @endif
-                                    </div>
+                                            @endforeach
+                                        </div>
+                                    @else
+                                        <span class="text-xs text-gray-400 italic">Sin movimientos operativos</span>
+                                    @endif
                                 </td>
 
                                 {{-- 4. N° CIERRE --}}
@@ -391,7 +407,7 @@
             @close-shift-cash-modal.window="open = false"
             :isOpen="false"
             :showCloseButton="false"
-            class="max-w-3xl"
+            class="max-w-4xl"
         >
             <form
                 id="shift-print-form"
@@ -399,44 +415,53 @@
                 x-data="{ selectedShiftId: null }"
                 @open-shift-cash-modal.window="selectedShiftId = $event.detail?.shiftId ?? null"
             >
-                <div class="p-6 sm:p-8">
-                    <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                        <div class="flex items-center gap-4">
+                <div class="p-6 sm:p-7 border-b border-gray-100 dark:border-gray-800">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-xl bg-emerald-100 dark:bg-emerald-950/60 text-[#124731] dark:text-emerald-400 flex items-center justify-center font-semibold">
+                                <i class="ri-file-pdf-2-line text-xl"></i>
+                            </div>
                             <div>
-                                <h3 class="text-lg font-semibold text-gray-800 dark:text-white/90">Imprimir PDF del turno de caja</h3>
-                                <p class="mt-1 text-sm text-gray-500">Turno cerrado o en curso: en curso incluye movimientos hasta ahora. Elige las secciones del PDF.</p>
+                                <h3 class="text-lg font-bold text-gray-900 dark:text-white">Imprimir PDF del Turno de Caja</h3>
+                                <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Turno cerrado o en curso (incluye movimientos hasta ahora). Elige las secciones del PDF.</p>
                             </div>
                         </div>
+                        <button type="button" @click="$dispatch('close-shift-cash-modal')" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800">
+                            <i class="ri-close-line text-xl"></i>
+                        </button>
                     </div>
                 </div>
-                @include('shift_cash.modal_cash')
-                <div class="p-6 sm:p-8 flex items-center justify-end gap-3">
+
+                <div class="py-2">
+                    @include('shift_cash.modal_cash')
+                </div>
+
+                <div class="p-5 sm:px-7 border-t border-gray-100 dark:border-gray-800 flex items-center justify-end gap-3 bg-gray-50/50 dark:bg-gray-900/40 rounded-b-2xl">
+                    <x-ui.button
+                        size="md"
+                        variant="outline"
+                        type="button"
+                        class="h-11 px-5 rounded-xl border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                        @click="$dispatch('close-shift-cash-modal')"
+                    >
+                        <i class="ri-close-line"></i> <span>Cancelar</span>
+                    </x-ui.button>
                     <x-ui.button
                         size="md"
                         variant="primary"
                         type="button"
-                        class="h-11 px-4"
-                        style="background-color: #0A2E1F;"
+                        class="h-11 px-6 rounded-xl font-medium shadow-md shadow-emerald-900/20 hover:shadow-emerald-900/30 transition-all flex items-center gap-2"
+                        style="background-color: #124731;"
                         x-bind:disabled="!selectedShiftId"
                         @click="
                             if (!selectedShiftId) return;
                             const form = document.getElementById('shift-print-form');
                             const qs = form ? new URLSearchParams(new FormData(form)).toString() : '';
                             const base = '{{ url('/caja/turno-caja') }}/' + selectedShiftId + '/print';
-                            window.location.assign(base + (qs ? '?' + qs : ''));
+                            window.open(base + (qs ? '?' + qs + '&inline=1' : '?inline=1'), '_blank');
                         "
                     >
-                        <i class="ri-file-pdf-line text-gray-100"></i> <span class="text-gray-100">Descargar PDF</span>
-                    </x-ui.button>
-                    <x-ui.button
-                        size="md"
-                        variant="outline"
-                        type="button"
-                        class="h-11 px-4"
-                        style="background-color: #FFFFFF; color: #0A2E1F;"
-                        @click="$dispatch('close-shift-cash-modal')"
-                    >
-                        <i class="ri-close-line"></i> <span>Cancelar</span>
+                        <i class="ri-external-link-line text-base text-gray-100"></i> <span class="text-gray-100">Abrir PDF</span>
                     </x-ui.button>
                 </div>
             </form>

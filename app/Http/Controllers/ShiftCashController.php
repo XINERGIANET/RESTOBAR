@@ -250,7 +250,7 @@ class ShiftCashController extends Controller
                 ->setOption('encoding', 'utf-8')
                 ->setOption('enable-local-file-access', true);
 
-            return $request->boolean('inline')
+            return ($request->has('inline') ? $request->boolean('inline') : true)
                 ? $pdf->inline($fileName)
                 : $pdf->download($fileName);
         } catch (\Throwable $e) {
