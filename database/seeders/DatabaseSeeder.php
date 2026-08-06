@@ -19,6 +19,7 @@ class DatabaseSeeder extends Seeder
             ReceiptPrinterParameterSeeder::class,
             OrderPriceEditingParameterSeeder::class,
             BranchQzCertificateParametersSeeder::class,
+            CloseTableParameterSeeder::class,
         ]);
     }
 }

@@ -187,7 +187,7 @@
                                                     class="w-8 h-8 flex items-center justify-center bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition">
                                                     <i class="ri-drag-move-2-line text-sm"></i>
                                                 </button>
-                                                <template x-if="!isMozo">
+                                                <template x-if="canCloseTables && !isMozo">
                                                     <button type="button" @click.stop="closeTable(table)" title="Cerrar mesa"
                                                         class="w-8 h-8 flex items-center justify-center bg-red-400 hover:bg-red-600 text-white rounded-lg transition">
                                                         <i class="ri-close-circle-line text-sm"></i>
@@ -468,6 +468,7 @@
                     cancelOrderToken: @json(csrf_token()),
                     canCharge: @json($canCharge ?? true),
                     isMozo: @json($isMozo ?? false),
+                    canCloseTables: @json($canCloseTables ?? true),
                     waiterPinEnabled: @json($waiterPinEnabled ?? false),
                     waiterPinBranchId: @json((int) session('branch_id')),
                     validateWaiterPinUrl: @json(route('orders.validateWaiterPin')),

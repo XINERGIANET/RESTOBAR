@@ -126,6 +126,25 @@ class OrderController extends Controller
         return in_array(mb_strtolower(trim((string) ($value ?? '0'))), ['1', 'true', 'si', 'sí', 'yes', 'on'], true);
     }
 
+    private function canCloseTables(?int $branchId): bool
+    {
+        if (! $branchId) return true;
+
+        $value = DB::table('parameters as p')
+            ->leftJoin('branch_parameters as bp', function ($join) use ($branchId) {
+                $join->on('bp.parameter_id', '=', 'p.id')
+                    ->where('bp.branch_id', $branchId)
+                    ->whereNull('bp.deleted_at');
+            })
+            ->whereNull('p.deleted_at')
+            ->where('p.description', 'Permitir cerrar mesas')
+            ->value(DB::raw('COALESCE(bp.value, p.value)'));
+
+        if ($value === null) return true;
+
+        return in_array(mb_strtolower(trim((string) $value)), ['1', 'true', 'si', 'sí', 'yes', 'on'], true);
+    }
+
     private function allowsZeroStockSales(?int $branchId, ?Branch $branch = null): bool
     {
         if (! $branchId) {
@@ -823,6 +842,7 @@ class OrderController extends Controller
             'isMozo' => Profile::userHasMozoProfile(
                 $profileId !== null && $profileId !== '' ? (int) $profileId : null
             ),
+            'canCloseTables' => $this->canCloseTables($branchId),
             'selectedAreaId' => $selectedAreaId,
             'turboCacheControl' => 'no-cache',
         ]);
