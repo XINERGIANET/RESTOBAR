@@ -149,6 +149,10 @@
                                                 str_contains($descLower, 'permitir') &&
                                                 str_contains($descLower, 'stock') &&
                                                 (str_contains($descLower, '0') || str_contains($descLower, 'cero'));
+                                            $isCloseTableParam =
+                                                str_contains($descLower, 'permitir') &&
+                                                str_contains($descLower, 'cerrar') &&
+                                                str_contains($descLower, 'mesa');
                                             // Detectar "TIPO VENTA POR DEFECTO" por descripción (no por ID hardcodeado)
                                             $isTipoVentaParam =
                                                 (str_contains($descLower, 'tipo') && str_contains($descLower, 'venta')) ||
@@ -233,6 +237,83 @@
                                                 <option value="0" {{ (string) ($parameter->branch_value ?? '') === '0' ? 'selected' : '' }}>No (0)</option>
                                                 <option value="1" {{ (string) ($parameter->branch_value ?? '') === '1' ? 'selected' : '' }}>Sí (1)</option>
                                             </select>
+                                        @elseif($isCloseTableParam)
+                                            {{-- PERMITIR CERRAR MESAS: Selección de Sí/No + Checkboxes de tipos de usuario --}}
+                                            @php
+                                                $rawVal = trim((string) ($parameter->branch_value ?? ''));
+                                                $closeTableEnabled = 'No';
+                                                $closeTableProfiles = [];
+
+                                                if (!empty($rawVal)) {
+                                                    $normalizedRaw = mb_strtolower($rawVal, 'UTF-8');
+                                                    if (in_array($normalizedRaw, ['no', '0', 'false'], true)) {
+                                                        $closeTableEnabled = 'No';
+                                                        $closeTableProfiles = [];
+                                                    } elseif (in_array($normalizedRaw, ['sí', 'si', '1', 'true'], true)) {
+                                                        $closeTableEnabled = 'Si';
+                                                        $closeTableProfiles = collect($profiles ?? [])->pluck('id')->map(fn($id) => (int)$id)->all();
+                                                    } else {
+                                                        $decoded = json_decode($rawVal, true);
+                                                        if (is_array($decoded)) {
+                                                            $statusVal = mb_strtolower((string)($decoded['status'] ?? ''), 'UTF-8');
+                                                            $closeTableEnabled = in_array($statusVal, ['no', '0', 'false'], true) ? 'No' : 'Si';
+                                                            $closeTableProfiles = array_values(array_map('intval', (array) ($decoded['profiles'] ?? [])));
+                                                        } else {
+                                                            $closeTableEnabled = 'Si';
+                                                            $closeTableProfiles = collect($profiles ?? [])->pluck('id')->map(fn($id) => (int)$id)->all();
+                                                        }
+                                                    }
+                                                }
+                                            @endphp
+
+                                            <div x-data="{ 
+                                                enabled: '{{ $closeTableEnabled }}', 
+                                                selectedProfiles: {{ json_encode($closeTableProfiles) }} 
+                                            }" class="w-full space-y-3">
+                                                
+                                                <select name="parameters[{{ $paramKey }}]" 
+                                                        x-model="enabled"
+                                                        class="w-full border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 px-3 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-colors shadow-sm">
+                                                    <option value="No">No (Deshabilitado)</option>
+                                                    <option value="Si">Sí (Permitir por tipo de usuario)</option>
+                                                </select>
+
+                                                <div x-show="enabled === 'Si'" 
+                                                     x-transition:enter="transition ease-out duration-200"
+                                                     x-transition:enter-start="opacity-0 -translate-y-2"
+                                                     x-transition:enter-end="opacity-100 translate-y-0"
+                                                     class="border border-gray-200 dark:border-gray-700 rounded-lg p-3 bg-gray-50 dark:bg-gray-800/50 space-y-2">
+                                                    <p class="text-xs font-semibold text-gray-600 dark:text-gray-400">
+                                                        Marcar tipos de usuario autorizados:
+                                                    </p>
+                                                    <div class="max-h-48 overflow-y-auto space-y-1.5">
+                                                        @foreach($profiles ?? [] as $prof)
+                                                            @php
+                                                                $isSystemAdmin = ((int)$prof->id === 1 || str_contains(mb_strtolower($prof->name ?? '', 'UTF-8'), 'sistema'));
+                                                            @endphp
+                                                            <label class="flex items-center gap-2 text-sm text-gray-800 dark:text-gray-200 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700/50 p-1.5 rounded transition">
+                                                                @if($isSystemAdmin)
+                                                                    <input type="hidden" name="close_table_profiles[]" value="{{ $prof->id }}">
+                                                                    <input type="checkbox"
+                                                                           checked
+                                                                           disabled
+                                                                           class="rounded border-gray-300 text-blue-600 focus:ring-blue-500 opacity-70 cursor-not-allowed">
+                                                                    <span class="font-semibold text-gray-900 dark:text-white">{{ $prof->name }}</span>
+                                                                    <span class="text-[10px] font-bold text-blue-700 bg-blue-100 dark:bg-blue-900/60 dark:text-blue-200 px-2 py-0.5 rounded-full uppercase tracking-wider">Por defecto</span>
+                                                                @else
+                                                                    <input type="checkbox"
+                                                                           name="close_table_profiles[]"
+                                                                           value="{{ $prof->id }}"
+                                                                           x-model="selectedProfiles"
+                                                                           :value="{{ $prof->id }}"
+                                                                           class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                                                                    <span class="font-medium">{{ $prof->name }}</span>
+                                                                @endif
+                                                            </label>
+                                                        @endforeach
+                                                    </div>
+                                                </div>
+                                            </div>
                                         @elseif($isTipoVentaParam)
                                             {{-- TIPO DE VENTA POR DEFECTO: Ticket / Boleta / Factura (detectado por descripción) --}}
                                             <select name="parameters[{{ $paramKey }}]" 

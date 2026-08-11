@@ -126,7 +126,7 @@ class OrderController extends Controller
         return in_array(mb_strtolower(trim((string) ($value ?? '0'))), ['1', 'true', 'si', 'sí', 'yes', 'on'], true);
     }
 
-    private function canCloseTables(?int $branchId): bool
+    private function canCloseTables(?int $branchId, ?int $profileId = null): bool
     {
         if (! $branchId) return true;
 
@@ -142,7 +142,39 @@ class OrderController extends Controller
 
         if ($value === null) return true;
 
-        return in_array(mb_strtolower(trim((string) $value)), ['1', 'true', 'si', 'sí', 'yes', 'on'], true);
+        $strVal = trim((string) $value);
+        $normalized = mb_strtolower($strVal, 'UTF-8');
+
+        if (in_array($normalized, ['0', 'no', 'false'], true)) {
+            return false;
+        }
+
+        if (in_array($normalized, ['1', 'true', 'si', 'sí', 'yes', 'on'], true)) {
+            if ($profileId !== null && Profile::userHasMozoProfile($profileId)) {
+                return false;
+            }
+            return true;
+        }
+
+        $decoded = json_decode($strVal, true);
+        if (is_array($decoded)) {
+            $status = mb_strtolower(trim((string) ($decoded['status'] ?? '')), 'UTF-8');
+            if (in_array($status, ['0', 'no', 'false'], true)) {
+                return false;
+            }
+            $allowedProfiles = array_map('intval', (array) ($decoded['profiles'] ?? []));
+
+            if ($profileId !== null) {
+                $systemAdminId = Profile::whereRaw('LOWER(name) LIKE ?', ['%sistema%'])->value('id') ?? 1;
+                if ((int) $profileId === (int) $systemAdminId) {
+                    return true;
+                }
+                return in_array((int) $profileId, $allowedProfiles, true);
+            }
+            return !empty($allowedProfiles);
+        }
+
+        return true;
     }
 
     private function allowsZeroStockSales(?int $branchId, ?Branch $branch = null): bool
@@ -687,7 +719,7 @@ class OrderController extends Controller
     public function index(Request $request)
     {
         $branchId = session('branch_id');
-        $profileId = session('profile_id') ?? $request->user()?->profile_id;
+        $profileId = $request->user()?->profile_id ?? session('profile_id');
         $waiterPinEnabled = $this->shouldRequireWaiterPin($branchId ? (int) $branchId : null, $profileId);
 
         $areas = Area::query()
@@ -842,7 +874,10 @@ class OrderController extends Controller
             'isMozo' => Profile::userHasMozoProfile(
                 $profileId !== null && $profileId !== '' ? (int) $profileId : null
             ),
-            'canCloseTables' => $this->canCloseTables($branchId),
+            'canCloseTables' => $this->canCloseTables(
+                $branchId,
+                $profileId !== null && $profileId !== '' ? (int) $profileId : null
+            ),
             'selectedAreaId' => $selectedAreaId,
             'turboCacheControl' => 'no-cache',
         ]);
@@ -4676,12 +4711,14 @@ class OrderController extends Controller
 
     public function cancelOrder(Request $request)
     {
-        $profileId = session('profile_id') ?? $request->user()?->profile_id;
+        $profileId = $request->user()?->profile_id ?? session('profile_id');
         $resolvedPid = $profileId !== null && $profileId !== '' ? (int) $profileId : null;
-        if (Profile::userHasMozoProfile($resolvedPid)) {
+        $branchId = session('branch_id');
+
+        if (! $this->canCloseTables($branchId, $resolvedPid)) {
             return response()->json([
                 'success' => false,
-                'message' => 'El perfil Mozo no puede anular ni cerrar el pedido.',
+                'message' => 'Tu perfil de usuario no tiene permiso para cerrar mesas.',
             ], 403);
         }
 

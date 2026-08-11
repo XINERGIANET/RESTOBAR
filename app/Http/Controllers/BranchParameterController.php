@@ -15,6 +15,7 @@ use App\Models\TaxRate;
 use App\Models\PaymentMethod;
 use App\Models\Parameters;
 use App\Models\PrinterBranch;
+use App\Models\Profile;
 
 class BranchParameterController extends Controller
 {
@@ -224,6 +225,8 @@ class BranchParameterController extends Controller
                 : $pivotIds;
         }
 
+        $profiles = Profile::query()->whereNull('deleted_at')->where('status', 1)->orderBy('id')->get(['id', 'name']);
+
         return view('branch_parameters.index', [
             'title' => 'Parámetros de Sucursal',
             'categories' => $categories,
@@ -233,6 +236,7 @@ class BranchParameterController extends Controller
             'paymentMethods' => $paymentMethods,
             'branchPaymentMethodIds' => $branchPaymentMethodIds,
             'printers' => $printers,
+            'profiles' => $profiles,
         ]);
     }
 
@@ -256,6 +260,38 @@ class BranchParameterController extends Controller
                     $valorSeguro = $value ?? '';
                     $parameterIdForHook = null;
 
+                    if (is_numeric($paramKey)) {
+                        $parameterIdForHook = BranchParameter::where('id', $paramKey)->value('parameter_id');
+                    } elseif (str_starts_with((string) $paramKey, 'p') && is_numeric(substr((string)$paramKey, 1))) {
+                        $parameterIdForHook = (int) substr((string)$paramKey, 1);
+                    }
+
+                    if ($parameterIdForHook) {
+                        $param = Parameters::query()->where('id', (int) $parameterIdForHook)->first(['id', 'description']);
+                        $desc = mb_strtolower(trim((string) ($param?->description ?? '')), 'UTF-8');
+
+                        $isCloseTableParam = str_contains($desc, 'permitir') &&
+                            str_contains($desc, 'cerrar') &&
+                            str_contains($desc, 'mesa');
+
+                        if ($isCloseTableParam) {
+                            $raw = mb_strtolower(trim((string) $valorSeguro), 'UTF-8');
+                            if (in_array($raw, ['no', '0', 'false'], true)) {
+                                $valorSeguro = 'No';
+                            } else {
+                                $systemAdminId = Profile::whereRaw('LOWER(name) LIKE ?', ['%sistema%'])->value('id') ?? 1;
+                                $selectedProfiles = array_values(array_unique(array_filter(array_map(
+                                    'intval',
+                                    array_merge((array) $request->input('close_table_profiles', []), [(int) $systemAdminId])
+                                ))));
+                                $valorSeguro = json_encode([
+                                    'status' => 'Si',
+                                    'profiles' => $selectedProfiles,
+                                ]);
+                            }
+                        }
+                    }
+
                     // Clave puede ser branch_parameter_id (numérico) o "p{parameter_id}" para nuevos
                     if (is_numeric($paramKey)) {
                         $branchParam = BranchParameter::where('id', $paramKey)
@@ -263,11 +299,9 @@ class BranchParameterController extends Controller
                             ->first();
                         if ($branchParam) {
                             $branchParam->update(['value' => $valorSeguro]);
-                            $parameterIdForHook = (int) $branchParam->parameter_id;
                         }
                     } elseif (str_starts_with((string) $paramKey, 'p') && is_numeric(substr($paramKey, 1))) {
                         $parameterId = (int) substr($paramKey, 1);
-                        $parameterIdForHook = $parameterId;
                         $branchParam = BranchParameter::where('parameter_id', $parameterId)
                             ->where('branch_id', $branchId)
                             ->whereNull('deleted_at')
