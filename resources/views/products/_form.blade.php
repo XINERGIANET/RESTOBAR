@@ -698,10 +698,9 @@
 
 
             <div>
-                <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">Stock mínimo <span
-                        class="text-red-500">*</span></label>
+                <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">Stock mínimo</label>
                 <input type="number" name="stock_minimum" step="0.01" x-model.number="branchFields.stock_minimum"
-                    value="{{ old('stock_minimum', $productBranch?->stock_minimum ?? '') }}" required min="0"
+                    value="{{ old('stock_minimum', $productBranch?->stock_minimum ?? '') }}" min="0"
                     class="dark:bg-dark-900 shadow-theme-xs focus:border-[#124731] focus:ring-[#124731]/10 dark:focus:border-[#124731] h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 placeholder:text-gray-400 focus:ring-3 focus:outline-hidden dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30"
                     placeholder="0.00" />
                 @error('stock_minimum')
@@ -709,10 +708,9 @@
                 @enderror
             </div>
             <div>
-                <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">Stock máximo <span
-                        class="text-red-500">*</span></label>
+                <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">Stock máximo</label>
                 <input type="number" name="stock_maximum" step="0.01" x-model.number="branchFields.stock_maximum"
-                    value="{{ old('stock_maximum', $productBranch?->stock_maximum ?? '') }}" required min="0"
+                    value="{{ old('stock_maximum', $productBranch?->stock_maximum ?? '') }}" min="0"
                     class="dark:bg-dark-900 shadow-theme-xs focus:border-[#124731] focus:ring-[#124731]/10 dark:focus:border-[#124731] h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 placeholder:text-gray-400 focus:ring-3 focus:outline-hidden dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30"
                     placeholder="0.00" />
                 @error('stock_maximum')
@@ -806,11 +804,10 @@
             </div>
 
             <div>
-                <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">Stock mínimo <span
-                        class="text-red-500">*</span></label>
+                <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">Stock mínimo</label>
                 <input type="number" :name="showBranchDetail ? 'stock_minimum' : 'stock_minimum_skip'" step="0.01"
                     value="{{ old('stock_minimum', $productBranch?->stock_minimum ?? '') }}"
-                    x-model.number="branchFields.stock_minimum" :required="showBranchDetail" min="0"
+                    x-model.number="branchFields.stock_minimum" min="0"
                     class="dark:bg-dark-900 shadow-theme-xs focus:border-[#124731] focus:ring-[#124731]/10 dark:focus:border-[#124731] h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 placeholder:text-gray-400 focus:ring-3 focus:outline-hidden dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30"
                     placeholder="0.00" />
                 @error('stock_minimum')
@@ -819,11 +816,10 @@
             </div>
 
             <div>
-                <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">Stock máximo <span
-                        class="text-red-500">*</span></label>
+                <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">Stock máximo</label>
                 <input type="number" :name="showBranchDetail ? 'stock_maximum' : 'stock_maximum_skip'" step="0.01"
                     value="{{ old('stock_maximum', $productBranch?->stock_maximum ?? '') }}"
-                    x-model.number="branchFields.stock_maximum" :required="showBranchDetail" min="0"
+                    x-model.number="branchFields.stock_maximum" min="0"
                     class="dark:bg-dark-900 shadow-theme-xs focus:border-[#124731] focus:ring-[#124731]/10 dark:focus:border-[#124731] h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 placeholder:text-gray-400 focus:ring-3 focus:outline-hidden dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30"
                     placeholder="0.00" />
                 @error('stock_maximum')
