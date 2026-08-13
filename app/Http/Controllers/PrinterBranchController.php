@@ -77,9 +77,18 @@ class PrinterBranchController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'width' => 'nullable|string|max:50',
-            'ip' => 'nullable|string|max:45',
+            'ip' => 'nullable|string|max:255',
             'status' => 'nullable|string|in:E,I',
         ]);
+
+        if (filled($validated['ip'] ?? null)) {
+            $ip = trim((string) $validated['ip']);
+            if (preg_match('#^https?://#i', $ip)) {
+                $ip = parse_url($ip, PHP_URL_HOST) ?? $ip;
+            }
+            $ip = preg_replace('/:[0-9]+$/', '', $ip);
+            $validated['ip'] = trim($ip, " \t\n\r\0\x0B/");
+        }
 
         $validated['branch_id'] = $branchId;
         $validated['status'] = $validated['status'] ?? 'E';
@@ -124,9 +133,18 @@ class PrinterBranchController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'width' => 'nullable|string|max:50',
-            'ip' => 'nullable|string|max:45',
+            'ip' => 'nullable|string|max:255',
             'status' => 'required|string|in:E,I',
         ]);
+
+        if (filled($validated['ip'] ?? null)) {
+            $ip = trim((string) $validated['ip']);
+            if (preg_match('#^https?://#i', $ip)) {
+                $ip = parse_url($ip, PHP_URL_HOST) ?? $ip;
+            }
+            $ip = preg_replace('/:[0-9]+$/', '', $ip);
+            $validated['ip'] = trim($ip, " \t\n\r\0\x0B/");
+        }
 
         $printerBranch->fill($validated);
         $printerBranch->save();

@@ -11,6 +11,15 @@ class ThermalNetworkPrintService
     public function sendRaw(string $host, int $port, string $payload, int $timeoutSeconds = 4): void
     {
         $host = trim($host);
+        if (preg_match('#^https?://#i', $host)) {
+            $parsedHost = parse_url($host, PHP_URL_HOST);
+            if ($parsedHost) {
+                $host = $parsedHost;
+            }
+        }
+        $host = preg_replace('/:[0-9]+$/', '', $host);
+        $host = trim($host, " \t\n\r\0\x0B/");
+
         if ($host === '' || $port <= 0) {
             throw new RuntimeException('Host o puerto de impresora no válido.');
         }
@@ -20,6 +29,9 @@ class ThermalNetworkPrintService
         $target = sprintf('tcp://%s:%d', $host, $port);
         $fp = @stream_socket_client($target, $errno, $errstr, $timeoutSeconds, STREAM_CLIENT_CONNECT);
         if ($fp === false) {
+            if ($errno === 110 || str_contains(strtolower($errstr), 'timed out')) {
+                throw new RuntimeException("No se pudo conectar a la ticketera ({$host}:{$port}): Tiempo de espera agotado. La ticketera está ocupada por otra conexión o fuera de red. Reinicie la ticketera (apáguela y enciéndala).");
+            }
             throw new RuntimeException("No se pudo conectar a la ticketera ({$host}:{$port}): {$errstr} ({$errno})");
         }
 
