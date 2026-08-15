@@ -286,19 +286,52 @@ class ApisunatService
         return compact('subtotal', 'tax', 'total');
     }
 
+    public function resolveSunatIssueDate(Movement $sale): array
+    {
+        $saleDate = $sale->moved_at
+            ? \Illuminate\Support\Carbon::parse($sale->moved_at)
+            : ($sale->created_at ? \Illuminate\Support\Carbon::parse($sale->created_at) : now());
+
+        $minAllowedDate = now()->subDays(2)->startOfDay();
+        $maxAllowedDate = now()->endOfDay();
+
+        if ($saleDate->lt($minAllowedDate)) {
+            // Si la fecha original es mayor a 2 días de antigüedad, ajustar al límite SUNAT (hace 2 días)
+            $issueDate = $minAllowedDate->format('Y-m-d');
+            $issueTime = now()->format('H:i:s');
+            $adjusted = true;
+        } elseif ($saleDate->gt($maxAllowedDate)) {
+            // Si la fecha es futura, ajustar al día de hoy
+            $issueDate = now()->format('Y-m-d');
+            $issueTime = now()->format('H:i:s');
+            $adjusted = true;
+        } else {
+            $issueDate = $saleDate->format('Y-m-d');
+            $issueTime = $saleDate->format('H:i:s');
+            $adjusted = false;
+        }
+
+        return [
+            'issue_date' => $issueDate,
+            'issue_time' => $issueTime,
+            'adjusted' => $adjusted,
+        ];
+    }
+
     private function buildDocumentBody(Movement $sale, array $catalog, string $customerDocument, string $customerDocType, array $totals, string $number): array
     {
         $branch = $sale->branch;
         $customerName = trim((string) ($sale->person_name ?: 'CLIENTES VARIOS'));
         $details = $this->resolveDetailsForSale($sale);
         $defaultTaxPercent = $this->resolveDefaultTaxPercentForBranch($branch);
+        $dates = $this->resolveSunatIssueDate($sale);
 
         $documentBody = [
             'cbc:UBLVersionID' => ['_text' => '2.1'],
             'cbc:CustomizationID' => ['_text' => '2.0'],
             'cbc:ID' => ['_text' => $catalog['serie'].'-'.$number],
-            'cbc:IssueDate' => ['_text' => now()->format('Y-m-d')],
-            'cbc:IssueTime' => ['_text' => now()->format('H:i:s')],
+            'cbc:IssueDate' => ['_text' => $dates['issue_date']],
+            'cbc:IssueTime' => ['_text' => $dates['issue_time']],
             'cbc:InvoiceTypeCode' => [
                 '_attributes' => ['listID' => '0101'],
                 '_text' => $catalog['type'],

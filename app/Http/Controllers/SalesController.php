@@ -2868,6 +2868,7 @@ class SalesController extends Controller
             ->get();
 
         $sentCount = 0;
+        $adjustedDateCount = 0;
         $skippedCount = 0;
         $errorCount = 0;
         $errors = [];
@@ -2876,6 +2877,11 @@ class SalesController extends Controller
             if ($movement->electronic_invoice_external_id) {
                 $skippedCount++;
                 continue;
+            }
+
+            $dateInfo = $apisunatService->resolveSunatIssueDate($movement);
+            if ($dateInfo['adjusted'] ?? false) {
+                $adjustedDateCount++;
             }
 
             $res = $this->syncElectronicInvoiceForSale($movement, $apisunatService);
@@ -2889,7 +2895,8 @@ class SalesController extends Controller
             }
         }
 
-        $msg = "Envío masivo a SUNAT completado. Enviados: {$sentCount}, Ya emitidos/Omitidos: {$skippedCount}, Errores: {$errorCount}.";
+        $dateAdjustMsg = $adjustedDateCount > 0 ? " ({$adjustedDateCount} con fecha de emisión ajustada al límite permitido de 2 días SUNAT)" : "";
+        $msg = "Envío masivo a SUNAT completado. Enviados: {$sentCount}{$dateAdjustMsg}, Ya emitidos/Omitidos: {$skippedCount}, Errores: {$errorCount}.";
 
         if ($request->wantsJson() || $request->ajax()) {
             return response()->json([
