@@ -118,7 +118,7 @@ class SalesController extends Controller
         $saleType = $request->input('sale_type');
         $showDeleted = $request->boolean('show_deleted') || $request->input('show_deleted') === '1' || $request->input('status_filter') === 'deleted';
         $perPage = (int) $request->input('per_page', 10);
-        $allowedPerPage = [10, 20, 50, 100];
+        $allowedPerPage = [10, 20, 50, 100, 200];
         if (! in_array($perPage, $allowedPerPage, true)) {
             $perPage = 10;
         }
