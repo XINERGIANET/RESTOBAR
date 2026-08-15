@@ -202,6 +202,10 @@
                         <input type="hidden" name="view_id" value="{{ $viewId }}">
                     @endif
 
+                    @if (!empty($showDeleted))
+                        <input type="hidden" name="show_deleted" value="1">
+                    @endif
+
                     <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
                         <div class="flex flex-1 flex-col gap-3 sm:flex-row sm:items-center flex-wrap">
 
@@ -222,11 +226,27 @@
                                     <span class="font-medium text-gray-100 hidden sm:inline">Buscar</span>
                                 </x-ui.button>
                                 <x-ui.link-button size="md" variant="outline"
-                                    href="{{ route('sales.index', $viewId ? ['view_id' => $viewId] : []) }}"
+                                    href="{{ route('sales.index', array_merge($viewId ? ['view_id' => $viewId] : [], !empty($showDeleted) ? ['show_deleted' => 1] : [])) }}"
                                     class="h-11 w-full sm:w-auto px-6 border-gray-200 text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-all duration-200">
                                     <i class="ri-refresh-line"></i>
                                     <span class="font-medium hidden sm:inline">Limpiar</span>
                                 </x-ui.link-button>
+
+                                @if (!empty($showDeleted))
+                                    <x-ui.link-button size="md" variant="primary"
+                                        href="{{ route('sales.index', array_filter(array_merge(request()->query(), ['show_deleted' => 0]))) }}"
+                                        class="h-11 w-full sm:w-auto px-5 bg-emerald-700 hover:bg-emerald-800 text-white transition-all duration-200 shadow-sm">
+                                        <i class="ri-checkbox-circle-line"></i>
+                                        <span class="font-medium hidden sm:inline">Ver Activas</span>
+                                    </x-ui.link-button>
+                                @else
+                                    <x-ui.link-button size="md" variant="outline"
+                                        href="{{ route('sales.index', array_filter(array_merge(request()->query(), ['show_deleted' => 1]))) }}"
+                                        class="h-11 w-full sm:w-auto px-5 border-red-300 text-red-700 hover:bg-red-50 hover:border-red-400 transition-all duration-200 shadow-xs">
+                                        <i class="ri-delete-bin-line"></i>
+                                        <span class="font-medium hidden sm:inline">Ver Eliminadas</span>
+                                    </x-ui.link-button>
+                                @endif
                             </div>
                         </div>
 
@@ -345,6 +365,7 @@
                                         'cash_register_id' => $cashRegisterId ?? null,
                                         'cash_shift_relation_id' => $cashShiftRelationId ?? null,
                                         'sale_type' => $saleType ?? null,
+                                        'show_deleted' => !empty($showDeleted) ? 1 : null,
                                     ]),
                                 ) }}"
                                 class="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-orange-600 px-4 text-sm font-medium text-white shadow-sm transition hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2">
@@ -364,6 +385,7 @@
                                         'cash_register_id' => $cashRegisterId ?? null,
                                         'cash_shift_relation_id' => $cashShiftRelationId ?? null,
                                         'sale_type' => $saleType ?? null,
+                                        'show_deleted' => !empty($showDeleted) ? 1 : null,
                                     ]),
                                 ) }}"
                                 class="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-emerald-600 px-4 text-sm font-medium text-white shadow-sm transition hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2">
@@ -387,6 +409,19 @@
                     </div>
                 </form>
             </div>
+
+            @if (!empty($showDeleted))
+                <div class="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-red-800 dark:border-red-900/50 dark:bg-red-950/30 dark:text-red-300">
+                    <div class="flex items-center gap-2 text-sm font-medium">
+                        <i class="ri-error-warning-line text-xl text-red-600 dark:text-red-400"></i>
+                        <span>Mostrando únicamente las <strong>ventas eliminadas / anuladas</strong>.</span>
+                    </div>
+                    <a href="{{ route('sales.index', array_filter(array_merge(request()->query(), ['show_deleted' => 0]))) }}"
+                        class="text-xs font-semibold text-red-700 underline hover:text-red-900 dark:text-red-300 dark:hover:text-white">
+                        Volver a ventas activas &rarr;
+                    </a>
+                </div>
+            @endif
 
             <div x-data="{ openRow: null }"
                 class="table-responsive mt-4 rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03]">
@@ -422,7 +457,7 @@
                     <tbody>
                         @forelse ($sales as $sale)
                             <tr
-                                class="border-b border-gray-100 transition hover:bg-gray-50 dark:border-gray-800 dark:hover:bg-white/5">
+                                class="border-b border-gray-100 transition {{ $sale->trashed() ? 'bg-red-50/70 dark:bg-red-950/20' : 'hover:bg-gray-50 dark:border-gray-800 dark:hover:bg-white/5' }}">
                                 <td class="px-4 text-center justify-center py-4 sm:px-6 sticky-left">
                                     <div class="flex items-center justify-center gap-2">
                                         <button type="button"
@@ -472,7 +507,10 @@
                                         $status = $sale->status ?? 'A';
                                         $badgeColor = 'success';
                                         $badgeText = 'Activo';
-                                        if ($status === 'P') {
+                                        if ($sale->trashed()) {
+                                            $badgeColor = 'error';
+                                            $badgeText = 'Eliminado';
+                                        } elseif ($status === 'P') {
                                             $badgeColor = 'warning';
                                             $badgeText = 'Pendiente';
                                         } elseif ($status !== 'A') {
@@ -555,34 +593,35 @@
                                                             : 'primary');
                                                     $variant = $isPrint ? 'outline' : $variant;
                                                 @endphp
-
                                                 @if ($isDelete)
-                                                    <form method="POST" action="{{ $actionUrl }}"
-                                                        class="relative group js-swal-delete"
-                                                        data-swal-title="Eliminar venta?"
-                                                        data-swal-text="Se eliminara la venta {{ $sale->number }}. Esta accion no se puede deshacer."
-                                                        data-swal-confirm="Si, eliminar" data-swal-cancel="Cancelar"
-                                                        data-swal-confirm-color="#ef4444"
-                                                        data-swal-cancel-color="#6b7280">
-                                                        @csrf
-                                                        @method('DELETE')
-                                                        @if ($viewId)
-                                                            <input type="hidden" name="view_id"
-                                                                value="{{ $viewId }}">
-                                                        @endif
-                                                        <x-ui.button size="icon" variant="{{ $variant }}"
-                                                            type="submit" className="rounded-xl"
-                                                            style="{{ $buttonStyle }}"
-                                                            aria-label="{{ $operation->name }}">
-                                                            <i class="{{ $operation->icon }}"></i>
-                                                        </x-ui.button>
-                                                        <span
-                                                            class="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-3 whitespace-nowrap rounded-md bg-gray-900 px-2.5 py-1 text-xs text-white opacity-0 transition group-hover:opacity-100 z-[100] shadow-xl">
-                                                            {{ $operation->name }}
+                                                    @if (!$sale->trashed())
+                                                        <form method="POST" action="{{ $actionUrl }}"
+                                                            class="relative group js-swal-delete"
+                                                            data-swal-title="Eliminar venta?"
+                                                            data-swal-text="Se eliminara la venta {{ $sale->number }}. Esta accion no se puede deshacer."
+                                                            data-swal-confirm="Si, eliminar" data-swal-cancel="Cancelar"
+                                                            data-swal-confirm-color="#ef4444"
+                                                            data-swal-cancel-color="#6b7280">
+                                                            @csrf
+                                                            @method('DELETE')
+                                                            @if ($viewId)
+                                                                <input type="hidden" name="view_id"
+                                                                    value="{{ $viewId }}">
+                                                            @endif
+                                                            <x-ui.button size="icon" variant="{{ $variant }}"
+                                                                type="submit" className="rounded-xl"
+                                                                style="{{ $buttonStyle }}"
+                                                                aria-label="{{ $operation->name }}">
+                                                                <i class="{{ $operation->icon }}"></i>
+                                                            </x-ui.button>
                                                             <span
-                                                                class="absolute top-full left-1/2 -ml-1 border-4 border-transparent border-t-gray-900"></span>
-                                                        </span>
-                                                    </form>
+                                                                class="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-3 whitespace-nowrap rounded-md bg-gray-900 px-2.5 py-1 text-xs text-white opacity-0 transition group-hover:opacity-100 z-[100] shadow-xl">
+                                                                {{ $operation->name }}
+                                                                <span
+                                                                    class="absolute top-full left-1/2 -ml-1 border-4 border-transparent border-t-gray-900"></span>
+                                                            </span>
+                                                        </form>
+                                                    @endif
                                                 @elseif ($isPrint)
                                                     <div class="relative group">
                                                         <x-ui.link-button size="icon" variant="outline"

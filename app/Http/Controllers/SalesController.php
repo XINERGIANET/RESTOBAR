@@ -68,6 +68,7 @@ class SalesController extends Controller
         $cashRegisterId = effective_cash_register_id($branchId ? (int) $branchId : null);
         $cashShiftRelationId = $request->input('cash_shift_relation_id');
         $saleType = $request->input('sale_type');
+        $showDeleted = $request->boolean('show_deleted') || $request->input('show_deleted') === '1' || $request->input('status_filter') === 'deleted';
         $perPage = (int) $request->input('per_page', 10);
         $allowedPerPage = [10, 20, 50, 100];
         if (! in_array($perPage, $allowedPerPage, true)) {
@@ -205,7 +206,12 @@ class SalesController extends Controller
                 });
             });
         }
-        if ($effectiveCashRegisterId) {
+        if ($showDeleted) {
+            $query->onlyTrashed();
+        }
+
+        // Restringir por caja solo si hay un turno específico filtrado
+        if ($effectiveCashRegisterId && $cashShiftRelationId !== null && $cashShiftRelationId !== '' && $cashShiftRelationId !== 'all') {
             $query->where(function ($cashFilter) use ($effectiveCashRegisterId) {
                 $cashFilter->whereIn('movements.id', function ($sub) use ($effectiveCashRegisterId) {
                     $sub->select('m.parent_movement_id')
@@ -330,6 +336,7 @@ class SalesController extends Controller
             'saleType' => $saleType,
             'cashShiftRelationId' => $cashShiftRelationId,
             'cashShiftSessions' => $cashShiftSessions,
+            'showDeleted' => $showDeleted,
             'clientOnLocalNetwork' => LocalNetworkClient::isOnLocalNetwork($request),
             'thermalPrinters' => $thermalPrintersIndex,
             'thermalPrintEnabled' => (bool) config('local_network.thermal_print_enabled', true),
@@ -2706,6 +2713,8 @@ class SalesController extends Controller
         $saleType = $request->input('sale_type');
         $cashShiftRelationId = $request->input('cash_shift_relation_id');
 
+        $showDeleted = $request->boolean('show_deleted') || $request->input('show_deleted') === '1' || $request->input('status_filter') === 'deleted';
+
         $branch = $branchId ? Branch::with('company')->find($branchId) : null;
         $companyName = $branch?->company?->legal_name;
         $branchName = $branch?->legal_name;
@@ -2715,6 +2724,10 @@ class SalesController extends Controller
             ->where('movement_type_id', 2)
             ->where('branch_id', $branchId)
             ->whereHas('salesMovement');
+
+        if ($showDeleted) {
+            $query->onlyTrashed();
+        }
 
         // Aplicación de filtros
         if ($documentTypeId && is_numeric($documentTypeId)) {
@@ -2745,7 +2758,7 @@ class SalesController extends Controller
                     ->whereNull('cmd.deleted_at');
             });
         }
-        if ($cashRegisterId) {
+        if ($cashRegisterId && $cashShiftRelationId !== null && $cashShiftRelationId !== '' && $cashShiftRelationId !== 'all') {
             $query->whereExists(function ($sub) use ($cashRegisterId) {
                 $sub->select(DB::raw(1))
                     ->from('movements as m')
@@ -2864,11 +2877,17 @@ class SalesController extends Controller
         $saleType = $request->input('sale_type');
         $cashShiftRelationId = $request->input('cash_shift_relation_id');
 
+        $showDeleted = $request->boolean('show_deleted') || $request->input('show_deleted') === '1' || $request->input('status_filter') === 'deleted';
+
         $query = Movement::query()
             ->with(['branch', 'person', 'movementType', 'documentType', 'salesMovement'])
             ->where('movement_type_id', 2)
             ->where('branch_id', $branchId)
             ->whereHas('salesMovement');
+
+        if ($showDeleted) {
+            $query->onlyTrashed();
+        }
 
         if ($documentTypeId && is_numeric($documentTypeId)) {
             $query->where('document_type_id', (int) $documentTypeId);
@@ -2898,7 +2917,7 @@ class SalesController extends Controller
                     ->whereNull('cmd.deleted_at');
             });
         }
-        if ($cashRegisterId) {
+        if ($cashRegisterId && $cashShiftRelationId !== null && $cashShiftRelationId !== '' && $cashShiftRelationId !== 'all') {
             $query->whereExists(function ($sub) use ($cashRegisterId) {
                 $sub->select(DB::raw(1))
                     ->from('movements as m')
