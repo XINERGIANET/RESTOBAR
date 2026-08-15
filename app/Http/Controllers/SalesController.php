@@ -250,7 +250,10 @@ class SalesController extends Controller
             $query->where('sales_movements.detail_type', $saleType);
         }
 
-        $sales = $query->orderBy('movements.moved_at', 'desc')
+        $sales = $query->orderByRaw('DATE(movements.moved_at) DESC')
+            ->orderBy('movements.document_type_id', 'asc')
+            ->orderBy('movements.number', 'desc')
+            ->orderBy('movements.id', 'desc')
             ->paginate($perPage)
             ->withQueryString();
 
@@ -2781,7 +2784,11 @@ class SalesController extends Controller
             }
         }
 
-        $sales = $query->orderBy('moved_at', 'desc')->get();
+        $sales = $query->orderByRaw('DATE(movements.moved_at) DESC')
+            ->orderBy('movements.document_type_id', 'asc')
+            ->orderBy('movements.number', 'desc')
+            ->orderBy('movements.id', 'desc')
+            ->get();
 
         $filters = [];
         $filters['Desde'] = $dateFrom ? \Carbon\Carbon::parse($dateFrom)->format('d/m/Y') : null;
@@ -2929,7 +2936,11 @@ class SalesController extends Controller
             }
         }
 
-        $sales = $query->orderBy('moved_at', 'desc')->get();
+        $sales = $query->orderByRaw('DATE(movements.moved_at) DESC')
+            ->orderBy('movements.document_type_id', 'asc')
+            ->orderBy('movements.number', 'desc')
+            ->orderBy('movements.id', 'desc')
+            ->get();
         $timestamp = now()->format('Ymd_His');
 
         return Excel::download(
