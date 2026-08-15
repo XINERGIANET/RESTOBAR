@@ -1448,6 +1448,67 @@
                     }
                 });
             }
+            function deletedSalesModal() {
+                return {
+                    open: false,
+                    loading: false,
+                    hasRestored: false,
+                    sales: [],
+                    searchQuery: '',
+                    fetchDeletedSales() {
+                        this.loading = true;
+                        const url = '{{ route('sales.deleted.list') }}' + (this.searchQuery ? '?search=' + encodeURIComponent(this.searchQuery) : '');
+                        fetch(url, {
+                            headers: {
+                                'X-Requested-With': 'XMLHttpRequest',
+                                'Accept': 'application/json'
+                            }
+                        })
+                        .then(res => res.json())
+                        .then(data => {
+                            this.sales = data.sales || [];
+                            this.loading = false;
+                        })
+                        .catch(err => {
+                            console.error('Error al cargar ventas eliminadas:', err);
+                            this.loading = false;
+                        });
+                    },
+                    restoreSale(id) {
+                        if (!confirm('¿Desea restaurar esta venta eliminada?')) return;
+                        const token = document.querySelector('meta[name="csrf-token"]')?.content || '{{ csrf_token() }}';
+                        fetch('/admin/ventas/' + id + '/restore', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': token,
+                                'X-Requested-With': 'XMLHttpRequest',
+                                'Accept': 'application/json'
+                            }
+                        })
+                        .then(res => res.json())
+                        .then(data => {
+                            if (data.success) {
+                                this.hasRestored = true;
+                                this.fetchDeletedSales();
+                            } else {
+                                alert(data.message || 'Error al restaurar la venta.');
+                            }
+                        })
+                        .catch(err => {
+                            console.error(err);
+                            alert('Error al restaurar la venta.');
+                        });
+                    },
+                    closeModal() {
+                        this.open = false;
+                        if (this.hasRestored) {
+                            window.location.reload();
+                        }
+                    }
+                };
+            }
+
             setupSalesConvertQuickClientForm();
             document.addEventListener('DOMContentLoaded', setupSalesConvertQuickClientForm);
             document.addEventListener('turbo:load', setupSalesConvertQuickClientForm);
@@ -1455,64 +1516,7 @@
     @endpush
 
     <!-- Modal para Ventas Eliminadas -->
-    <div x-data="{
-            open: false,
-            loading: false,
-            hasRestored: false,
-            sales: [],
-            searchQuery: '',
-            fetchDeletedSales() {
-                this.loading = true;
-                const url = '{{ route('sales.deleted.list') }}' + (this.searchQuery ? '?search=' + encodeURIComponent(this.searchQuery) : '');
-                fetch(url, {
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest',
-                        'Accept': 'application/json'
-                    }
-                })
-                .then(res => res.json())
-                .then(data => {
-                    this.sales = data.sales || [];
-                    this.loading = false;
-                })
-                .catch(err => {
-                    console.error('Error al cargar ventas eliminadas:', err);
-                    this.loading = false;
-                });
-            },
-            restoreSale(id) {
-                if (!confirm('¿Desea restaurar esta venta eliminada?')) return;
-                const token = document.querySelector('meta[name="csrf-token"]')?.content || '{{ csrf_token() }}';
-                fetch(`/admin/ventas/${id}/restore`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': token,
-                        'X-Requested-With': 'XMLHttpRequest',
-                        'Accept': 'application/json'
-                    }
-                })
-                .then(res => res.json())
-                .then(data => {
-                    if (data.success) {
-                        this.hasRestored = true;
-                        this.fetchDeletedSales();
-                    } else {
-                        alert(data.message || 'Error al restaurar la venta.');
-                    }
-                })
-                .catch(err => {
-                    console.error(err);
-                    alert('Error al restaurar la venta.');
-                });
-            },
-            closeModal() {
-                this.open = false;
-                if (this.hasRestored) {
-                    window.location.reload();
-                }
-            }
-        }"
+    <div x-data="deletedSalesModal()"
         x-on:open-deleted-sales-modal.window="open = true; hasRestored = false; fetchDeletedSales();"
         x-show="open" x-cloak
         class="fixed inset-0 z-[120] flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-sm"
