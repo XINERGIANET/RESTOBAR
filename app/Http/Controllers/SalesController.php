@@ -59,6 +59,54 @@ class SalesController extends Controller
         $branchId = session('branch_id');
         $profileId = session('profile_id') ?? $request->user()?->profile_id;
         $viewId = $request->input('view_id');
+
+        // Limpiar filtros explícitamente si se solicita
+        if ($request->has('clear_filters')) {
+            session()->forget('sales_index_filters');
+            return redirect()->route('sales.index', $viewId ? ['view_id' => $viewId] : []);
+        }
+
+        $filterKeys = [
+            'search',
+            'date_from',
+            'date_to',
+            'person_id',
+            'document_type_id',
+            'payment_method_id',
+            'cash_shift_relation_id',
+            'sale_type',
+            'per_page',
+        ];
+
+        // Verificar si la petición contiene parámetros de filtro explícitos
+        $hasAnyFilterKeyInQuery = false;
+        foreach ($filterKeys as $k) {
+            if ($request->has($k)) {
+                $hasAnyFilterKeyInQuery = true;
+                break;
+            }
+        }
+
+        if ($hasAnyFilterKeyInQuery || $request->has('page')) {
+            // Guardar filtros actuales en la sesión
+            $savedFilters = session('sales_index_filters', []);
+            foreach ($filterKeys as $k) {
+                if ($request->has($k)) {
+                    $savedFilters[$k] = $request->input($k);
+                }
+            }
+            session(['sales_index_filters' => $savedFilters]);
+        } elseif (session()->has('sales_index_filters')) {
+            // Restaurar filtros guardados en la sesión si se ingresa sin parámetros
+            $savedFilters = session('sales_index_filters');
+            foreach ($savedFilters as $k => $v) {
+                if ($v !== null && ! $request->has($k)) {
+                    $request->query->set($k, $v);
+                    $request->request->set($k, $v);
+                }
+            }
+        }
+
         $search = $request->input('search');
         $dateFrom = $request->input('date_from');
         $dateTo = $request->input('date_to');
@@ -2698,6 +2746,62 @@ class SalesController extends Controller
             'tax' => round($tax, 2),
             'total' => round($total, 2),
         ];
+    }
+
+    /**
+     * Endpoint JSON para obtener el listado de ventas eliminadas (modal).
+     */
+    public function deletedSalesList(Request $request)
+    {
+        $branchId = session('branch_id');
+        $search = $request->input('search');
+
+        $sales = Movement::query()
+            ->select('movements.*')
+            ->join('sales_movements', 'sales_movements.movement_id', '=', 'movements.id')
+            ->with(['branch', 'person', 'responsibleUser.person', 'movementType', 'documentType', 'salesMovement.details'])
+            ->where('movements.movement_type_id', 2)
+            ->when($branchId, fn ($q) => $q->where('movements.branch_id', $branchId))
+            ->onlyTrashed()
+            ->when($search, function ($q) use ($search) {
+                $q->where(function ($inner) use ($search) {
+                    $inner->where('number', 'like', "%{$search}%")
+                        ->orWhere('person_name', 'like', "%{$search}%")
+                        ->orWhere('user_name', 'like', "%{$search}%");
+                });
+            })
+            ->orderBy('movements.deleted_at', 'desc')
+            ->orderBy('movements.id', 'desc')
+            ->take(100)
+            ->get();
+
+        $formatted = $sales->map(function ($sale) {
+            $displayNumber = trim((string) ($sale->electronic_invoice_number ?? ''));
+            if ($displayNumber === '') {
+                $displayNumber = strtoupper(substr($sale->documentType?->name ?? 'V', 0, 1)) . ($sale->salesMovement?->series ?? '') . '-' . $sale->number;
+            }
+
+            return [
+                'id' => $sale->id,
+                'number' => $sale->number,
+                'display_number' => $displayNumber,
+                'document_type' => $sale->documentType?->name ?? '-',
+                'date' => $sale->moved_at ? $sale->moved_at->format('d/m/Y H:i') : '-',
+                'deleted_at' => $sale->deleted_at ? $sale->deleted_at->format('d/m/Y H:i') : '-',
+                'person_name' => $sale->person_name ?? 'Público General',
+                'user_name' => $sale->user_name ?? '-',
+                'responsible_name' => $sale->responsible_name ?? '-',
+                'subtotal' => number_format((float) ($sale->salesMovement?->subtotal ?? 0), 2),
+                'tax' => number_format((float) ($sale->salesMovement?->tax ?? 0), 2),
+                'total' => number_format((float) ($sale->salesMovement?->total ?? 0), 2),
+                'comment' => $sale->comment ?? '',
+            ];
+        });
+
+        return response()->json([
+            'success' => true,
+            'sales' => $formatted,
+        ]);
     }
 
     public function exportPdf(Request $request)

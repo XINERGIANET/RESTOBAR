@@ -209,7 +209,7 @@
                     <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
                         <div class="flex flex-1 flex-col gap-3 sm:flex-row sm:items-center flex-wrap">
 
-                            <x-ui.per-page-selector :per-page="$perPage" :submit-form="false" />
+                            <x-ui.per-page-selector :per-page="$perPage" :submit-form="true" />
 
                             <div class="relative flex-1 min-w-[200px]">
                                 <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
@@ -226,27 +226,17 @@
                                     <span class="font-medium text-gray-100 hidden sm:inline">Buscar</span>
                                 </x-ui.button>
                                 <x-ui.link-button size="md" variant="outline"
-                                    href="{{ route('sales.index', array_merge($viewId ? ['view_id' => $viewId] : [], !empty($showDeleted) ? ['show_deleted' => 1] : [])) }}"
+                                    href="{{ route('sales.index', array_merge($viewId ? ['view_id' => $viewId] : [], ['clear_filters' => 1])) }}"
                                     class="h-11 w-full sm:w-auto px-6 border-gray-200 text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-all duration-200">
                                     <i class="ri-refresh-line"></i>
                                     <span class="font-medium hidden sm:inline">Limpiar</span>
                                 </x-ui.link-button>
 
-                                @if (!empty($showDeleted))
-                                    <x-ui.link-button size="md" variant="primary"
-                                        href="{{ route('sales.index', array_filter(array_merge(request()->query(), ['show_deleted' => 0]))) }}"
-                                        class="h-11 w-full sm:w-auto px-5 bg-emerald-700 hover:bg-emerald-800 text-white transition-all duration-200 shadow-sm">
-                                        <i class="ri-checkbox-circle-line"></i>
-                                        <span class="font-medium hidden sm:inline">Ver Activas</span>
-                                    </x-ui.link-button>
-                                @else
-                                    <x-ui.link-button size="md" variant="outline"
-                                        href="{{ route('sales.index', array_filter(array_merge(request()->query(), ['show_deleted' => 1]))) }}"
-                                        class="h-11 w-full sm:w-auto px-5 border-red-300 text-red-700 hover:bg-red-50 hover:border-red-400 transition-all duration-200 shadow-xs">
-                                        <i class="ri-delete-bin-line"></i>
-                                        <span class="font-medium hidden sm:inline">Ver Eliminadas</span>
-                                    </x-ui.link-button>
-                                @endif
+                                <button type="button" @click="$dispatch('open-deleted-sales-modal')"
+                                    class="h-11 w-full sm:w-auto px-5 rounded-lg border border-red-300 bg-white text-red-700 hover:bg-red-50 hover:border-red-400 transition-all duration-200 shadow-xs flex items-center justify-center gap-2">
+                                    <i class="ri-delete-bin-line text-lg text-red-600"></i>
+                                    <span class="font-medium hidden sm:inline">Ver Eliminadas</span>
+                                </button>
                             </div>
                         </div>
 
@@ -409,19 +399,6 @@
                     </div>
                 </form>
             </div>
-
-            @if (!empty($showDeleted))
-                <div class="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-red-800 dark:border-red-900/50 dark:bg-red-950/30 dark:text-red-300">
-                    <div class="flex items-center gap-2 text-sm font-medium">
-                        <i class="ri-error-warning-line text-xl text-red-600 dark:text-red-400"></i>
-                        <span>Mostrando únicamente las <strong>ventas eliminadas / anuladas</strong>.</span>
-                    </div>
-                    <a href="{{ route('sales.index', array_filter(array_merge(request()->query(), ['show_deleted' => 0]))) }}"
-                        class="text-xs font-semibold text-red-700 underline hover:text-red-900 dark:text-red-300 dark:hover:text-white">
-                        Volver a ventas activas &rarr;
-                    </a>
-                </div>
-            @endif
 
             <div x-data="{ openRow: null }"
                 class="table-responsive mt-4 rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03]">
@@ -1337,8 +1314,8 @@
                 const baseUrl = btn ? btn.dataset.excelUrl : "{{ route('admin.sales.excel') }}";
 
                 const url = new URL(baseUrl, window.location.origin);
-                const dfVal = document.querySelector('[name=\"date_from\"]')?.value;
-                const dtVal = document.querySelector('[name=\"date_to\"]')?.value;
+                const dfVal = document.querySelector('[name="date_from"]')?.value;
+                const dtVal = document.querySelector('[name="date_to"]')?.value;
                 if (dfVal) url.searchParams.set('date_from', dfVal);
                 if (dtVal) url.searchParams.set('date_to', dtVal);
 
@@ -1346,7 +1323,7 @@
             }
 
             function setupSalesConvertQuickClientForm() {
-                const form = document.getElementById('quick-client-form-sales-convert');
+                const form = document.getElementById('sales-convert-quick-client-form');
                 if (!form || form.dataset.boundSalesConvert === '1') return;
                 form.dataset.boundSalesConvert = '1';
                 form.addEventListener('submit', async function (e) {
@@ -1418,4 +1395,130 @@
             document.addEventListener('turbo:load', setupSalesConvertQuickClientForm);
         </script>
     @endpush
+
+    <!-- Modal para Ventas Eliminadas -->
+    <div x-data="{
+            open: false,
+            loading: false,
+            sales: [],
+            searchQuery: '',
+            fetchDeletedSales() {
+                this.loading = true;
+                const url = '{{ route('sales.deleted.list') }}' + (this.searchQuery ? '?search=' + encodeURIComponent(this.searchQuery) : '');
+                fetch(url, {
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json'
+                    }
+                })
+                .then(res => res.json())
+                .then(data => {
+                    this.sales = data.sales || [];
+                    this.loading = false;
+                })
+                .catch(err => {
+                    console.error('Error al cargar ventas eliminadas:', err);
+                    this.loading = false;
+                });
+            }
+        }"
+        x-on:open-deleted-sales-modal.window="open = true; fetchDeletedSales();"
+        x-show="open" x-cloak
+        class="fixed inset-0 z-[120] flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-sm"
+        @keydown.escape.window="open = false">
+
+        <div class="relative flex max-h-[90vh] w-full max-w-5xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl dark:bg-gray-900 border border-gray-200 dark:border-gray-800">
+            <!-- Header -->
+            <div class="flex items-center justify-between border-b border-gray-200 px-6 py-4 dark:border-gray-800 bg-red-50/50 dark:bg-red-950/30">
+                <div class="flex items-center gap-3">
+                    <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-red-100 text-red-600 dark:bg-red-900/40 dark:text-red-400">
+                        <i class="ri-delete-bin-line text-xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-bold text-gray-900 dark:text-white">Ventas Eliminadas / Anuladas</h3>
+                        <p class="text-xs text-gray-500 dark:text-gray-400">Histórico de comprobantes anulados o eliminados del sistema</p>
+                    </div>
+                </div>
+                <button type="button" @click="open = false"
+                    class="flex h-9 w-9 items-center justify-center rounded-full text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-800 dark:hover:text-white">
+                    <i class="ri-close-line text-xl"></i>
+                </button>
+            </div>
+
+            <!-- Search Bar -->
+            <div class="flex items-center gap-3 border-b border-gray-200 px-6 py-3 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900">
+                <div class="relative flex-1">
+                    <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400">
+                        <i class="ri-search-line text-base"></i>
+                    </span>
+                    <input type="text" x-model="searchQuery" @keyup.enter="fetchDeletedSales()" placeholder="Buscar por comprobante, cliente o usuario..."
+                        class="h-10 w-full rounded-lg border border-gray-300 bg-white pl-10 pr-4 text-sm text-gray-800 placeholder-gray-400 focus:border-red-500 focus:outline-none focus:ring-2 focus:ring-red-500/20 dark:border-gray-700 dark:bg-gray-800 dark:text-white" />
+                </div>
+                <button type="button" @click="fetchDeletedSales()"
+                    class="h-10 rounded-lg bg-red-600 px-4 text-sm font-semibold text-white shadow-xs hover:bg-red-700 transition">
+                    Buscar
+                </button>
+            </div>
+
+            <!-- Content -->
+            <div class="flex-1 overflow-y-auto p-6">
+                <div x-show="loading" class="flex flex-col items-center justify-center py-12">
+                    <i class="ri-loader-4-line text-4xl text-red-600 animate-spin mb-2"></i>
+                    <p class="text-sm text-gray-500 font-medium">Cargando comprobantes eliminados...</p>
+                </div>
+
+                <div x-show="!loading && sales.length === 0" class="flex flex-col items-center justify-center py-12 text-center">
+                    <div class="flex h-16 w-16 items-center justify-center rounded-full bg-gray-100 text-gray-400 dark:bg-gray-800 mb-3">
+                        <i class="ri-inbox-line text-3xl"></i>
+                    </div>
+                    <h4 class="text-base font-semibold text-gray-800 dark:text-white">No se encontraron ventas eliminadas</h4>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 max-w-sm mt-1">No hay registros de comprobantes eliminados o que coincidan con la búsqueda.</p>
+                </div>
+
+                <div x-show="!loading && sales.length > 0" class="overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-800">
+                    <table class="w-full text-left text-sm">
+                        <thead>
+                            <tr class="bg-gray-100 text-xs uppercase font-semibold text-gray-600 dark:bg-gray-800 dark:text-gray-300">
+                                <th class="px-4 py-3">Comprobante</th>
+                                <th class="px-4 py-3">Fecha Venta</th>
+                                <th class="px-4 py-3">Fecha Eliminado</th>
+                                <th class="px-4 py-3">Cliente / Persona</th>
+                                <th class="px-4 py-3">Registrado por</th>
+                                <th class="px-4 py-3 text-right">Total</th>
+                                <th class="px-4 py-3 text-center">Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-200 dark:divide-gray-800">
+                            <template x-for="s in sales" :key="s.id">
+                                <tr class="hover:bg-red-50/40 dark:hover:bg-red-950/20 transition">
+                                    <td class="px-4 py-3 font-bold text-gray-800 dark:text-white" x-text="s.display_number"></td>
+                                    <td class="px-4 py-3 text-xs text-gray-600 dark:text-gray-400" x-text="s.date"></td>
+                                    <td class="px-4 py-3 text-xs text-red-600 dark:text-red-400 font-medium" x-text="s.deleted_at"></td>
+                                    <td class="px-4 py-3 text-gray-700 dark:text-gray-300" x-text="s.person_name"></td>
+                                    <td class="px-4 py-3 text-xs text-gray-600 dark:text-gray-400" x-text="s.user_name"></td>
+                                    <td class="px-4 py-3 text-right font-bold text-red-700 dark:text-red-400" x-text="'S/ ' + s.total"></td>
+                                    <td class="px-4 py-3 text-center">
+                                        <span class="inline-flex items-center rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-semibold text-red-800 dark:bg-red-900/30 dark:text-red-400">
+                                            Eliminado
+                                        </span>
+                                    </td>
+                                </tr>
+                            </template>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="flex items-center justify-between border-t border-gray-200 px-6 py-4 dark:border-gray-800 bg-gray-50 dark:bg-gray-900">
+                <div class="text-xs text-gray-500">
+                    <span class="font-bold text-gray-700 dark:text-gray-300" x-text="sales.length"></span> ventas eliminadas encontradas
+                </div>
+                <button type="button" @click="open = false"
+                    class="rounded-xl border border-gray-300 bg-white px-5 py-2 text-sm font-semibold text-gray-700 shadow-xs hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 transition">
+                    Cerrar
+                </button>
+            </div>
+        </div>
+    </div>
 @endsection

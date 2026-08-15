@@ -138,6 +138,7 @@ Route::middleware('auth')->group(function () {
         ->names('sales')
         ->parameters(['ventas' => 'sale'])
         ->only(['index', 'store', 'edit', 'update', 'destroy']);
+    Route::get('/admin/ventas/eliminadas', [SalesController::class, 'deletedSalesList'])->name('sales.deleted.list');
     Route::get('/admin/ventas/pdf', [SalesController::class, 'exportPdf'])->name('admin.sales.pdf');
     Route::get('/admin/ventas/excel', [SalesController::class, 'exportExcel'])->name('admin.sales.excel');
     Route::get('/admin/ventas/pdf/{sale}', [SalesController::class, 'printPdf'])->name('admin.sales.print.pdf');
