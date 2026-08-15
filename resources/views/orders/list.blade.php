@@ -147,7 +147,7 @@
                             <div class="col-span-1 lg:col-span-2">
                                 <label class="{{ $labelClass }}">Turno</label>
                                 <select name="cash_shift_relation_id" class="{{ $selectClass }}">
-                                    <option value="">Todos</option>
+                                    <option value="" @selected(($cashShiftRelationId ?? '') === '' || ($cashShiftRelationId ?? '') === 'all')>Todos</option>
                                     @foreach ($cashShiftSessions ?? [] as $csr)
                                         @php
                                             $shiftName = $csr->cashMovementStart?->shift?->name ?? 'Turno';
@@ -156,7 +156,7 @@
                                             $statusLabel = $csrStatus === '1' ? 'En curso' : 'Cerrado';
                                             $csrLabel = $shiftName . ($started ? ' | ' . $started : '') . ' (' . $statusLabel . ')';
                                         @endphp
-                                        <option value="{{ $csr->id }}" @selected(($cashShiftRelationId ?? '') == $csr->id)>{{ $csrLabel }}</option>
+                                        <option value="{{ $csr->id }}" @selected(($cashShiftRelationId ?? '') == $csr->id && ($cashShiftRelationId !== 'all' && $cashShiftRelationId !== '' && $cashShiftRelationId !== null))>{{ $csrLabel }}</option>
                                     @endforeach
                                 </select>
                             </div>

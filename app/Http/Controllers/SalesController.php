@@ -138,8 +138,8 @@ class SalesController extends Controller
                 ->get();
         }
 
-        // Por defecto: filtrar por el turno actual (o último) de la caja seleccionada/en sesión
-        if (($cashShiftRelationId === null || $cashShiftRelationId === '') && $branchId && $effectiveCashRegisterId) {
+        // Por defecto (al cargar la página sin filtro enviado): filtrar por el turno actual (o último) de la caja seleccionada/en sesión
+        if (! $request->has('cash_shift_relation_id') && $branchId && $effectiveCashRegisterId) {
             $lastShift = CashShiftRelation::query()
                 ->where('branch_id', $branchId)
                 ->whereHas('cashMovementStart', function ($q) use ($effectiveCashRegisterId) {
@@ -226,7 +226,7 @@ class SalesController extends Controller
         }
 
         // Filtro por turno (CashShiftRelation): ventana temporal por movimientos
-        if ($cashShiftRelationId !== null && $cashShiftRelationId !== '' && $branchId && $effectiveCashRegisterId) {
+        if ($cashShiftRelationId !== null && $cashShiftRelationId !== '' && $cashShiftRelationId !== 'all' && $branchId && $effectiveCashRegisterId) {
             $csrApplied = CashShiftRelation::query()
                 ->with(['cashMovementStart', 'cashMovementEnd'])
                 ->where('branch_id', $branchId)
@@ -2760,7 +2760,7 @@ class SalesController extends Controller
 
         // Filtro por turno (CashShiftRelation): ventana temporal por movimientos
         $effectiveCR = $cashRegisterId;
-        if ($cashShiftRelationId !== null && $cashShiftRelationId !== '' && $branchId && $effectiveCR) {
+        if ($cashShiftRelationId !== null && $cashShiftRelationId !== '' && $cashShiftRelationId !== 'all' && $branchId && $effectiveCR) {
             $csrApplied = CashShiftRelation::query()
                 ->with(['cashMovementStart', 'cashMovementEnd'])
                 ->where('branch_id', $branchId)
@@ -2908,7 +2908,7 @@ class SalesController extends Controller
         }
 
         $effectiveCR = $cashRegisterId;
-        if ($cashShiftRelationId !== null && $cashShiftRelationId !== '' && $branchId && $effectiveCR) {
+        if ($cashShiftRelationId !== null && $cashShiftRelationId !== '' && $cashShiftRelationId !== 'all' && $branchId && $effectiveCR) {
             $csrApplied = CashShiftRelation::query()
                 ->with(['cashMovementStart', 'cashMovementEnd'])
                 ->where('branch_id', $branchId)
