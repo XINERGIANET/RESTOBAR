@@ -2804,6 +2804,175 @@ class SalesController extends Controller
         ]);
     }
 
+    /**
+     * Restaurar una venta eliminada.
+     */
+    public function restore($id)
+    {
+        $sale = Movement::onlyTrashed()->findOrFail((int) $id);
+
+        DB::transaction(function () use ($sale) {
+            $sale->restore();
+
+            if ($sale->salesMovement) {
+                $sale->salesMovement()->withTrashed()->restore();
+            }
+
+            try {
+                app(KardexSyncService::class)->syncSaleMovement((int) $sale->id);
+            } catch (\Throwable $e) {
+                Log::warning('No se pudo resincronizar Kardex al restaurar venta: ' . $e->getMessage());
+            }
+        });
+
+        if (request()->wantsJson() || request()->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => "Venta N° {$sale->number} restaurada correctamente.",
+            ]);
+        }
+
+        return back()->with('status', "Venta N° {$sale->number} restaurada correctamente.");
+    }
+
+    /**
+     * Enviar masivamente Boletas y Facturas no emitidas a APISUNAT.
+     */
+    public function batchSyncSunat(Request $request, ApisunatService $apisunatService)
+    {
+        $branchId = session('branch_id');
+        $branch = $branchId ? Branch::find($branchId) : null;
+
+        if (! $branch) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No se encontró la sucursal activa en sesión.',
+            ], 422);
+        }
+
+        if (! $apisunatService->isConfiguredForBranch($branch)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'La sucursal no tiene configurada o habilitada la facturación electrónica APISUNAT.',
+            ], 422);
+        }
+
+        $movements = Movement::query()
+            ->with(['documentType', 'branch', 'salesMovement'])
+            ->where('branch_id', $branchId)
+            ->where('movement_type_id', 2)
+            ->whereHas('documentType', function ($q) {
+                $q->where(DB::raw('LOWER(name)'), 'like', '%boleta%')
+                  ->orWhere(DB::raw('LOWER(name)'), 'like', '%factura%');
+            })
+            ->get();
+
+        $sentCount = 0;
+        $skippedCount = 0;
+        $errorCount = 0;
+        $errors = [];
+
+        foreach ($movements as $movement) {
+            if ($movement->electronic_invoice_external_id) {
+                $skippedCount++;
+                continue;
+            }
+
+            $res = $this->syncElectronicInvoiceForSale($movement, $apisunatService);
+            if (($res['status'] ?? '') === 'SENT') {
+                $sentCount++;
+            } elseif (($res['status'] ?? '') === 'SKIPPED') {
+                $skippedCount++;
+            } else {
+                $errorCount++;
+                $errors[] = "Documento N° {$movement->number}: " . ($res['message'] ?? 'Error desconocido');
+            }
+        }
+
+        $msg = "Envío masivo a SUNAT completado. Enviados: {$sentCount}, Ya emitidos/Omitidos: {$skippedCount}, Errores: {$errorCount}.";
+
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => $msg,
+                'sent_count' => $sentCount,
+                'skipped_count' => $skippedCount,
+                'error_count' => $errorCount,
+                'errors' => $errors,
+            ]);
+        }
+
+        return back()->with('status', $msg);
+    }
+
+    /**
+     * Reorganizar y resecuenciar correlativos por tipo de documento para eliminar huecos.
+     */
+    public function reorganizeCorrelatives(Request $request)
+    {
+        $branchId = session('branch_id');
+        if (! $branchId) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No se encontró la sucursal activa en sesión.',
+            ], 422);
+        }
+
+        $summary = [];
+
+        DB::transaction(function () use ($branchId, &$summary) {
+            $documentTypeIds = Movement::query()
+                ->where('branch_id', $branchId)
+                ->where('movement_type_id', 2)
+                ->distinct()
+                ->pluck('document_type_id');
+
+            foreach ($documentTypeIds as $docTypeId) {
+                $docType = DocumentType::find($docTypeId);
+                $typeName = $docType?->name ?? "Tipo {$docTypeId}";
+
+                $movements = Movement::query()
+                    ->where('branch_id', $branchId)
+                    ->where('movement_type_id', 2)
+                    ->where('document_type_id', $docTypeId)
+                    ->orderBy('moved_at', 'asc')
+                    ->orderBy('id', 'asc')
+                    ->get();
+
+                $sequence = 1;
+                foreach ($movements as $m) {
+                    $newCorrelative = str_pad((string) $sequence, 8, '0', STR_PAD_LEFT);
+                    $updateData = ['number' => $newCorrelative];
+
+                    if ($m->electronic_invoice_number) {
+                        $prefix = strtoupper(substr($typeName, 0, 1));
+                        $series = $m->salesMovement?->series ?? '001';
+                        $updateData['electronic_invoice_number'] = "{$prefix}{$series}-{$newCorrelative}";
+                    }
+
+                    $m->update($updateData);
+                    $sequence++;
+                }
+
+                $count = $movements->count();
+                $lastNum = $count > 0 ? str_pad((string) $count, 8, '0', STR_PAD_LEFT) : '00000000';
+                $summary[] = "{$typeName}: {$count} comprobantes (00000001 al {$lastNum})";
+            }
+        });
+
+        $message = 'Correlativos reorganizados correctamente sin huecos: ' . implode(' | ', $summary);
+
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => $message,
+                'summary' => $summary,
+            ]);
+        }
+
+        return back()->with('status', $message);
+    }
+
     public function exportPdf(Request $request)
     {
         $branchId = session('branch_id');

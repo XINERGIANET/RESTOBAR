@@ -341,27 +341,36 @@
                                 </select>
                             </div>
                         </div>
-                        <div class="shrink-0 flex flex-wrap items-center gap-2">
-                            <button type="button" onclick="descargarPdf()"
-                                data-pdf-url="{{ route(
-                                    'admin.sales.pdf',
-                                    array_filter([
-                                        'view_id' => $viewId ?? null,
-                                        'date_from' => $dateFrom,
-                                        'date_to' => $dateTo,
-                                        'search' => $search,
-                                        'document_type_id' => $documentTypeId ?? null,
-                                        'payment_method_id' => $paymentMethodId ?? null,
-                                        'cash_register_id' => $cashRegisterId ?? null,
-                                        'cash_shift_relation_id' => $cashShiftRelationId ?? null,
-                                        'sale_type' => $saleType ?? null,
-                                        'show_deleted' => !empty($showDeleted) ? 1 : null,
-                                    ]),
-                                ) }}"
-                                class="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-orange-600 px-4 text-sm font-medium text-white shadow-sm transition hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2">
-                                <i class="ri-file-pdf-line text-base"></i>
-                                <span>Descargar PDF</span>
-                            </button>
+                             <button type="button" onclick="reorganizarCorrelativos()"
+                                 class="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-amber-600 px-4 text-sm font-medium text-white shadow-sm transition hover:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2">
+                                 <i class="ri-hashtag text-base"></i>
+                                 <span>Reordenar Correlativos</span>
+                             </button>
+                             <button type="button" onclick="sincronizarSunatMasivo()"
+                                 class="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-blue-700 px-4 text-sm font-medium text-white shadow-sm transition hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2">
+                                 <i class="ri-send-plane-fill text-base"></i>
+                                 <span>Enviar a APISUNAT</span>
+                             </button>
+                             <button type="button" onclick="descargarPdf()"
+                                 data-pdf-url="{{ route(
+                                     'admin.sales.pdf',
+                                     array_filter([
+                                         'view_id' => $viewId ?? null,
+                                         'date_from' => $dateFrom,
+                                         'date_to' => $dateTo,
+                                         'search' => $search,
+                                         'document_type_id' => $documentTypeId ?? null,
+                                         'payment_method_id' => $paymentMethodId ?? null,
+                                         'cash_register_id' => $cashRegisterId ?? null,
+                                         'cash_shift_relation_id' => $cashShiftRelationId ?? null,
+                                         'sale_type' => $saleType ?? null,
+                                         'show_deleted' => !empty($showDeleted) ? 1 : null,
+                                     ]),
+                                 ) }}"
+                                 class="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-orange-600 px-4 text-sm font-medium text-white shadow-sm transition hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2">
+                                 <i class="ri-file-pdf-line text-base"></i>
+                                 <span>Descargar PDF</span>
+                             </button>
                             <button type="button" onclick="descargarExcel()"
                                 data-excel-url="{{ route(
                                     'admin.sales.excel',
@@ -1295,6 +1304,56 @@
                 document.addEventListener('turbo:load', showFlashToast);
             })();
 
+            function reorganizarCorrelativos() {
+                if (!confirm("¿Está seguro de reorganizar los correlativos de esta sucursal?\n\nSe asignarán números continuos sin huecos por tipo de documento ordenados por fecha.")) {
+                    return;
+                }
+                const token = document.querySelector('meta[name="csrf-token"]')?.content || '{{ csrf_token() }}';
+                fetch("{{ route('sales.reorganize.correlatives') }}", {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': token,
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json'
+                    }
+                })
+                .then(res => res.json())
+                .then(data => {
+                    alert(data.message || 'Proceso completado.');
+                    if (data.success) window.location.reload();
+                })
+                .catch(err => {
+                    console.error(err);
+                    alert('Error al procesar la reorganización de correlativos.');
+                });
+            }
+
+            function sincronizarSunatMasivo() {
+                if (!confirm("¿Desea enviar todas las Boletas y Facturas no emitidas de esta sucursal a APISUNAT?")) {
+                    return;
+                }
+                const token = document.querySelector('meta[name="csrf-token"]')?.content || '{{ csrf_token() }}';
+                fetch("{{ route('sales.batch.sunat') }}", {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': token,
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json'
+                    }
+                })
+                .then(res => res.json())
+                .then(data => {
+                    alert(data.message || 'Proceso completado.');
+                    if (data.success) window.location.reload();
+                })
+                .catch(err => {
+                    console.error(err);
+                    alert('Error al enviar documentos a APISUNAT.');
+                });
+            }
+
             function descargarPdf() {
                 const btn = document.querySelector('[data-pdf-url]');
                 const baseUrl = btn ? btn.dataset.pdfUrl : "{{ route('admin.sales.pdf') }}";
@@ -1400,6 +1459,7 @@
     <div x-data="{
             open: false,
             loading: false,
+            hasRestored: false,
             sales: [],
             searchQuery: '',
             fetchDeletedSales() {
@@ -1420,12 +1480,44 @@
                     console.error('Error al cargar ventas eliminadas:', err);
                     this.loading = false;
                 });
+            },
+            restoreSale(id) {
+                if (!confirm('¿Desea restaurar esta venta eliminada?')) return;
+                const token = document.querySelector('meta[name="csrf-token"]')?.content || '{{ csrf_token() }}';
+                fetch(`/admin/ventas/${id}/restore`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': token,
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json'
+                    }
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        this.hasRestored = true;
+                        this.fetchDeletedSales();
+                    } else {
+                        alert(data.message || 'Error al restaurar la venta.');
+                    }
+                })
+                .catch(err => {
+                    console.error(err);
+                    alert('Error al restaurar la venta.');
+                });
+            },
+            closeModal() {
+                this.open = false;
+                if (this.hasRestored) {
+                    window.location.reload();
+                }
             }
         }"
-        x-on:open-deleted-sales-modal.window="open = true; fetchDeletedSales();"
+        x-on:open-deleted-sales-modal.window="open = true; hasRestored = false; fetchDeletedSales();"
         x-show="open" x-cloak
         class="fixed inset-0 z-[120] flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-sm"
-        @keydown.escape.window="open = false">
+        @keydown.escape.window="closeModal()">
 
         <div class="relative flex max-h-[90vh] w-full max-w-5xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl dark:bg-gray-900 border border-gray-200 dark:border-gray-800">
             <!-- Header -->
@@ -1439,7 +1531,7 @@
                         <p class="text-xs text-gray-500 dark:text-gray-400">Histórico de comprobantes anulados o eliminados del sistema</p>
                     </div>
                 </div>
-                <button type="button" @click="open = false"
+                <button type="button" @click="closeModal()"
                     class="flex h-9 w-9 items-center justify-center rounded-full text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-800 dark:hover:text-white">
                     <i class="ri-close-line text-xl"></i>
                 </button>
@@ -1486,6 +1578,7 @@
                                 <th class="px-4 py-3">Registrado por</th>
                                 <th class="px-4 py-3 text-right">Total</th>
                                 <th class="px-4 py-3 text-center">Estado</th>
+                                <th class="px-4 py-3 text-center">Acciones</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-200 dark:divide-gray-800">
@@ -1502,6 +1595,13 @@
                                             Eliminado
                                         </span>
                                     </td>
+                                    <td class="px-4 py-3 text-center">
+                                        <button type="button" @click="restoreSale(s.id)"
+                                            class="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white shadow-xs hover:bg-emerald-700 active:scale-95 transition">
+                                            <i class="ri-restart-line text-sm"></i>
+                                            <span>Restaurar</span>
+                                        </button>
+                                    </td>
                                 </tr>
                             </template>
                         </tbody>
@@ -1514,7 +1614,7 @@
                 <div class="text-xs text-gray-500">
                     <span class="font-bold text-gray-700 dark:text-gray-300" x-text="sales.length"></span> ventas eliminadas encontradas
                 </div>
-                <button type="button" @click="open = false"
+                <button type="button" @click="closeModal()"
                     class="rounded-xl border border-gray-300 bg-white px-5 py-2 text-sm font-semibold text-gray-700 shadow-xs hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 transition">
                     Cerrar
                 </button>
