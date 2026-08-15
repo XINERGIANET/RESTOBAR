@@ -856,7 +856,6 @@
                 </div>
             </div>
         </x-common.component-card>
-    </div>
 
     <div x-data="{ open: false, saleId: null, personId: '', documentTypeId: '{{ $firstConvertibleDocumentTypeId }}' }"
         x-on:open-convert-ticket-modal.window="
