@@ -527,9 +527,6 @@
 
     <table class="items-table{{ $showUnitColumn ? ' has-measure-column' : '' }}">
         <thead>
-        <tr class="dash-row">
-            <th colspan="{{ $showUnitColumn ? 5 : 4 }}">------------------------------------------------------------</th>
-        </tr>
         <tr>
             <th class="col-product"><strong>Prod.</strong></th>
             <th class="col-qty"><strong>Cant.</strong></th>
@@ -539,8 +536,8 @@
             <th class="col-unit"><strong>P.Unit.</strong></th>
             <th class="col-subtotal"><strong>Subt.</strong></th>
         </tr>
-        <tr class="dash-row">
-            <th colspan="{{ $showUnitColumn ? 5 : 4 }}">------------------------------------------------------------</th>
+        <tr>
+            <th colspan="{{ $showUnitColumn ? 5 : 4 }}" style="padding-bottom: 2mm;"></th>
         </tr>
         </thead>
         <tbody>
@@ -567,8 +564,6 @@
         </tbody>
     </table>
 
-    <div class="separator"></div>
-
     <table class="totals-table">
         <tr>
             <td class="totals-label">Op. gravada:</td>
@@ -585,16 +580,14 @@
     </table>
 
     @if($showUnitColumn)
-        <div class="amount-in-words"><strong>SON:</strong> {{ $totalInWords }}</div>
+        <div class="amount-in-words"><strong>SON:</strong> {{ mb_strtoupper($totalInWords, 'UTF-8') }}</div>
     @endif
 
     @if($sale->comment)
-        <div class="separator"></div>
-        <div class="notes"><strong>Notas:</strong> {{ $sale->comment }}</div>
+        <div class="notes" style="margin-top: 1mm;"><strong>Notas:</strong> {{ $sale->comment }}</div>
     @endif
 
     @if(!empty($qrImageUrl))
-        <div class="separator"></div>
         <div class="qr-dash">------------------------------------------------------------</div>
         <div class="qr-wrap">
             <img src="{{ $qrImageUrl }}" alt="QR del comprobante">
