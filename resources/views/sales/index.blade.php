@@ -1217,12 +1217,16 @@
                                 });
                                 const td = tr.headers.get('content-type')?.includes('application/json') ? await tr.json() : null;
                                 if (tr.ok && td?.success) {
-                                    thermalPrintToast('Impresión', td.message || 'Enviado a la ticketera.', 'success');
+                                    if (td?.print_bridge) {
+                                        thermalPrintToast('En Cola', td.message || 'Comprobante enviado a la cola de impresión.', 'info');
+                                    } else {
+                                        thermalPrintToast('Impresión', td.message || 'Enviado a la ticketera.', 'success');
+                                    }
                                 } else {
-                                    openSaleTicketPdfTab(movementId);
+                                    thermalPrintToast('Error', td?.message || 'Error al enviar a la ticketera.', 'error');
                                 }
                             } catch (e2) {
-                                openSaleTicketPdfTab(movementId);
+                                thermalPrintToast('Error de Red', 'No se pudo conectar con el servicio de impresión.', 'error');
                             }
                         }
                         return;
@@ -1246,12 +1250,16 @@
                         });
                         const td = tr.headers.get('content-type')?.includes('application/json') ? await tr.json() : null;
                         if (tr.ok && td?.success) {
-                            thermalPrintToast('Impresión', td.message || 'Enviado a la ticketera.', 'success');
+                            if (td?.print_bridge) {
+                                thermalPrintToast('En Cola', td.message || 'Comprobante enviado a la cola de impresión.', 'info');
+                            } else {
+                                thermalPrintToast('Impresión', td.message || 'Enviado a la ticketera.', 'success');
+                            }
                         } else {
-                            openSaleTicketPdfTab(movementId);
+                            thermalPrintToast('Error', td?.message || 'Error al enviar a la ticketera.', 'error');
                         }
                     } catch (e) {
-                        openSaleTicketPdfTab(movementId);
+                        thermalPrintToast('Error de Red', 'No se pudo conectar con el servicio de impresión.', 'error');
                     }
                 }
 
