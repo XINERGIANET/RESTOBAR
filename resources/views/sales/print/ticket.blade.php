@@ -527,6 +527,9 @@
 
     <table class="items-table{{ $showUnitColumn ? ' has-measure-column' : '' }}">
         <thead>
+        <tr class="dash-row">
+            <th colspan="{{ $showUnitColumn ? 5 : 4 }}">------------------------------------------------------------</th>
+        </tr>
         <tr>
             <th class="col-product"><strong>Prod.</strong></th>
             <th class="col-qty"><strong>Cant.</strong></th>
@@ -536,8 +539,8 @@
             <th class="col-unit"><strong>P.Unit.</strong></th>
             <th class="col-subtotal"><strong>Subt.</strong></th>
         </tr>
-        <tr>
-            <th colspan="{{ $showUnitColumn ? 5 : 4 }}" style="padding-bottom: 2mm;"></th>
+        <tr class="dash-row">
+            <th colspan="{{ $showUnitColumn ? 5 : 4 }}">------------------------------------------------------------</th>
         </tr>
         </thead>
         <tbody>
