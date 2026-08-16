@@ -1107,7 +1107,6 @@
                     const printerId = sel && sel.value ? parseInt(sel.value, 10) : null;
                     const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
                     const preferredPrinterName = resolveStrictLocalPrinterName();
-                    const strictLocalQz = requiresStrictLocalQz(preferredPrinterName);
                     const body = {
                         movement_id: movementId,
                         printer_name: preferredPrinterName || null
@@ -1116,29 +1115,7 @@
                         body.printer_id = printerId;
                     }
 
-                    // Prioridad 1: impresión RAW por la IP configurada.
-                    if (@json((bool) ($clientOnLocalNetwork ?? false))) try {
-                        const networkResponse = await fetch(salesThermalPrintUrl, {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'X-CSRF-TOKEN': csrf,
-                                Accept: 'application/json',
-                            },
-                            credentials: 'same-origin',
-                            body: JSON.stringify(body),
-                        });
-                        const networkData = networkResponse.headers.get('content-type')?.includes('application/json') ?
-                            await networkResponse.json() : null;
-                        if (networkResponse.ok && networkData?.success) {
-                            thermalPrintToast('Impresión', networkData.message || 'Comprobante enviado por red.', 'success');
-                            return;
-                        }
-                    } catch (networkError) {
-                        console.warn('Impresión por IP no disponible; se intentará QZ.', networkError);
-                    }
-
-                    // Prioridad 2: QZ Tray como respaldo.
+                    // Prioridad 1: QZ Tray si está activo localmente
                     if (qzApi && await ensureQzTrayConnected(qzApi, preferredPrinterName)) {
                         try {
                             const tr = await fetch(salesThermalPrintUrl, {
@@ -1153,90 +1130,46 @@
                             });
                             const td = tr.headers.get('content-type')?.includes('application/json') ? await tr.json() : null;
                             if (tr.ok && td?.duplicate_skipped) return;
-                            if (!tr.ok || !td?.success || (!td?.ticket_pdf_b64 && !td?.ticket_html_b64)) {
-                                throw new Error(td?.message || 'No se pudo obtener el ticket del servidor.');
-                            }
-                            let printerName = preferredPrinterName || td.printer_name || '';
-                            if (!printerName) {
-                                printerName = await qzApi.printers.getDefault();
-                            }
-                            if (!printerName) {
-                                openSaleTicketPdfTab(movementId);
-                                return;
-                            }
-                            const paperMm = (parseInt(td.paper_width, 10) || 58) === 80 ? 80 : 58;
-                            const paperHeight = Math.max(120, parseFloat(td.paper_height) || 200);
-                            const sizeOpts = { units: 'mm', size: { width: paperMm, height: paperHeight } };
-                            const configPdf = qzApi.configs.create(printerName, {
-                                ...sizeOpts,
-                                scaleContent: true,
-                                rasterize: false,
-                                colorType: 'blackwhite',
-                            });
-                            const printHtmlTicket = () => qzApi.print(configPdf, [{
-                                type: 'pixel',
-                                format: 'html',
-                                flavor: 'base64',
-                                data: td.ticket_html_b64,
-                            }]);
-                            if (td.ticket_pdf_b64 && td.qz_print_format === 'pdf') {
-                                try {
+                            if (tr.ok && td?.success && (td?.ticket_pdf_b64 || td?.ticket_html_b64)) {
+                                let printerName = preferredPrinterName || td.printer_name || '';
+                                if (!printerName) {
+                                    printerName = await qzApi.printers.getDefault();
+                                }
+                                const paperMm = (parseInt(td.paper_width, 10) || 58) === 80 ? 80 : 58;
+                                const paperHeight = Math.max(120, parseFloat(td.paper_height) || 200);
+                                const sizeOpts = { units: 'mm', size: { width: paperMm, height: paperHeight } };
+                                const configPdf = qzApi.configs.create(printerName, {
+                                    ...sizeOpts,
+                                    scaleContent: true,
+                                    rasterize: false,
+                                    colorType: 'blackwhite',
+                                });
+                                const printHtmlTicket = () => qzApi.print(configPdf, [{
+                                    type: 'pixel',
+                                    format: 'html',
+                                    flavor: 'base64',
+                                    data: td.ticket_html_b64,
+                                }]);
+                                if (td.ticket_pdf_b64 && td.qz_print_format === 'pdf') {
                                     await qzApi.print(configPdf, [{
                                         type: 'pixel',
                                         format: 'pdf',
                                         flavor: 'base64',
                                         data: td.ticket_pdf_b64,
-                                        options: {
-                                            ignoreTransparency: true,
-                                        },
+                                        options: { ignoreTransparency: true },
                                     }]);
-                                } catch (pdfErr) {
-                                    console.warn('QZ Tray: resultado PDF incierto; no se reintenta para evitar duplicados', pdfErr);
-                                    throw pdfErr;
+                                } else {
+                                    await printHtmlTicket();
                                 }
-                            } else {
-                                await printHtmlTicket();
-                            }
-                            thermalPrintToast('Impresión', 'Comprobante enviado a "' + printerName + '".', 'success');
-                        } catch (e) {
-                            console.warn('QZ Ticket listado:', e);
-                            if (strictLocalQz) {
-                                openSaleTicketPdfTab(movementId);
+                                thermalPrintToast('Impresión', 'Comprobante enviado a "' + printerName + '".', 'success');
                                 return;
                             }
-                            try {
-                                const tr = await fetch(salesThermalPrintUrl, {
-                                    method: 'POST',
-                                    headers: {
-                                        'Content-Type': 'application/json',
-                                        'X-CSRF-TOKEN': csrf,
-                                        Accept: 'application/json',
-                                    },
-                                    credentials: 'same-origin',
-                                    body: JSON.stringify(body),
-                                });
-                                const td = tr.headers.get('content-type')?.includes('application/json') ? await tr.json() : null;
-                                if (tr.ok && td?.success) {
-                                    if (td?.print_bridge) {
-                                        thermalPrintToast('En Cola', td.message || 'Comprobante enviado a la cola de impresión.', 'info');
-                                    } else {
-                                        thermalPrintToast('Impresión', td.message || 'Enviado a la ticketera.', 'success');
-                                    }
-                                } else {
-                                    thermalPrintToast('Error', td?.message || 'Error al enviar a la ticketera.', 'error');
-                                }
-                            } catch (e2) {
-                                thermalPrintToast('Error de Red', 'No se pudo conectar con el servicio de impresión.', 'error');
-                            }
+                        } catch (e) {
+                            console.warn('QZ Ticket listado:', e);
                         }
-                        return;
                     }
 
-                    if (strictLocalQz) {
-                        openSaleTicketPdfTab(movementId);
-                        return;
-                    }
-
+                    // Fallback principal: Impresión vía servidor/red/puente (idéntico a la acción de cobro)
                     try {
                         const tr = await fetch(salesThermalPrintUrl, {
                             method: 'POST',
@@ -1256,9 +1189,10 @@
                                 thermalPrintToast('Impresión', td.message || 'Enviado a la ticketera.', 'success');
                             }
                         } else {
-                            thermalPrintToast('Error', td?.message || 'Error al enviar a la ticketera.', 'error');
+                            thermalPrintToast('Error', td?.message || 'No se pudo enviar a la ticketera.', 'error');
                         }
                     } catch (e) {
+                        console.error('Error al reimprimir comprobante:', e);
                         thermalPrintToast('Error de Red', 'No se pudo conectar con el servicio de impresión.', 'error');
                     }
                 }
