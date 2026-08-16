@@ -2836,6 +2836,50 @@ class SalesController extends Controller
     }
 
     /**
+     * Emitir un solo comprobante de venta a APISUNAT.
+     */
+    public function emitSingleSunat(Request $request, Movement $sale, ApisunatService $apisunatService)
+    {
+        $filterKeys = [
+            'search',
+            'date_from',
+            'date_to',
+            'person_id',
+            'document_type_id',
+            'payment_method_id',
+            'cash_shift_relation_id',
+            'sale_type',
+            'per_page',
+            'page',
+        ];
+
+        $savedFilters = session('sales_index_filters', []);
+        foreach ($filterKeys as $k) {
+            if ($request->has($k)) {
+                $savedFilters[$k] = $request->input($k);
+            }
+        }
+        session(['sales_index_filters' => $savedFilters]);
+
+        try {
+            $res = $this->syncElectronicInvoiceForSale($sale, $apisunatService);
+            if (($res['status'] ?? '') === 'SENT') {
+                $dateInfo = $apisunatService->resolveSunatIssueDate($sale);
+                $dateAdjustNotice = ($dateInfo['adjusted'] ?? false)
+                    ? ' (Fecha de emisión ajustada al límite de 2 días SUNAT)'
+                    : '';
+                $msg = "Comprobante N° {$sale->number} enviado y aceptado correctamente por SUNAT{$dateAdjustNotice}.";
+                return back()->with('status', $msg);
+            }
+
+            $errMsg = $res['message'] ?? 'No se pudo emitir el comprobante en SUNAT.';
+            return back()->with('error', $errMsg);
+        } catch (\Throwable $e) {
+            return back()->with('error', 'Error al emitir en SUNAT: ' . $e->getMessage());
+        }
+    }
+
+    /**
      * Enviar masivamente Boletas y Facturas no emitidas a APISUNAT.
      */
     public function batchSyncSunat(Request $request, ApisunatService $apisunatService)

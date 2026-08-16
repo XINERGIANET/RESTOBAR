@@ -140,6 +140,7 @@ Route::middleware('auth')->group(function () {
         ->only(['index', 'store', 'edit', 'update', 'destroy']);
     Route::get('/admin/ventas/eliminadas', [SalesController::class, 'deletedSalesList'])->name('sales.deleted.list');
     Route::post('/admin/ventas/{id}/restore', [SalesController::class, 'restore'])->name('sales.restore');
+    Route::post('/admin/ventas/{sale}/emitir-sunat', [SalesController::class, 'emitSingleSunat'])->name('sales.emit.sunat');
     Route::post('/admin/ventas/sincronizar-sunat', [SalesController::class, 'batchSyncSunat'])->name('sales.batch.sunat');
     Route::post('/admin/ventas/reorganizar-correlativos', [SalesController::class, 'reorganizeCorrelatives'])->name('sales.reorganize.correlatives');
     Route::get('/admin/ventas/pdf', [SalesController::class, 'exportPdf'])->name('admin.sales.pdf');

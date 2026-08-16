@@ -548,8 +548,41 @@
                                                         class="absolute top-full left-1/2 -ml-1 border-4 border-transparent border-t-gray-900"></span>
                                                 </span>
                                             </div>
-                                        @endif
-                                        @if ($rowOperations->isNotEmpty())
+                                         @endif
+
+                                         @php
+                                             $docName = mb_strtolower(trim((string) ($sale->documentType?->name ?? '')), 'UTF-8');
+                                             $isEligibleSunat = str_contains($docName, 'boleta') || str_contains($docName, 'factura');
+                                             $isAlreadySentSunat = !empty($sale->electronic_invoice_external_id) || ($sale->electronic_invoice_status ?? '') === 'SENT';
+                                         @endphp
+                                         @if ($isEligibleSunat && !$isAlreadySentSunat && !$sale->trashed())
+                                             <div class="relative group">
+                                                 <form method="POST" action="{{ route('sales.emit.sunat', $sale->id) }}">
+                                                     @csrf
+                                                     @if ($viewId)
+                                                         <input type="hidden" name="view_id" value="{{ $viewId }}">
+                                                     @endif
+                                                     @foreach (request()->query() as $qKey => $qVal)
+                                                         @if ($qKey !== 'view_id' && !is_array($qVal))
+                                                             <input type="hidden" name="{{ $qKey }}" value="{{ $qVal }}">
+                                                         @endif
+                                                     @endforeach
+                                                     <button type="submit"
+                                                         class="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-blue-600 text-white shadow-sm transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500/40"
+                                                         aria-label="Enviar a SUNAT">
+                                                         <i class="ri-cloud-upload-line"></i>
+                                                     </button>
+                                                     <span
+                                                         class="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-3 whitespace-nowrap rounded-md bg-gray-900 px-2.5 py-1 text-xs text-white opacity-0 transition group-hover:opacity-100 z-[100] shadow-xl">
+                                                         Enviar a SUNAT
+                                                         <span
+                                                             class="absolute top-full left-1/2 -ml-1 border-4 border-transparent border-t-gray-900"></span>
+                                                     </span>
+                                                 </form>
+                                             </div>
+                                         @endif
+
+                                         @if ($rowOperations->isNotEmpty())
                                             @foreach ($rowOperations as $operation)
                                                 @php
                                                     $action = $operation->action ?? '';
