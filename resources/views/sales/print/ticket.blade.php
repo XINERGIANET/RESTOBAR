@@ -30,20 +30,21 @@
         }
 
         .ticket {
-            width: 96%;
-            max-width: 96%;
-            padding: 2.2mm 0 3mm;
-            margin: 0 auto;
+            width: 90%;
+            max-width: 90%;
+            padding: 2.2mm 1.2mm 3mm;
+            margin-left: 0;
+            margin-right: auto;
             overflow: visible;
         }
 
-        /* Centrado simétrico del contenido en impresión térmica */
+        /* La ticketera tiene menos ancho imprimible que el rollo: desplaza el
+           contenido a la izquierda y reserva 2 mm extra en el borde derecho. */
         body.thermal-print .ticket {
-            width: 96%;
-            max-width: 96%;
+            width: calc(90% - 2mm);
+            max-width: calc(90% - 2mm);
             padding-left: 0;
-            padding-right: 0;
-            margin: 0 auto;
+            padding-right: 2mm;
         }
 
         /* Respaldo visual si el servidor no dispone temporalmente del generador PDF. */
@@ -251,8 +252,7 @@
 
         body.ticket-paper-58.thermal-print .ticket {
             padding-left: 0;
-            padding-right: 0;
-            margin: 0 auto;
+            padding-right: 2mm;
         }
 
         body.ticket-paper-58 .items-table th,
