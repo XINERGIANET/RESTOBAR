@@ -194,14 +194,42 @@
             word-break: normal;
         }
 
-        .items-table.has-measure-column .col-product { width: 18%; }
+        /* En la impresión física se fuerza el ancho al 100% sin márgenes laterales vacíos */
+        @media print {
+            @page {
+                size: {{ (int) ($ticketPageWidthMm ?? 80) }}mm auto;
+                margin: 0 !important;
+            }
+
+            html, body {
+                width: 100% !important;
+                max-width: 100% !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+
+            .ticket {
+                width: 100% !important;
+                max-width: 100% !important;
+                padding: 1mm 1.5mm !important;
+                margin: 0 auto !important;
+                box-sizing: border-box !important;
+            }
+
+            table, .items-table, .totals-table, .info-table {
+                width: 100% !important;
+                max-width: 100% !important;
+            }
+        }
+
+        .items-table.has-measure-column .col-product { width: 30%; }
         .items-table.has-measure-column .col-qty { width: 12%; }
-        .items-table.has-measure-column .col-measure { width: 28%; }
-        .items-table.has-measure-column .col-unit { width: 20%; }
-        .items-table.has-measure-column .col-subtotal { width: 22%; }
+        .items-table.has-measure-column .col-measure { width: 22%; }
+        .items-table.has-measure-column .col-unit { width: 18%; }
+        .items-table.has-measure-column .col-subtotal { width: 18%; }
 
         .col-subtotal {
-            width: 26%;
+            width: 20%;
             text-align: right;
             padding-right: 0;
         }
