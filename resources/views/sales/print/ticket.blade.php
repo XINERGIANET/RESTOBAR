@@ -36,6 +36,8 @@
             margin-left: 0;
             margin-right: auto;
             overflow: visible;
+            page-break-inside: avoid;
+            break-inside: avoid;
         }
 
         /* La ticketera tiene menos ancho imprimible que el rollo: desplaza el
@@ -600,24 +602,25 @@
             <img src="{{ $qrImageUrl }}" alt="QR del comprobante">
         </div>
         <div class="qr-dash">------------------------------------------------------------</div>
-        @if(!empty($ticketFooterMeta))
-            <div class="ticket-footer-meta">
-                <div><strong>Pedido:</strong> {{ $ticketFooterMeta['order_number'] }}</div>
-                <div><strong>Mesa:</strong> {{ $ticketFooterMeta['location'] }}</div>
-                <div><strong>Responsable:</strong> {{ $ticketFooterMeta['responsible'] }}</div>
-                <div><strong>Caja:</strong> {{ $ticketFooterMeta['cash_register'] }}</div>
-                <div><strong>Forma de pago:</strong></div>
-                @forelse($ticketFooterMeta['payment_lines'] as $paymentLine)
-                    <div>{{ $paymentLine }}</div>
-                @empty
-                    <div>{{ $paymentLabel }}</div>
-                @endforelse
-                <div class="ticket-footer-condition">
-                    <span>{{ $ticketFooterMeta['condition'] }}</span>
-                    <span><strong>Hora:</strong> {{ $ticketFooterMeta['time'] }}</span>
-                </div>
+    @endif
+
+    @if(!empty($ticketFooterMeta))
+        <div class="ticket-footer-meta">
+            <div><strong>Pedido:</strong> {{ $ticketFooterMeta['order_number'] }}</div>
+            <div><strong>Mesa:</strong> {{ $ticketFooterMeta['location'] }}</div>
+            <div><strong>Responsable:</strong> {{ $ticketFooterMeta['responsible'] }}</div>
+            <div><strong>Caja:</strong> {{ $ticketFooterMeta['cash_register'] }}</div>
+            <div><strong>Forma de pago:</strong></div>
+            @forelse($ticketFooterMeta['payment_lines'] as $paymentLine)
+                <div>{{ $paymentLine }}</div>
+            @empty
+                <div>{{ $paymentLabel }}</div>
+            @endforelse
+            <div class="ticket-footer-condition">
+                <span>{{ $ticketFooterMeta['condition'] }}</span>
+                <span><strong>Hora:</strong> {{ $ticketFooterMeta['time'] }}</span>
             </div>
-        @endif
+        </div>
     @endif
 
     <div class="separator"></div>

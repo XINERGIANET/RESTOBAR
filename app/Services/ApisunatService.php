@@ -98,7 +98,6 @@ class ApisunatService
             ->toArray();
 
         $usedSet = array_flip($usedNumbers);
-        $localNum = (int) preg_replace('/\D+/', '', (string) $sale->number);
 
         $apiLastNum = 0;
         $correlativeResp = Http::timeout(20)->post($apiUrl.'/personas/lastDocument', [
@@ -115,10 +114,25 @@ class ApisunatService
             $apiLastNum = max($sug, $last);
         }
 
-        // Si el número local no ha sido emitido aún, se prueba primero.
-        // De lo contrario, o si hay un hueco sin emitir, se busca el menor número entero no emitido.
-        if ($localNum > 0 && ! isset($usedSet[$localNum])) {
-            $targetNum = $localNum;
+        // Buscar el primer hueco no emitido en la secuencia desde 1 hasta apiLastNum
+        $firstGap = null;
+        if ($apiLastNum > 0) {
+            for ($i = 1; $i <= $apiLastNum; $i++) {
+                if (! isset($usedSet[$i])) {
+                    $firstGap = $i;
+                    break;
+                }
+            }
+        }
+
+        // Determinación del correlativo estricto para APISUNAT:
+        // 1. Si hay un hueco previo sin emitir, se rellena ese hueco (ej: 646).
+        // 2. Si no hay hueco, el número SIEMPRE es el correlativo inmediato de APISUNAT: apiLastNum + 1.
+        // 3. De lo contrario, el primer entero no emitido disponible.
+        if ($firstGap !== null) {
+            $targetNum = $firstGap;
+        } elseif ($apiLastNum > 0) {
+            $targetNum = $apiLastNum + 1;
         } else {
             $candidate = 1;
             while (isset($usedSet[$candidate])) {

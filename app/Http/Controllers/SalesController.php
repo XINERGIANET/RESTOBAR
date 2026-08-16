@@ -1765,13 +1765,14 @@ class SalesController extends Controller
             $notesLines = max(1, (int) ceil(mb_strlen((string) $sale->comment) / 26));
         }
 
-        $baseHeight = 106;
-        $itemsHeight = $detailLines * 8;
-        $metaHeight = ($customerNameLines + $addressLines + $documentLines + $paymentLines + $creditNoteLines) * 4;
-        $notesHeight = $notesLines * 5;
-        $footerSafety = 18;
+        $baseHeight = 150;
+        $itemsHeight = $detailLines * 10;
+        $metaHeight = ($customerNameLines + $addressLines + $documentLines + $paymentLines + $creditNoteLines) * 6;
+        $notesHeight = $notesLines * 6;
+        $qrHeight = 65;
+        $footerSafety = 45;
 
-        $height = max(120, min(900, $baseHeight + $itemsHeight + $metaHeight + $notesHeight + $footerSafety));
+        $height = max(200, min(1200, $baseHeight + $itemsHeight + $metaHeight + $notesHeight + $qrHeight + $footerSafety));
 
         return $height.'mm';
     }
@@ -2355,7 +2356,18 @@ class SalesController extends Controller
             return null;
         }
 
-        return 'https://api.qrserver.com/v1/create-qr-code/?size=170x170&margin=0&data='.rawurlencode($payload);
+        $remoteUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=170x170&margin=0&data='.rawurlencode($payload);
+
+        try {
+            $response = \Illuminate\Support\Facades\Http::timeout(5)->get($remoteUrl);
+            if ($response->successful() && strlen($response->body()) > 100) {
+                return 'data:image/png;base64,'.base64_encode($response->body());
+            }
+        } catch (\Throwable $e) {
+            // fallback a URL si falla la conexión externa
+        }
+
+        return $remoteUrl;
     }
 
     /**
