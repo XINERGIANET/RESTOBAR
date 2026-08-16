@@ -87,6 +87,9 @@ class ApisunatService
         $totals = $this->resolveMovementTotals($sale);
         $apiUrl = $this->resolveApiUrl($config);
 
+        $localNum = (int) preg_replace('/\D+/', '', (string) $sale->number);
+        $apiLastNum = 0;
+
         $correlativeResp = Http::timeout(20)->post($apiUrl.'/personas/lastDocument', [
             'personaId' => (string) $config->persona_id,
             'personaToken' => (string) $config->persona_token,
@@ -94,31 +97,55 @@ class ApisunatService
             'serie' => $catalog['serie'],
         ]);
 
-        if ($correlativeResp->failed()) {
-            throw new \RuntimeException('Error consultando correlativo en Apisunat: '.$correlativeResp->body());
+        if ($correlativeResp->successful()) {
+            $obj = $correlativeResp->object();
+            $sug = (int) data_get($obj, 'suggestedNumber', 0);
+            $last = (int) data_get($obj, 'lastNumber', 0);
+            $apiLastNum = max($sug, $last);
         }
 
-        $suggestedNumber = trim((string) data_get($correlativeResp->object(), 'suggestedNumber', ''));
-        if ($suggestedNumber === '' || ! ctype_digit($suggestedNumber)) {
-            throw new \RuntimeException('Apisunat devolvió un correlativo inválido.');
-        }
+        $nextApiNum = $apiLastNum > 0 ? $apiLastNum + 1 : 1;
+        $targetNum = max($localNum, $nextApiNum);
 
-        $number = str_pad($suggestedNumber, 8, '0', STR_PAD_LEFT);
-        $fileName = trim((string) ($branch?->ruc ?? '0')).'-'.$catalog['type'].'-'.$catalog['serie'].'-'.$number;
-        $documentBody = $this->buildDocumentBody($sale, $catalog, $customerDocument, $customerDocType, $totals, $number);
-        $this->validateDocumentBodyForSunat($documentBody);
+        $attempts = 0;
+        $sendResp = null;
+        $number = '';
+        $fileName = '';
 
-        $sendResp = Http::timeout(35)->post($apiUrl.'/personas/v1/sendBill', [
-            'personaId' => (string) $config->persona_id,
-            'personaToken' => (string) $config->persona_token,
-            'fileName' => $fileName,
-            'documentBody' => $documentBody,
-        ]);
+        while ($attempts < 3) {
+            $attempts++;
+            $number = str_pad((string) $targetNum, 8, '0', STR_PAD_LEFT);
+            $fileName = trim((string) ($branch?->ruc ?? '0')).'-'.$catalog['type'].'-'.$catalog['serie'].'-'.$number;
+            $documentBody = $this->buildDocumentBody($sale, $catalog, $customerDocument, $customerDocType, $totals, $number);
+            $this->validateDocumentBodyForSunat($documentBody);
 
-        if ($sendResp->failed()) {
+            $sendResp = Http::timeout(35)->post($apiUrl.'/personas/v1/sendBill', [
+                'personaId' => (string) $config->persona_id,
+                'personaToken' => (string) $config->persona_token,
+                'fileName' => $fileName,
+                'documentBody' => $documentBody,
+            ]);
+
+            if ($sendResp->successful()) {
+                break;
+            }
+
             $errorMessage = data_get($sendResp->object(), 'error.message')
                 ?: data_get($sendResp->json(), 'error.message')
                 ?: $sendResp->body();
+
+            if (str_contains(mb_strtolower($errorMessage, 'UTF-8'), 'repetida') || str_contains(mb_strtolower($errorMessage, 'UTF-8'), 'ya existe')) {
+                $targetNum++;
+                continue;
+            }
+
+            throw new \RuntimeException('Error enviando comprobante a Apisunat: '.$errorMessage);
+        }
+
+        if (! $sendResp || $sendResp->failed()) {
+            $errorMessage = data_get($sendResp?->object(), 'error.message')
+                ?: data_get($sendResp?->json(), 'error.message')
+                ?: ($sendResp ? $sendResp->body() : 'Error enviando comprobante a Apisunat.');
 
             throw new \RuntimeException('Error enviando comprobante a Apisunat: '.$errorMessage);
         }
