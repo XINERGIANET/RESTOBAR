@@ -69,11 +69,23 @@
             return '#FFFFFF';
         };
 
-        $isCreateOp = fn ($operation) => str_contains($operation->action ?? '', 'tax_rates.create')
-            || str_contains($operation->action ?? '', 'tax_rates.store')
-            || str_contains($operation->action ?? '', 'open-tax-rate-modal');
-        $isEditOp = fn ($operation) => str_contains($operation->action ?? '', 'tax_rates.edit')
-            || str_contains($operation->action ?? '', 'tax_rates.update');
+        $isCreateOp = function ($operation) {
+            $act = mb_strtolower((string) ($operation->action ?? ''), 'UTF-8');
+            $name = mb_strtolower((string) ($operation->name ?? ''), 'UTF-8');
+            return str_contains($act, 'create') || str_contains($act, 'store') || str_contains($act, 'modal') || str_contains($name, 'nuevo') || str_contains($name, 'crear');
+        };
+
+        $isEditOp = function ($operation) {
+            $act = mb_strtolower((string) ($operation->action ?? ''), 'UTF-8');
+            $name = mb_strtolower((string) ($operation->name ?? ''), 'UTF-8');
+            return str_contains($act, 'edit') || str_contains($act, 'update') || str_contains($name, 'edit') || str_contains($name, 'editar') || str_contains($name, 'igv');
+        };
+
+        $isDeleteOp = function ($operation) {
+            $act = mb_strtolower((string) ($operation->action ?? ''), 'UTF-8');
+            $name = mb_strtolower((string) ($operation->name ?? ''), 'UTF-8');
+            return str_contains($act, 'destroy') || str_contains($act, 'delete') || str_contains($name, 'eliminar') || str_contains($name, 'borrar');
+        };
     @endphp
     <div x-data="{}">
         <x-common.page-breadcrumb pageTitle="Tasas de impuesto" />
@@ -184,13 +196,13 @@
                                         @foreach ($rowOperations as $operation)
                                             @php
                                                 $action = $operation->action ?? '';
-                                                $isDelete = str_contains($action, 'destroy');
+                                                $isDelete = $isDeleteOp($operation);
                                                 $isEdit = $isEditOp($operation);
                                                 $actionUrl = $resolveActionUrl($action, $taxRate, $operation);
                                                 $textColor = $resolveTextColor($operation);
                                                 $buttonColor = $operation->color ?: '#3B82F6';
                                                 $buttonStyle = "background-color: {$buttonColor}; color: {$textColor};";
-                                                $variant = $isDelete ? 'eliminate' : (str_contains($action, 'edit') ? 'edit' : 'primary');
+                                                $variant = $isDelete ? 'eliminate' : ($isEdit ? 'edit' : 'primary');
                                             @endphp
                                             @if ($isDelete)
                                                 <form
@@ -223,16 +235,24 @@
                                                 </form>
                                             @elseif ($isEdit)
                                                 <div class="relative group">
-                                                    <x-ui.link-button
+                                                    <x-ui.button
                                                         size="icon"
                                                         variant="{{ $variant }}"
-                                                        href="{{ $actionUrl }}"
+                                                        type="button"
                                                         className="rounded-xl"
                                                         style="{{ $buttonStyle }}"
                                                         aria-label="{{ $operation->name }}"
+                                                        x-on:click.prevent="window.dispatchEvent(new CustomEvent('open-edit-tax-rate-modal', { detail: {{ Illuminate\Support\Js::from([
+                                                            'id' => $taxRate->id,
+                                                            'code' => $taxRate->code,
+                                                            'description' => $taxRate->description,
+                                                            'tax_rate' => $taxRate->tax_rate,
+                                                            'order_num' => $taxRate->order_num,
+                                                            'status' => (bool) $taxRate->status,
+                                                        ]) }} }));"
                                                     >
                                                         <i class="{{ $operation->icon }}"></i>
-                                                    </x-ui.link-button>
+                                                    </x-ui.button>
                                                     <span class="pointer-events-none absolute top-full left-1/2 -translate-x-1/2 mt-2 whitespace-nowrap rounded-md bg-gray-900 px-2 py-1 text-xs text-white opacity-0 transition group-hover:opacity-100 z-50" style="transition-delay: 0.5s;">{{ $operation->name }}</span>
                                                 </div>
                                             @else
