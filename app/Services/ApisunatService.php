@@ -87,9 +87,20 @@ class ApisunatService
         $totals = $this->resolveMovementTotals($sale);
         $apiUrl = $this->resolveApiUrl($config);
 
-        $localNum = (int) preg_replace('/\D+/', '', (string) $sale->number);
-        $apiLastNum = 0;
+        $usedNumbers = Movement::query()
+            ->where('branch_id', $sale->branch_id)
+            ->where('document_type_id', $sale->document_type_id)
+            ->where('movement_type_id', 2)
+            ->whereNotNull('electronic_invoice_external_id')
+            ->pluck('number')
+            ->map(fn ($n) => (int) preg_replace('/\D+/', '', (string) $n))
+            ->filter(fn ($n) => $n > 0)
+            ->toArray();
 
+        $usedSet = array_flip($usedNumbers);
+        $localNum = (int) preg_replace('/\D+/', '', (string) $sale->number);
+
+        $apiLastNum = 0;
         $correlativeResp = Http::timeout(20)->post($apiUrl.'/personas/lastDocument', [
             'personaId' => (string) $config->persona_id,
             'personaToken' => (string) $config->persona_token,
@@ -104,16 +115,30 @@ class ApisunatService
             $apiLastNum = max($sug, $last);
         }
 
-        $nextApiNum = $apiLastNum > 0 ? $apiLastNum + 1 : 1;
-        $targetNum = max($localNum, $nextApiNum);
+        // Si el número local no ha sido emitido aún, se prueba primero.
+        // De lo contrario, o si hay un hueco sin emitir, se busca el menor número entero no emitido.
+        if ($localNum > 0 && ! isset($usedSet[$localNum])) {
+            $targetNum = $localNum;
+        } else {
+            $candidate = 1;
+            while (isset($usedSet[$candidate])) {
+                $candidate++;
+            }
+            $targetNum = $candidate;
+        }
 
         $attempts = 0;
         $sendResp = null;
         $number = '';
         $fileName = '';
 
-        while ($attempts < 3) {
+        while ($attempts < 5) {
             $attempts++;
+            // Asegurar no saltar si targetNum está en el conjunto usado
+            while (isset($usedSet[$targetNum])) {
+                $targetNum++;
+            }
+
             $number = str_pad((string) $targetNum, 8, '0', STR_PAD_LEFT);
             $fileName = trim((string) ($branch?->ruc ?? '0')).'-'.$catalog['type'].'-'.$catalog['serie'].'-'.$number;
             $documentBody = $this->buildDocumentBody($sale, $catalog, $customerDocument, $customerDocType, $totals, $number);
@@ -135,6 +160,7 @@ class ApisunatService
                 ?: $sendResp->body();
 
             if (str_contains(mb_strtolower($errorMessage, 'UTF-8'), 'repetida') || str_contains(mb_strtolower($errorMessage, 'UTF-8'), 'ya existe')) {
+                $usedSet[$targetNum] = true;
                 $targetNum++;
                 continue;
             }
