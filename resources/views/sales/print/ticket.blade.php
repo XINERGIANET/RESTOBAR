@@ -30,21 +30,19 @@
         }
 
         .ticket {
-            width: 90%;
-            max-width: 90%;
-            padding: 2.2mm 1.2mm 3mm;
-            margin-left: 0;
-            margin-right: auto;
+            width: 95%;
+            max-width: 95%;
+            padding: 2.2mm 1mm 3mm;
+            margin: 0 auto;
             overflow: visible;
         }
 
-        /* La ticketera tiene menos ancho imprimible que el rollo: desplaza el
-           contenido a la izquierda y reserva 2 mm extra en el borde derecho. */
         body.thermal-print .ticket {
-            width: calc(90% - 2mm);
-            max-width: calc(90% - 2mm);
-            padding-left: 0;
-            padding-right: 2mm;
+            width: 95%;
+            max-width: 95%;
+            padding-left: 0.5mm;
+            padding-right: 0.5mm;
+            margin: 0 auto;
         }
 
         /* Respaldo visual si el servidor no dispone temporalmente del generador PDF. */
@@ -248,11 +246,13 @@
         /* Rollo 58 mm: menos ancho útil; tipografía y columnas más compactas */
         body.ticket-paper-58 .ticket {
             padding: 1.8mm 1mm 2.5mm;
+            margin: 0 auto;
         }
 
         body.ticket-paper-58.thermal-print .ticket {
-            padding-left: 0;
-            padding-right: 2mm;
+            padding-left: 0.5mm;
+            padding-right: 0.5mm;
+            margin: 0 auto;
         }
 
         body.ticket-paper-58 .items-table th,
