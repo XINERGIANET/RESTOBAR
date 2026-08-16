@@ -30,23 +30,21 @@
         }
 
         .ticket {
-            width: 90%;
-            max-width: 90%;
-            padding: 2.2mm 1.2mm 3mm;
-            margin-left: 0;
-            margin-right: auto;
+            width: 100%;
+            max-width: 100%;
+            padding: 2mm 1.5mm 3mm 1.5mm;
+            margin: 0 auto;
             overflow: visible;
             page-break-inside: avoid;
             break-inside: avoid;
         }
 
-        /* La ticketera tiene menos ancho imprimible que el rollo: desplaza el
-           contenido a la izquierda y reserva 2 mm extra en el borde derecho. */
         body.thermal-print .ticket {
-            width: calc(90% - 2mm);
-            max-width: calc(90% - 2mm);
-            padding-left: 0;
-            padding-right: 2mm;
+            width: 100%;
+            max-width: 100%;
+            padding-left: 1.5mm;
+            padding-right: 1.5mm;
+            margin: 0 auto;
         }
 
         /* Respaldo visual si el servidor no dispone temporalmente del generador PDF. */
