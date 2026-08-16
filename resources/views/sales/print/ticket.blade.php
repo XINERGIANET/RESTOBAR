@@ -26,8 +26,8 @@
         }
 
         body {
-            font-size: 3.5mm;
-            line-height: 1.2;
+            font-size: 4.2mm;
+            line-height: 1.22;
         }
 
         .ticket {
@@ -65,30 +65,30 @@
 
         .logo {
             display: block;
-            max-width: 38mm;
-            max-height: 16mm;
+            max-width: 42mm;
+            max-height: 18mm;
             margin: 0 auto;
             object-fit: contain;
         }
 
         .company {
             margin: 0;
-            font-size: 6.5mm;
-            font-weight: 800;
+            font-size: 7.5mm;
+            font-weight: 900;
             line-height: 1;
         }
 
         .subhead {
             margin: 0.4mm 0 0;
-            font-size: 4.2mm;
-            line-height: 1.1;
+            font-size: 4.8mm;
+            line-height: 1.15;
         }
 
         .doc-code {
             margin: 1.2mm 0 0;
-            font-size: 5.2mm;
-            font-weight: 800;
-            line-height: 1.1;
+            font-size: 6.2mm;
+            font-weight: 900;
+            line-height: 1.15;
         }
 
         .separator {
@@ -103,15 +103,15 @@
         }
 
         .info-table td {
-            padding: 0.4mm 0;
+            padding: 0.5mm 0;
             vertical-align: top;
-            font-size: 3.6mm;
-            line-height: 1.15;
+            font-size: 4.2mm;
+            line-height: 1.2;
         }
 
         .info-label {
-            width: 24mm;
-            font-weight: 800;
+            width: 28mm;
+            font-weight: 900;
             padding-right: 1mm;
             white-space: nowrap;
         }
@@ -123,13 +123,13 @@
 
         .items-table th,
         .items-table td {
-            padding: 0.6mm 0.2mm;
-            font-size: 3.5mm;
+            padding: 0.8mm 0.2mm;
+            font-size: 4.2mm;
         }
 
         .items-table th {
-            font-weight: 800;
-            border-bottom: 0.3mm solid #000;
+            font-weight: 900;
+            border-bottom: 0.4mm solid #000;
         }
 
         .items-table td {
@@ -137,7 +137,7 @@
         }
 
         .col-product {
-            width: 42%;
+            width: 40%;
             text-align: left;
             padding-left: 0.35mm;
             padding-right: 0.35mm;
@@ -146,13 +146,13 @@
         }
 
         .col-qty {
-            width: 14%;
+            width: 15%;
             text-align: right;
             padding-right: 0.35mm;
         }
 
         .col-unit {
-            width: 22%;
+            width: 23%;
             text-align: right;
             padding-right: 0.2mm;
         }
@@ -169,14 +169,14 @@
         }
 
         .totals-table td {
-            padding: 0.6mm 0;
-            font-size: 3.7mm;
+            padding: 0.8mm 0;
+            font-size: 4.4mm;
             vertical-align: top;
         }
 
         .totals-label {
             width: 50%;
-            font-weight: 800;
+            font-weight: 900;
             padding-right: 1mm;
         }
 
@@ -188,10 +188,10 @@
         }
 
         .grand-total td {
-            border-top: 0.3mm solid #000;
-            padding-top: 1.2mm;
-            font-size: 4.8mm;
-            font-weight: 800;
+            border-top: 0.4mm solid #000;
+            padding-top: 1.4mm;
+            font-size: 5.6mm;
+            font-weight: 900;
         }
 
         /* Adaptación para Rollo 58 mm */
@@ -201,7 +201,7 @@
 
         body.ticket-paper-58 .items-table th,
         body.ticket-paper-58 .items-table td {
-            font-size: 2.45mm;
+            font-size: 2.8mm;
             padding: 0.35mm 0.1mm;
         }
 
@@ -224,62 +224,63 @@
         }
 
         body.ticket-paper-58 .info-label {
-            width: 17mm;
-            font-size: 2.75mm;
+            width: 20mm;
+            font-size: 3.0mm;
         }
 
         body.ticket-paper-58 .info-table td {
-            font-size: 2.65mm;
+            font-size: 2.9mm;
         }
 
         body.ticket-paper-58 .grand-total td {
-            font-size: 3.5mm;
+            font-size: 4.0mm;
         }
 
         body.ticket-paper-58 .company {
-            font-size: 5.2mm;
+            font-size: 5.8mm;
         }
 
         body.ticket-paper-58 .doc-code {
-            font-size: 4.2mm;
+            font-size: 4.8mm;
         }
 
         .notes {
-            font-size: 3mm;
-            line-height: 1.15;
+            font-size: 3.8mm;
+            line-height: 1.2;
         }
 
         .notes strong {
-            font-weight: 800;
+            font-weight: 900;
         }
 
         .qr-wrap {
             text-align: center;
-            margin-top: 1.6mm;
+            margin-top: 2mm;
         }
 
         .qr-wrap img {
-            width: 24mm;
-            height: 24mm;
+            width: 32mm;
+            height: 32mm;
             object-fit: contain;
         }
 
         .footer {
             text-align: center;
-            font-size: 2.7mm;
-            line-height: 1.15;
+            font-size: 3.4mm;
+            line-height: 1.2;
         }
 
         .thanks {
-            margin-top: 0.6mm;
-            font-size: 3mm;
+            margin-top: 1mm;
+            font-size: 4.0mm;
+            font-weight: 900;
         }
 
         .ticket-footer-meta {
-            margin-top: 1.2mm;
+            margin-top: 1.4mm;
             text-align: left;
-            line-height: 1.25;
-            font-size: 2.9mm;
+            line-height: 1.3;
+            font-size: 3.6mm;
         }
 
         .ticket-footer-condition {
