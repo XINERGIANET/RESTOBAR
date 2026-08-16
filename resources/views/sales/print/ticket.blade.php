@@ -12,39 +12,40 @@
         }
 
         @page {
-            size: {{ (int) ($ticketPageWidthMm ?? 80) }}mm auto;
-            margin: 0;
+            size: {{ (int) ($ticketPageWidthMm ?? 80) }}mm 210mm;
+            margin: 0 !important;
         }
 
         html,
         body {
-            margin: 0;
-            padding: 0;
-            width: 100%;
+            margin: 0 !important;
+            padding: 0 !important;
+            width: 100% !important;
+            max-width: 100% !important;
             background: #fff;
         }
 
         body {
-            font-size: 10.5px;
-            line-height: 1.18;
+            font-size: 3.5mm;
+            line-height: 1.2;
         }
 
         .ticket {
-            width: 90%;
-            max-width: 90%;
-            padding: 2.2mm 1.2mm 3mm;
-            margin-left: 0;
-            margin-right: auto;
+            width: 100% !important;
+            max-width: 100% !important;
+            padding: 1.5mm 1mm !important;
+            margin: 0 auto !important;
+            box-sizing: border-box !important;
             overflow: visible;
+            page-break-inside: avoid;
+            break-inside: avoid;
         }
 
-        /* La ticketera tiene menos ancho imprimible que el rollo: desplaza el
-           contenido a la izquierda y reserva 2 mm extra en el borde derecho. */
         body.thermal-print .ticket {
-            width: calc(90% - 2mm);
-            max-width: calc(90% - 2mm);
-            padding-left: 0;
-            padding-right: 2mm;
+            width: 100% !important;
+            max-width: 100% !important;
+            padding: 1.5mm 1mm !important;
+            margin: 0 auto !important;
         }
 
         /* Respaldo visual si el servidor no dispone temporalmente del generador PDF. */
@@ -194,14 +195,42 @@
             word-break: normal;
         }
 
-        .items-table.has-measure-column .col-product { width: 18%; }
-        .items-table.has-measure-column .col-qty { width: 12%; }
-        .items-table.has-measure-column .col-measure { width: 28%; }
-        .items-table.has-measure-column .col-unit { width: 20%; }
-        .items-table.has-measure-column .col-subtotal { width: 22%; }
+        @media print {
+            @page {
+                size: {{ (int) ($ticketPageWidthMm ?? 80) }}mm 210mm;
+                margin: 0 !important;
+            }
+
+            html, body {
+                width: 100% !important;
+                max-width: 100% !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                background: #fff !important;
+            }
+
+            .ticket {
+                width: 100% !important;
+                max-width: 100% !important;
+                padding: 1.5mm 1mm !important;
+                margin: 0 auto !important;
+                box-sizing: border-box !important;
+            }
+
+            table, .items-table, .totals-table, .info-table {
+                width: 100% !important;
+                max-width: 100% !important;
+            }
+        }
+
+        .items-table.has-measure-column .col-product { width: 34%; }
+        .items-table.has-measure-column .col-qty { width: 12%; text-align: center; }
+        .items-table.has-measure-column .col-measure { width: 20%; text-align: center; }
+        .items-table.has-measure-column .col-unit { width: 17%; text-align: right; }
+        .items-table.has-measure-column .col-subtotal { width: 17%; text-align: right; }
 
         .col-subtotal {
-            width: 26%;
+            width: 20%;
             text-align: right;
             padding-right: 0;
         }
