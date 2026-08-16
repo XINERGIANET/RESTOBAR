@@ -25,18 +25,16 @@
         }
 
         body {
-            font-size: 10px;
+            font-size: 10.5px;
             line-height: 1.18;
-            text-align: center;
         }
 
         .ticket {
-            width: 100%;
-            max-width: 100%;
-            padding: 2mm 3.5mm 4mm 3.5mm;
-            margin: 0 auto;
-            box-sizing: border-box;
-            text-align: left;
+            width: 90%;
+            max-width: 90%;
+            padding: 2.2mm 1.2mm 3mm;
+            margin-left: 0;
+            margin-right: auto;
             overflow: visible;
             page-break-inside: avoid;
             break-inside: avoid;
@@ -51,30 +49,11 @@
             padding-right: 2mm;
         }
 
-        /* Respaldo visual y presentación centrada estilo visor PDF */
+        /* Respaldo visual si el servidor no dispone temporalmente del generador PDF. */
         @media screen {
-            html {
-                background-color: #323639 !important;
-                min-height: 100vh;
-                display: flex;
-                justify-content: center;
-                align-items: flex-start;
-                padding: 24px 15px;
-            }
-
             body {
-                width: {{ (int) ($ticketPageWidthMm ?? 80) }}mm !important;
-                max-width: {{ (int) ($ticketPageWidthMm ?? 80) }}mm !important;
-                background: #ffffff !important;
-                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.45), 0 1px 4px rgba(0, 0, 0, 0.25) !important;
-                border-radius: 2px !important;
-                margin: 0 auto !important;
-            }
-
-            .ticket {
-                width: 100% !important;
-                max-width: 100% !important;
-                padding: 5mm 4mm 6mm !important;
+                width: {{ (int) ($ticketPageWidthMm ?? 80) }}mm;
+                max-width: {{ (int) ($ticketPageWidthMm ?? 80) }}mm;
             }
         }
 
@@ -158,18 +137,6 @@
             font-size: 2.85mm;
         }
 
-        .items-table thead tr.header-row th {
-            border-top: 1px dashed #000 !important;
-            border-bottom: 1px dashed #000 !important;
-            padding: 1.4mm 0.15mm !important;
-        }
-
-        .items-table tbody tr.end-dash-row td {
-            border-bottom: 1px dashed #000 !important;
-            padding: 0.6mm 0 !important;
-            height: 1px;
-        }
-
         .items-table th {
             font-weight: 700;
         }
@@ -229,16 +196,16 @@
             word-break: normal;
         }
 
-        .items-table.has-measure-column .col-product { width: 30%; }
+        .items-table.has-measure-column .col-product { width: 18%; }
         .items-table.has-measure-column .col-qty { width: 12%; }
-        .items-table.has-measure-column .col-measure { width: 24%; }
-        .items-table.has-measure-column .col-unit { width: 17%; }
-        .items-table.has-measure-column .col-subtotal { width: 17%; }
+        .items-table.has-measure-column .col-measure { width: 28%; }
+        .items-table.has-measure-column .col-unit { width: 20%; }
+        .items-table.has-measure-column .col-subtotal { width: 22%; }
 
         .col-subtotal {
-            width: 20%;
+            width: 26%;
             text-align: right;
-            padding-right: 0.5mm;
+            padding-right: 0;
         }
 
         .totals-table {
@@ -380,35 +347,6 @@
             line-height: 3mm;
         }
 
-        /* ── Estilos de descuento ── */
-        .item-discount td {
-            padding-top: 0;
-            padding-bottom: 0.5mm;
-            font-size: 2.6mm;
-            color: #b91c1c;
-            font-style: italic;
-        }
-
-        .item-discount .discount-text {
-            display: inline;
-        }
-
-        .totals-discount td {
-            color: #b91c1c;
-        }
-
-        body.ticket-paper-58 .item-discount td {
-            font-size: 2.25mm;
-        }
-
-        body.thermal-print .item-discount td {
-            font-size: 2.9mm;
-        }
-
-        body.ticket-paper-58.thermal-print .item-discount td {
-            font-size: 2.5mm;
-        }
-
         body.thermal-print .company,
         body.thermal-print .subhead,
         body.thermal-print .doc-code,
@@ -466,14 +404,17 @@
 
         .qr-wrap {
             text-align: center;
-            margin: 1.5mm 0;
+            margin-top: 1.6mm;
         }
 
         .qr-dash {
-            width: 100%;
-            border-top: 1px dashed #000 !important;
-            margin: 2mm 0 !important;
-            height: 0;
+            height: 3mm;
+            overflow: hidden;
+            white-space: nowrap;
+            font-family: "Courier New", monospace;
+            font-size: 3mm;
+            font-weight: 700;
+            line-height: 3mm;
         }
 
         .ticket-footer-meta {
@@ -535,27 +476,6 @@
     if ($customerDocument === '' || $customerDocument === '-') {
         $customerDocument = '0';
     }
-
-    // ── Descuentos ──
-    $ticketTotalDiscount = 0;
-    $ticketHasDiscounts = false;
-    foreach ($details as $d) {
-        $dPct = (float) ($d->discount_percentage ?? 0);
-        $dOrig = $d->original_amount !== null ? (float) $d->original_amount : null;
-        $dAmt = (float) ($d->amount ?? 0);
-        if ($dOrig !== null && $dOrig > $dAmt + 0.009) {
-            $ticketTotalDiscount += round($dOrig - $dAmt, 2);
-            $ticketHasDiscounts = true;
-        } elseif ($dPct > 0.009) {
-            $denom = 1 - ($dPct / 100);
-            if ($denom > 0.0001) {
-                $origCalc = $dAmt / $denom;
-                $ticketTotalDiscount += round(max(0, $origCalc - $dAmt), 2);
-                $ticketHasDiscounts = true;
-            }
-        }
-    }
-    $ticketTotalDiscount = round($ticketTotalDiscount, 2);
 @endphp
 
 <div class="ticket">
@@ -609,7 +529,10 @@
 
     <table class="items-table{{ $showUnitColumn ? ' has-measure-column' : '' }}">
         <thead>
-        <tr class="header-row">
+        <tr class="dash-row">
+            <th colspan="{{ $showUnitColumn ? 5 : 4 }}">------------------------------------------------------------</th>
+        </tr>
+        <tr>
             <th class="col-product"><strong>Prod.</strong></th>
             <th class="col-qty"><strong>Cant.</strong></th>
             @if($showUnitColumn)
@@ -618,6 +541,9 @@
             <th class="col-unit"><strong>P.Unit.</strong></th>
             <th class="col-subtotal"><strong>Subt.</strong></th>
         </tr>
+        <tr class="dash-row">
+            <th colspan="{{ $showUnitColumn ? 5 : 4 }}">------------------------------------------------------------</th>
+        </tr>
         </thead>
         <tbody>
         @foreach($details as $detail)
@@ -625,26 +551,6 @@
                 $qty = (float) $detail->quantity;
                 $lineTotal = (float) $detail->amount;
                 $unitPrice = $qty > 0 ? ($lineTotal / $qty) : 0;
-                // Descuento de esta línea
-                $lineDctoPct = (float) ($detail->discount_percentage ?? 0);
-                $lineOrigAmt = $detail->original_amount !== null ? (float) $detail->original_amount : null;
-                $lineDiscAmt = 0;
-                $lineHasDisc = false;
-                if ($lineOrigAmt !== null && $lineOrigAmt > $lineTotal + 0.009) {
-                    $lineDiscAmt = round($lineOrigAmt - $lineTotal, 2);
-                    $lineHasDisc = true;
-                } elseif ($lineDctoPct > 0.009) {
-                    $denom = 1 - ($lineDctoPct / 100);
-                    if ($denom > 0.0001) {
-                        $origCalc = $lineTotal / $denom;
-                        $lineDiscAmt = round(max(0, $origCalc - $lineTotal), 2);
-                        $lineHasDisc = true;
-                    }
-                }
-                // Precio original unitario (antes del descuento)
-                $lineOrigUnitPrice = $lineHasDisc && $qty > 0
-                    ? (($lineTotal + $lineDiscAmt) / $qty)
-                    : $unitPrice;
             @endphp
             <tr class="item-description">
                 <td colspan="{{ $showUnitColumn ? 5 : 4 }}">{{ $detail->description ?? $detail->product?->description ?? '-' }}</td>
@@ -658,31 +564,14 @@
                 <td class="col-unit">{{ number_format($unitPrice, 2) }}</td>
                 <td class="col-subtotal">{{ number_format($lineTotal, 2) }}</td>
             </tr>
-            @if($lineHasDisc)
-            <tr class="item-discount">
-                <td colspan="{{ $showUnitColumn ? 5 : 4 }}">
-                    <span class="discount-text">
-                        Dcto. {{ number_format($lineDctoPct, 1) }}%
-                        (P.Orig: {{ number_format($lineOrigUnitPrice, 2) }})
-                        &minus;S/ {{ number_format($lineDiscAmt, 2) }}
-                    </span>
-                </td>
-            </tr>
-            @endif
         @endforeach
-            <tr class="end-dash-row"><td colspan="{{ $showUnitColumn ? 5 : 4 }}"></td></tr>
+            <tr class="dash-row"><td colspan="{{ $showUnitColumn ? 5 : 4 }}">------------------------------------------------------------</td></tr>
         </tbody>
     </table>
 
     <div class="separator"></div>
 
     <table class="totals-table">
-        @if($ticketHasDiscounts)
-        <tr class="totals-discount">
-            <td class="totals-label">Descuento total:</td>
-            <td class="totals-value">&minus;S/ {{ number_format($ticketTotalDiscount, 2) }}</td>
-        </tr>
-        @endif
         <tr>
             <td class="totals-label">Op. gravada:</td>
             <td class="totals-value">S/ {{ number_format($ticketSubtotal, 2) }}</td>
@@ -709,14 +598,13 @@
     @if(!empty($qrImageUrl))
         <div class="separator"></div>
         <div class="qr-dash">------------------------------------------------------------</div>
-        <div class="qr-wrap" style="text-align: center; margin: 2mm 0;">
-            <img src="{{ $qrImageUrl }}" alt="QR del comprobante" style="width: 32mm; height: 32mm; display: block; margin: 0 auto;">
+        <div class="qr-wrap">
+            <img src="{{ $qrImageUrl }}" alt="QR del comprobante">
         </div>
         <div class="qr-dash">------------------------------------------------------------</div>
     @endif
 
     @if(!empty($ticketFooterMeta))
-        <div class="separator"></div>
         <div class="ticket-footer-meta">
             <div><strong>Pedido:</strong> {{ $ticketFooterMeta['order_number'] }}</div>
             <div><strong>Mesa:</strong> {{ $ticketFooterMeta['location'] }}</div>
