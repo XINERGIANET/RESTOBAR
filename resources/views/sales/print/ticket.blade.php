@@ -26,7 +26,7 @@
         }
 
         body {
-            font-size: 4.2mm;
+            font-size: 4.6mm;
             line-height: 1.22;
         }
 
@@ -65,34 +65,34 @@
 
         .logo {
             display: block;
-            max-width: 42mm;
-            max-height: 18mm;
+            max-width: 45mm;
+            max-height: 20mm;
             margin: 0 auto;
             object-fit: contain;
         }
 
         .company {
             margin: 0;
-            font-size: 7.5mm;
+            font-size: 8.5mm;
             font-weight: 900;
             line-height: 1;
         }
 
         .subhead {
             margin: 0.4mm 0 0;
-            font-size: 4.8mm;
+            font-size: 5.2mm;
             line-height: 1.15;
         }
 
         .doc-code {
             margin: 1.2mm 0 0;
-            font-size: 6.2mm;
+            font-size: 6.8mm;
             font-weight: 900;
             line-height: 1.15;
         }
 
         .separator {
-            border-top: 0.4mm dashed #000;
+            border-top: 0.5mm dashed #000;
             margin: 2mm 0;
         }
 
@@ -103,16 +103,16 @@
         }
 
         .info-table td {
-            padding: 0.5mm 0;
+            padding: 0.6mm 0;
             vertical-align: top;
-            font-size: 4.2mm;
+            font-size: 4.6mm;
             line-height: 1.2;
         }
 
         .info-label {
-            width: 28mm;
+            width: 34mm;
             font-weight: 900;
-            padding-right: 1mm;
+            padding-right: 2mm;
             white-space: nowrap;
         }
 
@@ -123,13 +123,13 @@
 
         .items-table th,
         .items-table td {
-            padding: 0.8mm 0.2mm;
-            font-size: 4.2mm;
+            padding: 0.9mm 0.2mm;
+            font-size: 4.6mm;
         }
 
         .items-table th {
             font-weight: 900;
-            border-bottom: 0.4mm solid #000;
+            border-bottom: 0.5mm solid #000;
         }
 
         .items-table td {
@@ -137,28 +137,28 @@
         }
 
         .col-product {
-            width: 40%;
+            width: 44%;
             text-align: left;
-            padding-left: 0.35mm;
-            padding-right: 0.35mm;
+            padding-left: 0.5mm;
+            padding-right: 1mm;
             word-break: break-word;
             overflow-wrap: anywhere;
         }
 
         .col-qty {
-            width: 15%;
-            text-align: right;
-            padding-right: 0.35mm;
+            width: 16%;
+            text-align: left;
+            padding-right: 1mm;
         }
 
         .col-unit {
-            width: 23%;
+            width: 20%;
             text-align: right;
-            padding-right: 0.2mm;
+            padding-right: 1mm;
         }
 
         .col-subtotal {
-            width: 22%;
+            width: 20%;
             text-align: right;
             padding-right: 0;
         }
@@ -169,8 +169,8 @@
         }
 
         .totals-table td {
-            padding: 0.8mm 0;
-            font-size: 4.4mm;
+            padding: 0.9mm 0;
+            font-size: 4.8mm;
             vertical-align: top;
         }
 
@@ -188,9 +188,9 @@
         }
 
         .grand-total td {
-            border-top: 0.4mm solid #000;
-            padding-top: 1.4mm;
-            font-size: 5.6mm;
+            border-top: 0.5mm solid #000;
+            padding-top: 1.5mm;
+            font-size: 6.2mm;
             font-weight: 900;
         }
 
@@ -245,7 +245,7 @@
         }
 
         .notes {
-            font-size: 3.8mm;
+            font-size: 4.2mm;
             line-height: 1.2;
         }
 
@@ -259,20 +259,20 @@
         }
 
         .qr-wrap img {
-            width: 32mm;
-            height: 32mm;
+            width: 36mm;
+            height: 36mm;
             object-fit: contain;
         }
 
         .footer {
             text-align: center;
-            font-size: 3.4mm;
+            font-size: 3.8mm;
             line-height: 1.2;
         }
 
         .thanks {
             margin-top: 1mm;
-            font-size: 4.0mm;
+            font-size: 4.4mm;
             font-weight: 900;
         }
 
@@ -280,7 +280,7 @@
             margin-top: 1.4mm;
             text-align: left;
             line-height: 1.3;
-            font-size: 3.6mm;
+            font-size: 4.0mm;
         }
 
         .ticket-footer-condition {
