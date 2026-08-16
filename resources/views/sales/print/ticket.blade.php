@@ -12,15 +12,16 @@
         }
 
         @page {
-            size: {{ (int) ($ticketPageWidthMm ?? 80) }}mm auto;
-            margin: 0;
+            size: {{ (int) ($ticketPageWidthMm ?? 80) }}mm 210mm;
+            margin: 0 !important;
         }
 
         html,
         body {
-            margin: 0;
-            padding: 0;
-            width: 100%;
+            margin: 0 !important;
+            padding: 0 !important;
+            width: 100% !important;
+            max-width: 100% !important;
             background: #fff;
         }
 
@@ -30,21 +31,21 @@
         }
 
         .ticket {
-            width: 100%;
-            max-width: 100%;
-            padding: 2mm 1.5mm 3mm 1.5mm;
-            margin: 0 auto;
+            width: 100% !important;
+            max-width: 100% !important;
+            padding: 1mm 1mm !important;
+            margin: 0 !important;
+            box-sizing: border-box !important;
             overflow: visible;
             page-break-inside: avoid;
             break-inside: avoid;
         }
 
         body.thermal-print .ticket {
-            width: 100%;
-            max-width: 100%;
-            padding-left: 1.5mm;
-            padding-right: 1.5mm;
-            margin: 0 auto;
+            width: 100% !important;
+            max-width: 100% !important;
+            padding: 1mm 1mm !important;
+            margin: 0 !important;
         }
 
         /* Respaldo visual si el servidor no dispone temporalmente del generador PDF. */
