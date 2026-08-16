@@ -12,48 +12,30 @@
         }
 
         @page {
-            size: {{ (int) ($ticketPageWidthMm ?? 80) }}mm 210mm;
-            margin: 0 !important;
+            size: {{ (int) ($ticketPageWidthMm ?? 80) }}mm auto;
+            margin: 0;
         }
 
         html,
         body {
-            margin: 0 !important;
-            padding: 0 !important;
-            width: 100% !important;
-            max-width: 100% !important;
+            margin: 0;
+            padding: 0;
+            width: 100%;
             background: #fff;
         }
 
         body {
-            font-size: 3.5mm;
-            line-height: 1.2;
+            font-size: 10.5px;
+            line-height: 1.18;
         }
 
         .ticket {
-            width: 100% !important;
-            max-width: 100% !important;
-            padding: 1.5mm 1mm !important;
-            margin: 0 auto !important;
-            box-sizing: border-box !important;
+            width: 90%;
+            max-width: 90%;
+            padding: 2.2mm 1.2mm 3mm;
+            margin-left: 0;
+            margin-right: auto;
             overflow: visible;
-            page-break-inside: avoid;
-            break-inside: avoid;
-        }
-
-        body.thermal-print .ticket {
-            width: 100% !important;
-            max-width: 100% !important;
-            padding: 1.5mm 1mm !important;
-            margin: 0 auto !important;
-        }
-
-        /* Respaldo visual si el servidor no dispone temporalmente del generador PDF. */
-        @media screen {
-            body {
-                width: {{ (int) ($ticketPageWidthMm ?? 80) }}mm;
-                max-width: {{ (int) ($ticketPageWidthMm ?? 80) }}mm;
-            }
         }
 
         .center {
@@ -72,18 +54,10 @@
             object-fit: contain;
         }
 
-        @media print {
-            .logo {
-                -webkit-filter: grayscale(1) brightness(0);
-                filter: grayscale(1) brightness(0);
-                opacity: 1;
-            }
-        }
-
         .company {
             margin: 0;
             font-size: 6.2mm;
-            font-weight: 700;
+            font-weight: 800;
             line-height: 1;
         }
 
@@ -96,13 +70,13 @@
         .doc-code {
             margin: 1.2mm 0 0;
             font-size: 4.9mm;
-            font-weight: 700;
+            font-weight: 800;
             line-height: 1.05;
         }
 
         .separator {
+            border-top: 0.3mm dashed #7ea1d4;
             margin: 1.8mm 0;
-            height: 0;
         }
 
         table {
@@ -120,7 +94,7 @@
 
         .info-label {
             width: 21mm;
-            font-weight: 700;
+            font-weight: 800;
             padding-right: 1mm;
             white-space: nowrap;
         }
@@ -137,38 +111,16 @@
         }
 
         .items-table th {
-            font-weight: 700;
-        }
-
-        .items-table th strong {
-            font-family: Arial, Helvetica, sans-serif;
-            font-weight: 700;
+            font-weight: 800;
+            border-bottom: 0.2mm solid #bdbdbd;
         }
 
         .items-table td {
             vertical-align: top;
         }
 
-        .item-description td {
-            padding-top: 0.9mm;
-            padding-bottom: 0.25mm;
-            text-align: left;
-            font-weight: 700;
-            word-break: normal;
-            overflow-wrap: anywhere;
-        }
-
-        .item-values td {
-            padding-top: 0.2mm;
-            padding-bottom: 0.7mm;
-        }
-
-        .item-values .col-qty {
-            text-align: center;
-        }
-
         .col-product {
-            width: 44%;
+            width: 38%;
             text-align: left;
             padding-left: 0.35mm;
             padding-right: 0.35mm;
@@ -177,60 +129,19 @@
         }
 
         .col-qty {
-            width: 10%;
-            text-align: left;
-            padding-left: 0;
+            width: 13%;
+            text-align: right;
             padding-right: 0.35mm;
         }
 
         .col-unit {
-            width: 20%;
+            width: 21%;
             text-align: right;
             padding-right: 0.2mm;
         }
 
-        .col-measure {
-            text-align: center;
-            white-space: nowrap;
-            word-break: normal;
-        }
-
-        @media print {
-            @page {
-                size: {{ (int) ($ticketPageWidthMm ?? 80) }}mm 210mm;
-                margin: 0 !important;
-            }
-
-            html, body {
-                width: 100% !important;
-                max-width: 100% !important;
-                margin: 0 !important;
-                padding: 0 !important;
-                background: #fff !important;
-            }
-
-            .ticket {
-                width: 100% !important;
-                max-width: 100% !important;
-                padding: 1.5mm 1mm !important;
-                margin: 0 auto !important;
-                box-sizing: border-box !important;
-            }
-
-            table, .items-table, .totals-table, .info-table {
-                width: 100% !important;
-                max-width: 100% !important;
-            }
-        }
-
-        .items-table.has-measure-column .col-product { width: 34%; }
-        .items-table.has-measure-column .col-qty { width: 12%; text-align: center; }
-        .items-table.has-measure-column .col-measure { width: 20%; text-align: center; }
-        .items-table.has-measure-column .col-unit { width: 17%; text-align: right; }
-        .items-table.has-measure-column .col-subtotal { width: 17%; text-align: right; }
-
         .col-subtotal {
-            width: 20%;
+            width: 28%;
             text-align: right;
             padding-right: 0;
         }
@@ -248,7 +159,7 @@
 
         .totals-label {
             width: 52%;
-            font-weight: 700;
+            font-weight: 800;
             padding-right: 1mm;
         }
 
@@ -260,28 +171,15 @@
         }
 
         .grand-total td {
+            border-top: 0.25mm solid #7ea1d4;
             padding-top: 1.1mm;
             font-size: 4.1mm;
-            font-weight: 700;
+            font-weight: 800;
         }
 
-        .amount-in-words {
-            margin-top: 1.2mm;
-            line-height: 1.2;
-        }
-
-        .amount-in-words strong {
-            font-weight: 700;
-        }
-
-        /* Rollo 58 mm: menos ancho útil; tipografía y columnas más compactas */
+        /* Adaptación para Rollo 58 mm */
         body.ticket-paper-58 .ticket {
             padding: 1.8mm 1mm 2.5mm;
-        }
-
-        body.ticket-paper-58.thermal-print .ticket {
-            padding-left: 0;
-            padding-right: 2mm;
         }
 
         body.ticket-paper-58 .items-table th,
@@ -291,32 +189,22 @@
         }
 
         body.ticket-paper-58 .col-qty {
-            width: 9%;
+            width: 12%;
         }
 
         body.ticket-paper-58 .col-product {
-            width: 42%;
-            padding-left: 0.35mm;
+            width: 36%;
+            padding-left: 0.2mm;
             padding-right: 0.2mm;
         }
 
-        body.ticket-paper-58 .col-qty {
-            padding-right: 0.35mm;
-        }
-
         body.ticket-paper-58 .col-unit {
-            width: 21%;
+            width: 22%;
         }
 
         body.ticket-paper-58 .col-subtotal {
-            width: 28%;
+            width: 30%;
         }
-
-        body.ticket-paper-58 .items-table.has-measure-column .col-product { width: 14%; }
-        body.ticket-paper-58 .items-table.has-measure-column .col-qty { width: 12%; }
-        body.ticket-paper-58 .items-table.has-measure-column .col-measure { width: 30%; }
-        body.ticket-paper-58 .items-table.has-measure-column .col-unit { width: 20%; }
-        body.ticket-paper-58 .items-table.has-measure-column .col-subtotal { width: 24%; }
 
         body.ticket-paper-58 .info-label {
             width: 17mm;
@@ -339,125 +227,18 @@
             font-size: 4.2mm;
         }
 
-        /* Tipografía optimizada para la salida física del botón verde. */
-        body.ticket-paper-80.thermal-print .company { font-size: 6.7mm; }
-        body.ticket-paper-80.thermal-print .subhead { font-size: 4.15mm; }
-        body.ticket-paper-80.thermal-print .doc-code { font-size: 5.3mm; }
-        body.ticket-paper-80.thermal-print .info-table td,
-        body.ticket-paper-80.thermal-print .totals-table td { font-size: 3.4mm; }
-        body.ticket-paper-80.thermal-print .items-table th { font-size: 3.2mm; }
-        body.ticket-paper-80.thermal-print .items-table td {
-            font-size: 3.55mm;
-            line-height: 1.18;
-        }
-        body.ticket-paper-80.thermal-print .grand-total td { font-size: 4.5mm; }
-
-        body.ticket-paper-58.thermal-print .info-table td { font-size: 2.9mm; }
-        body.ticket-paper-58.thermal-print .items-table th { font-size: 2.7mm; }
-        body.ticket-paper-58.thermal-print .items-table td {
-            font-size: 2.95mm;
-            line-height: 1.16;
-        }
-        body.ticket-paper-58.thermal-print .grand-total td { font-size: 3.8mm; }
-
-        body.thermal-print .notes { font-size: 3.25mm; }
-        body.thermal-print .footer { font-size: 3mm; }
-        body.thermal-print .thanks { font-size: 3.25mm; }
-        .dash-row td {
-            height: 3mm;
-            padding: 0;
-            overflow: hidden;
-            white-space: nowrap;
-            font-family: "Courier New", monospace;
-            font-size: 3mm;
-            font-weight: 700;
-            line-height: 3mm;
-        }
-
-        body.thermal-print .company,
-        body.thermal-print .subhead,
-        body.thermal-print .doc-code,
-        body.thermal-print .sunat-warning,
-        body.thermal-print .info-label,
-        body.thermal-print .items-table th,
-        body.thermal-print .totals-label,
-        body.thermal-print .grand-total td,
-        body.thermal-print .notes strong {
-            font-family: Arial, Helvetica, sans-serif;
-            font-weight: 700 !important;
-        }
-
-        /* En la impresión física todo el contenido usa una escala uniforme. */
-        body.ticket-paper-80.thermal-print .ticket,
-        body.ticket-paper-80.thermal-print .ticket p,
-        body.ticket-paper-80.thermal-print .ticket th,
-        body.ticket-paper-80.thermal-print .ticket td,
-        body.ticket-paper-80.thermal-print .notes,
-        body.ticket-paper-80.thermal-print .footer,
-        body.ticket-paper-80.thermal-print .thanks,
-        body.ticket-paper-80.thermal-print .sunat-warning {
-            font-size: 3.4mm;
-            line-height: 1.15;
-        }
-
-        body.ticket-paper-58.thermal-print .ticket,
-        body.ticket-paper-58.thermal-print .ticket p,
-        body.ticket-paper-58.thermal-print .ticket th,
-        body.ticket-paper-58.thermal-print .ticket td,
-        body.ticket-paper-58.thermal-print .notes,
-        body.ticket-paper-58.thermal-print .footer,
-        body.ticket-paper-58.thermal-print .thanks,
-        body.ticket-paper-58.thermal-print .sunat-warning {
-            font-size: 2.9mm;
-            line-height: 1.15;
-        }
-
-        .sunat-warning {
-            margin: 1.4mm 0 0;
-            text-align: center;
-            font-size: 3.2mm;
-            font-weight: 700;
-            line-height: 1.15;
-        }
-
         .notes {
             font-size: 3mm;
             line-height: 1.15;
         }
 
         .notes strong {
-            font-weight: 700;
+            font-weight: 800;
         }
 
         .qr-wrap {
             text-align: center;
             margin-top: 1.6mm;
-        }
-
-        .qr-dash {
-            height: 3mm;
-            overflow: hidden;
-            white-space: nowrap;
-            font-family: "Courier New", monospace;
-            font-size: 3mm;
-            font-weight: 700;
-            line-height: 3mm;
-        }
-
-        .ticket-footer-meta {
-            margin-top: 1.2mm;
-            text-align: left;
-            line-height: 1.25;
-        }
-
-        .ticket-footer-meta strong {
-            font-weight: 700;
-        }
-
-        .ticket-footer-condition {
-            display: flex;
-            justify-content: space-between;
-            gap: 2mm;
         }
 
         .qr-wrap img {
@@ -476,16 +257,26 @@
             margin-top: 0.6mm;
             font-size: 3mm;
         }
+
+        .ticket-footer-meta {
+            margin-top: 1.2mm;
+            text-align: left;
+            line-height: 1.25;
+            font-size: 2.9mm;
+        }
+
+        .ticket-footer-condition {
+            display: flex;
+            justify-content: space-between;
+            gap: 2mm;
+        }
     </style>
 </head>
-<body class="ticket-paper-{{ (int) ($ticketPageWidthMm ?? 80) === 58 ? '58' : '80' }}{{ !empty($thermalPrint) ? ' thermal-print' : '' }}">
+<body class="ticket-paper-{{ (int) ($ticketPageWidthMm ?? 80) === 58 ? '58' : '80' }}">
 @php
     $docName = strtoupper($sale->documentType?->name ?? 'TICKET DE VENTA');
     $documentNameLower = mb_strtolower($docName, 'UTF-8');
     $isSaleTicket = str_contains($documentNameLower, 'ticket');
-    // Todo comprobante debe identificar la unidad de medida, sin depender
-    // del nombre configurado para Ticket, Boleta o Factura.
-    $showUnitColumn = true;
     $ticketSeries = $sale->salesMovement?->series ?? '001';
     if (!empty($sale->electronic_invoice_series) && preg_match('/^[A-Z]+(\d+)$/i', (string) $sale->electronic_invoice_series, $seriesMatches) === 1) {
         $ticketSeries = $seriesMatches[1];
@@ -506,6 +297,7 @@
 @endphp
 
 <div class="ticket">
+    <!-- Encabezado con Logo y Datos de la Sucursal -->
     <div class="center">
         @if(!empty($logoFileUrl) || !empty($logoUrl))
             <div class="logo-wrap">
@@ -515,7 +307,7 @@
         <p class="company">{{ strtoupper($branchForLogo->legal_name ?? 'SUCURSAL') }}</p>
         <p class="subhead">RUC: {{ $branchForLogo->ruc ?? '-' }}</p>
         @if(!empty(trim((string) ($branchForLogo->address ?? ''))))
-            <p class="subhead">{{ trim((string) $branchForLogo->address) }}</p>
+            <p class="subhead">Suc.: {{ trim((string) $branchForLogo->address) }}</p>
         @endif
         <p class="subhead">{{ $docName }}</p>
         <p class="doc-code">{{ $docCode }}</p>
@@ -523,6 +315,7 @@
 
     <div class="separator"></div>
 
+    <!-- Información de la Venta / Cliente / Mesa -->
     <table class="info-table">
         <tr>
             <td class="info-label">Fecha:</td>
@@ -533,7 +326,7 @@
             <td class="info-value">{{ $customerName }}</td>
         </tr>
         <tr>
-            <td class="info-label">Dirección:</td>
+            <td class="info-label">Dir. cliente:</td>
             <td class="info-value">{{ $ticketAddressDisplay ?? '-' }}</td>
         </tr>
         <tr>
@@ -541,7 +334,7 @@
             <td class="info-value">{{ $customerDocument }}</td>
         </tr>
         <tr>
-            <td class="info-label">F. pago:</td>
+            <td class="info-label">Forma pago:</td>
             <td class="info-value">{{ $paymentLabel }}</td>
         </tr>
         @if (($sale->orderMovement?->payment_type ?? '') === 'CREDITO' || in_array((string) ($sale->salesMovement?->payment_type ?? ''), ['CREDIT', 'CREDITO'], true))
@@ -554,22 +347,14 @@
 
     <div class="separator"></div>
 
-    <table class="items-table{{ $showUnitColumn ? ' has-measure-column' : '' }}">
+    <!-- Tabla de Ítems / Productos -->
+    <table class="items-table">
         <thead>
-        <tr class="dash-row">
-            <th colspan="{{ $showUnitColumn ? 5 : 4 }}">------------------------------------------------------------</th>
-        </tr>
         <tr>
-            <th class="col-product"><strong>Prod.</strong></th>
-            <th class="col-qty"><strong>Cant.</strong></th>
-            @if($showUnitColumn)
-                <th class="col-measure"><strong>Unidad(es)</strong></th>
-            @endif
-            <th class="col-unit"><strong>P.Unit.</strong></th>
-            <th class="col-subtotal"><strong>Subt.</strong></th>
-        </tr>
-        <tr class="dash-row">
-            <th colspan="{{ $showUnitColumn ? 5 : 4 }}">------------------------------------------------------------</th>
+            <th class="col-qty">CANT.</th>
+            <th class="col-product">DESCRIPCION</th>
+            <th class="col-unit">PRECIO</th>
+            <th class="col-subtotal">IMPORTE</th>
         </tr>
         </thead>
         <tbody>
@@ -579,25 +364,19 @@
                 $lineTotal = (float) $detail->amount;
                 $unitPrice = $qty > 0 ? ($lineTotal / $qty) : 0;
             @endphp
-            <tr class="item-description">
-                <td colspan="{{ $showUnitColumn ? 5 : 4 }}">{{ $detail->description ?? $detail->product?->description ?? '-' }}</td>
-            </tr>
-            <tr class="item-values">
-                <td class="col-product"></td>
+            <tr>
                 <td class="col-qty">{{ number_format($qty, 2) }}</td>
-                @if($showUnitColumn)
-                    <td class="col-measure">{{ $detail->unit?->description ?: '-' }}</td>
-                @endif
+                <td class="col-product">{{ $detail->description ?? $detail->product?->description ?? '-' }}</td>
                 <td class="col-unit">{{ number_format($unitPrice, 2) }}</td>
                 <td class="col-subtotal">{{ number_format($lineTotal, 2) }}</td>
             </tr>
         @endforeach
-            <tr class="dash-row"><td colspan="{{ $showUnitColumn ? 5 : 4 }}">------------------------------------------------------------</td></tr>
         </tbody>
     </table>
 
     <div class="separator"></div>
 
+    <!-- Totales -->
     <table class="totals-table">
         <tr>
             <td class="totals-label">Op. gravada:</td>
@@ -613,10 +392,6 @@
         </tr>
     </table>
 
-    @if($showUnitColumn)
-        <div class="amount-in-words"><strong>SON:</strong> {{ $totalInWords }}</div>
-    @endif
-
     @if($sale->comment)
         <div class="separator"></div>
         <div class="notes"><strong>Notas:</strong> {{ $sale->comment }}</div>
@@ -624,14 +399,13 @@
 
     @if(!empty($qrImageUrl))
         <div class="separator"></div>
-        <div class="qr-dash">------------------------------------------------------------</div>
         <div class="qr-wrap">
             <img src="{{ $qrImageUrl }}" alt="QR del comprobante">
         </div>
-        <div class="qr-dash">------------------------------------------------------------</div>
     @endif
 
     @if(!empty($ticketFooterMeta))
+        <div class="separator"></div>
         <div class="ticket-footer-meta">
             <div><strong>Pedido:</strong> {{ $ticketFooterMeta['order_number'] }}</div>
             <div><strong>Mesa:</strong> {{ $ticketFooterMeta['location'] }}</div>
@@ -652,11 +426,12 @@
 
     <div class="separator"></div>
 
+    <!-- Pie de Página -->
     <div class="footer">
         Impreso: {{ $printedAt->format('d/m/Y H:i:s') }}<br>
         <div class="thanks">Gracias por su preferencia</div>
         @if($isSaleTicket)
-            <p class="sunat-warning">Este documento no constituye un Comprobante de Pago válido para efectos tributarios conforme a la normativa de SUNAT.</p>
+            <p class="sunat-warning" style="margin-top: 1.4mm; text-align: center; font-size: 2.5mm; font-weight: 700;">Este documento no constituye un Comprobante de Pago válido para efectos tributarios conforme a la normativa de SUNAT.</p>
         @endif
     </div>
 </div>
