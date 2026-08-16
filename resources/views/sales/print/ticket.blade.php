@@ -12,16 +12,15 @@
         }
 
         @page {
-            size: {{ (int) ($ticketPageWidthMm ?? 80) }}mm 210mm;
-            margin: 0 !important;
+            size: {{ (int) ($ticketPageWidthMm ?? 80) }}mm auto;
+            margin: 0;
         }
 
         html,
         body {
-            margin: 0 !important;
-            padding: 0 !important;
-            width: 100% !important;
-            max-width: 100% !important;
+            margin: 0;
+            padding: 0;
+            width: 100%;
             background: #fff;
         }
 
@@ -31,21 +30,21 @@
         }
 
         .ticket {
-            width: 100% !important;
-            max-width: 100% !important;
-            padding: 1mm 1mm !important;
-            margin: 0 !important;
-            box-sizing: border-box !important;
+            width: 90%;
+            max-width: 90%;
+            padding: 2.2mm 1.2mm 3mm;
+            margin-left: 0;
+            margin-right: auto;
             overflow: visible;
-            page-break-inside: avoid;
-            break-inside: avoid;
         }
 
+        /* La ticketera tiene menos ancho imprimible que el rollo: desplaza el
+           contenido a la izquierda y reserva 2 mm extra en el borde derecho. */
         body.thermal-print .ticket {
-            width: 100% !important;
-            max-width: 100% !important;
-            padding: 1mm 1mm !important;
-            margin: 0 !important;
+            width: calc(90% - 2mm);
+            max-width: calc(90% - 2mm);
+            padding-left: 0;
+            padding-right: 2mm;
         }
 
         /* Respaldo visual si el servidor no dispone temporalmente del generador PDF. */
@@ -195,42 +194,14 @@
             word-break: normal;
         }
 
-        /* En la impresión física se fuerza el ancho al 100% sin márgenes laterales vacíos */
-        @media print {
-            @page {
-                size: {{ (int) ($ticketPageWidthMm ?? 80) }}mm auto;
-                margin: 0 !important;
-            }
-
-            html, body {
-                width: 100% !important;
-                max-width: 100% !important;
-                margin: 0 !important;
-                padding: 0 !important;
-            }
-
-            .ticket {
-                width: 100% !important;
-                max-width: 100% !important;
-                padding: 1mm 1.5mm !important;
-                margin: 0 auto !important;
-                box-sizing: border-box !important;
-            }
-
-            table, .items-table, .totals-table, .info-table {
-                width: 100% !important;
-                max-width: 100% !important;
-            }
-        }
-
-        .items-table.has-measure-column .col-product { width: 30%; }
+        .items-table.has-measure-column .col-product { width: 18%; }
         .items-table.has-measure-column .col-qty { width: 12%; }
-        .items-table.has-measure-column .col-measure { width: 22%; }
-        .items-table.has-measure-column .col-unit { width: 18%; }
-        .items-table.has-measure-column .col-subtotal { width: 18%; }
+        .items-table.has-measure-column .col-measure { width: 28%; }
+        .items-table.has-measure-column .col-unit { width: 20%; }
+        .items-table.has-measure-column .col-subtotal { width: 22%; }
 
         .col-subtotal {
-            width: 20%;
+            width: 26%;
             text-align: right;
             padding-right: 0;
         }
