@@ -4254,6 +4254,7 @@ class OrderController extends Controller
 
         $query = Movement::query()
             ->where('branch_id', $branchId)
+            ->where('movement_type_id', 2)
             ->where('document_type_id', $documentTypeId)
             ->whereYear('moved_at', $year);
 

@@ -341,15 +341,10 @@
                                 </select>
                             </div>
                         </div>
-                             <button type="button" onclick="reorganizarCorrelativos()"
-                                 class="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-amber-600 px-4 text-sm font-medium text-white shadow-sm transition hover:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2">
-                                 <i class="ri-hashtag text-base"></i>
-                                 <span>Reordenar Correlativos</span>
-                             </button>
-                             <button type="button" onclick="sincronizarSunatMasivo()"
-                                 class="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-blue-700 px-4 text-sm font-medium text-white shadow-sm transition hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2">
-                                 <i class="ri-send-plane-fill text-base"></i>
-                                 <span>Enviar a APISUNAT</span>
+                             <button type="button" onclick="sincronizarApisunat()"
+                                 class="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 text-sm font-medium text-white shadow-sm transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                                 <i class="ri-refresh-line text-base"></i>
+                                 <span>Sincronizar APISUNAT</span>
                              </button>
                              <button type="button" onclick="descargarPdf()"
                                  data-pdf-url="{{ route(
@@ -1336,12 +1331,12 @@
                 document.addEventListener('turbo:load', showFlashToast);
             })();
 
-            function reorganizarCorrelativos() {
-                if (!confirm("¿Está seguro de reorganizar los correlativos de esta sucursal?\n\nSe asignarán números continuos sin huecos por tipo de documento ordenados por fecha.")) {
+            function sincronizarApisunat() {
+                if (!confirm("¿Desea sincronizar los comprobantes y correlativos del sistema con APISUNAT?")) {
                     return;
                 }
                 const token = document.querySelector('meta[name="csrf-token"]')?.content || '{{ csrf_token() }}';
-                fetch("{{ route('sales.reorganize.correlatives') }}", {
+                fetch("{{ route('sales.sync.apisunat') }}", {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -1352,17 +1347,14 @@
                 })
                 .then(res => res.json())
                 .then(data => {
-                    alert(data.message || 'Proceso completado.');
+                    alert(data.message || 'Sincronización completada.');
                     if (data.success) window.location.reload();
                 })
                 .catch(err => {
                     console.error(err);
-                    alert('Error al procesar la reorganización de correlativos.');
+                    alert('Error al sincronizar con APISUNAT.');
                 });
             }
-
-            function sincronizarSunatMasivo() {
-                if (!confirm("¿Desea enviar todas las Boletas y Facturas no emitidas de esta sucursal a APISUNAT?")) {
                     return;
                 }
                 const token = document.querySelector('meta[name="csrf-token"]')?.content || '{{ csrf_token() }}';

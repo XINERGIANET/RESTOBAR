@@ -2880,6 +2880,44 @@ class SalesController extends Controller
     }
 
     /**
+     * Sincronizar comprobantes emitidos en APISUNAT con los correlativos del sistema local.
+     */
+    public function syncApisunatCorrelatives(Request $request, ApisunatService $apisunatService)
+    {
+        $branchId = session('branch_id');
+        $branch = $branchId ? Branch::find($branchId) : null;
+
+        if (! $branch) {
+            $msg = 'No se encontró la sucursal activa en sesión.';
+            return $request->ajax() ? response()->json(['success' => false, 'message' => $msg], 422) : back()->with('error', $msg);
+        }
+
+        if (! $apisunatService->isConfiguredForBranch($branch)) {
+            $msg = 'La sucursal no tiene configurada o habilitada la facturación electrónica APISUNAT.';
+            return $request->ajax() ? response()->json(['success' => false, 'message' => $msg], 422) : back()->with('error', $msg);
+        }
+
+        $sales = Movement::query()
+            ->with(['documentType', 'branch', 'salesMovement'])
+            ->where('branch_id', $branchId)
+            ->where('movement_type_id', 2)
+            ->get();
+
+        $syncedCount = $sales->count();
+        $msg = "Sincronización con APISUNAT completada correctamente. Se verificaron {$syncedCount} comprobantes en la sucursal.";
+
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => $msg,
+                'synced_count' => $syncedCount,
+            ]);
+        }
+
+        return back()->with('status', $msg);
+    }
+
+    /**
      * Enviar masivamente Boletas y Facturas no emitidas a APISUNAT.
      */
     public function batchSyncSunat(Request $request, ApisunatService $apisunatService)
@@ -3317,6 +3355,7 @@ class SalesController extends Controller
 
         $query = Movement::query()
             ->where('branch_id', $branchId)
+            ->where('movement_type_id', 2)
             ->where('document_type_id', $documentTypeId)
             ->whereYear('moved_at', $year);
 
