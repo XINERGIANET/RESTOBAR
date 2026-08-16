@@ -1019,8 +1019,9 @@
                 function openSaleTicketPdfTab(movementId) {
                     if (!movementId) return;
                     let ticketUrl = salesTicketPrintBaseUrl.replace('__SALE__', movementId);
+                    ticketUrl += (ticketUrl.includes('?') ? '&' : '?') + 'direct_print=1';
                     if (salesIndexViewId) {
-                        ticketUrl += (ticketUrl.includes('?') ? '&' : '?') + 'view_id=' + encodeURIComponent(salesIndexViewId);
+                        ticketUrl += '&view_id=' + encodeURIComponent(salesIndexViewId);
                     }
                     window.open(ticketUrl, '_blank', 'noopener,noreferrer');
                 }

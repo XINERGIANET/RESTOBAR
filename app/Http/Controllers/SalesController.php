@@ -1703,6 +1703,7 @@ class SalesController extends Controller
         $printData = $this->buildSalePrintData($sale, $request);
         if ($request->boolean('direct_print')) {
             $printData['autoPrint'] = true;
+            $printData['thermalPrint'] = true;
 
             return view('sales.print.ticket', $printData);
         }
