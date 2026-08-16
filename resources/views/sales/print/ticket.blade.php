@@ -32,8 +32,9 @@
         .ticket {
             width: 100%;
             max-width: 100%;
-            padding: 1.5mm 1mm;
+            padding: 2mm 3.5mm 4mm 3.5mm;
             margin: 0 auto;
+            box-sizing: border-box;
             overflow: visible;
             page-break-inside: avoid;
             break-inside: avoid;
@@ -42,14 +43,33 @@
         body.thermal-print .ticket {
             width: 100%;
             max-width: 100%;
-            padding: 1mm 1mm;
+            padding: 2mm 3.5mm 4mm 3.5mm;
         }
 
-        /* Respaldo visual si el servidor no dispone temporalmente del generador PDF. */
+        /* Respaldo visual y presentación centrada estilo visor PDF en navegador */
         @media screen {
+            html {
+                background-color: #323639 !important;
+                min-height: 100vh;
+                display: flex;
+                justify-content: center;
+                align-items: flex-start;
+                padding: 24px 15px;
+            }
+
             body {
-                width: {{ (int) ($ticketPageWidthMm ?? 80) }}mm;
-                max-width: {{ (int) ($ticketPageWidthMm ?? 80) }}mm;
+                width: {{ (int) ($ticketPageWidthMm ?? 80) }}mm !important;
+                max-width: {{ (int) ($ticketPageWidthMm ?? 80) }}mm !important;
+                background: #ffffff !important;
+                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.45), 0 1px 4px rgba(0, 0, 0, 0.25) !important;
+                border-radius: 2px !important;
+                margin: 0 auto !important;
+            }
+
+            .ticket {
+                width: 100% !important;
+                max-width: 100% !important;
+                padding: 5mm 4mm 6mm !important;
             }
         }
 
@@ -594,8 +614,8 @@
     @if(!empty($qrImageUrl))
         <div class="separator"></div>
         <div class="qr-dash">------------------------------------------------------------</div>
-        <div class="qr-wrap">
-            <img src="{{ $qrImageUrl }}" alt="QR del comprobante">
+        <div class="qr-wrap" style="text-align: center; margin: 2mm 0;">
+            <img src="{{ $qrImageUrl }}" alt="QR del comprobante" style="width: 32mm; height: 32mm; display: block; margin: 0 auto;">
         </div>
         <div class="qr-dash">------------------------------------------------------------</div>
     @endif
