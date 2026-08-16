@@ -1,5 +1,9 @@
 @extends('layouts.app')
 
+@push('styles')
+    <style>[x-cloak] { display: none !important; }</style>
+@endpush
+
 @section('content')
     @php
         $printJobPreviews = collect($unresolvedPrintJobs ?? [])->mapWithKeys(fn ($job) => [
@@ -1543,8 +1547,11 @@
     <!-- Modal para Ventas Eliminadas -->
     <div x-data="deletedSalesModal()"
         x-on:open-deleted-sales-modal.window="open = true; hasRestored = false; fetchDeletedSales();"
-        x-show="open" x-cloak
-        class="fixed inset-0 z-[120] flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-sm"
+        x-show="open"
+        x-cloak
+        style="display: none;"
+        :class="{ 'flex': open, 'hidden': !open }"
+        class="fixed inset-0 z-[120] items-center justify-center bg-slate-900/60 p-4 backdrop-blur-sm"
         @keydown.escape.window="closeModal()">
 
         <div class="relative flex max-h-[90vh] w-full max-w-5xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl dark:bg-gray-900 border border-gray-200 dark:border-gray-800">
