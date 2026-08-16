@@ -1640,7 +1640,13 @@
             <!-- Footer -->
             <div class="flex items-center justify-between border-t border-gray-200 px-6 py-4 dark:border-gray-800 bg-gray-50 dark:bg-gray-900">
                 <div class="text-xs text-gray-500">
-                    <span class="font-bold text-gray-700 dark:text-gray-300" x-text="sales.length"></span> ventas eliminadas encontradas
+                    <span x-show="loading" class="inline-flex items-center gap-1.5 text-gray-500 font-medium">
+                        <i class="ri-loader-4-line text-sm text-red-600 animate-spin"></i>
+                        <span>Buscando comprobantes...</span>
+                    </span>
+                    <span x-show="!loading">
+                        <strong class="font-bold text-gray-800 dark:text-white" x-text="sales.length">0</strong> comprobante(s) eliminado(s) encontrado(s)
+                    </span>
                 </div>
                 <button type="button" @click="closeModal()"
                     class="rounded-xl border border-gray-300 bg-white px-5 py-2 text-sm font-semibold text-gray-700 shadow-xs hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 transition">

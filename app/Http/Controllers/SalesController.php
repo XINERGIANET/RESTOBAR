@@ -2770,16 +2770,16 @@ class SalesController extends Controller
 
         $sales = Movement::query()
             ->select('movements.*')
-            ->join('sales_movements', 'sales_movements.movement_id', '=', 'movements.id')
-            ->with(['branch', 'person', 'responsibleUser.person', 'movementType', 'documentType', 'salesMovement.details'])
+            ->leftJoin('sales_movements', 'sales_movements.movement_id', '=', 'movements.id')
+            ->with(['branch', 'person', 'responsibleUser.person', 'movementType', 'documentType', 'salesMovement' => fn ($q) => $q->withTrashed()])
             ->where('movements.movement_type_id', 2)
             ->when($branchId, fn ($q) => $q->where('movements.branch_id', $branchId))
             ->onlyTrashed()
             ->when($search, function ($q) use ($search) {
                 $q->where(function ($inner) use ($search) {
-                    $inner->where('number', 'like', "%{$search}%")
-                        ->orWhere('person_name', 'like', "%{$search}%")
-                        ->orWhere('user_name', 'like', "%{$search}%");
+                    $inner->where('movements.number', 'like', "%{$search}%")
+                        ->orWhere('movements.person_name', 'like', "%{$search}%")
+                        ->orWhere('movements.user_name', 'like', "%{$search}%");
                 });
             })
             ->orderBy('movements.deleted_at', 'desc')
