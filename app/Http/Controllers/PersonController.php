@@ -319,7 +319,7 @@ class PersonController extends Controller
                 if (! $user) {
                     User::create([
                         'name' => $userData['user_name'],
-                        'email' => $person->email,
+                        'email' => ! empty($person->email) ? $person->email : null,
                         'password' => Hash::make($userData['password']),
                         'person_id' => $person->id,
                         'profile_id' => $userData['profile_id'],
@@ -408,7 +408,7 @@ class PersonController extends Controller
                 if ($user) {
                     $user->update([
                         'name' => $userData['user_name'],
-                        'email' => $person->email,
+                        'email' => ! empty($person->email) ? $person->email : null,
                         'profile_id' => $userData['profile_id'],
                     ]);
                     if (!empty($userData['password'])) {
@@ -419,7 +419,7 @@ class PersonController extends Controller
                 } else {
                     User::create([
                         'name' => $userData['user_name'],
-                        'email' => $person->email,
+                        'email' => ! empty($person->email) ? $person->email : null,
                         'password' => Hash::make($userData['password']),
                         'person_id' => $person->id,
                         'profile_id' => $userData['profile_id'],
