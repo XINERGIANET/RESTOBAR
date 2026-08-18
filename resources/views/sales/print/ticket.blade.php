@@ -13,14 +13,15 @@
 
         @page {
             size: {{ (int) ($ticketPageWidthMm ?? 80) }}mm auto;
-            margin: 0;
+            margin: 0 !important;
         }
 
         html,
         body {
-            margin: 0;
-            padding: 0;
-            width: 100%;
+            margin: 0 !important;
+            padding: 0 !important;
+            width: {{ (int) ($ticketPageWidthMm ?? 80) }}mm !important;
+            max-width: {{ (int) ($ticketPageWidthMm ?? 80) }}mm !important;
             background: #fff;
         }
 
@@ -30,28 +31,32 @@
         }
 
         .ticket {
-            width: 90%;
-            max-width: 90%;
-            padding: 2.2mm 1.2mm 3mm;
-            margin-left: 0;
-            margin-right: auto;
+            width: 100% !important;
+            max-width: 100% !important;
+            padding: 2mm 0.5mm 3mm 0.5mm !important;
+            margin: 0 auto !important;
+            box-sizing: border-box !important;
             overflow: visible;
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
         }
 
-        /* La ticketera tiene menos ancho imprimible que el rollo: desplaza el
-           contenido a la izquierda y reserva 2 mm extra en el borde derecho. */
+        /* La ticketera utiliza el 100% del ancho util sin margen derecho sobrante */
         body.thermal-print .ticket {
-            width: calc(90% - 2mm);
-            max-width: calc(90% - 2mm);
-            padding-left: 0;
-            padding-right: 2mm;
+            width: 100% !important;
+            max-width: 100% !important;
+            padding-left: 0.5mm !important;
+            padding-right: 0.5mm !important;
+            box-sizing: border-box !important;
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
         }
 
         /* Respaldo visual si el servidor no dispone temporalmente del generador PDF. */
         @media screen {
             body {
-                width: {{ (int) ($ticketPageWidthMm ?? 80) }}mm;
-                max-width: {{ (int) ($ticketPageWidthMm ?? 80) }}mm;
+                width: {{ (int) ($ticketPageWidthMm ?? 80) }}mm !important;
+                max-width: {{ (int) ($ticketPageWidthMm ?? 80) }}mm !important;
             }
         }
 
@@ -65,19 +70,33 @@
 
         .logo {
             display: block;
-            max-width: 38mm;
-            max-height: 16mm;
+            max-width: 100%;
+            max-height: 48mm;
             margin: 0 auto;
             object-fit: contain;
         }
 
         @media print {
-            .logo {
-                -webkit-filter: grayscale(1) brightness(0);
-                filter: grayscale(1) brightness(0);
-                opacity: 1;
+            @page {
+                size: {{ (int) ($ticketPageWidthMm ?? 80) }}mm auto;
+                margin: 0 !important;
             }
-        }
+
+            html,
+            body {
+                width: {{ (int) ($ticketPageWidthMm ?? 80) }}mm !important;
+                max-width: {{ (int) ($ticketPageWidthMm ?? 80) }}mm !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+
+            .ticket {
+                width: 100% !important;
+                max-width: 100% !important;
+                padding: 2mm 0.5mm 3mm 0.5mm !important;
+                margin: 0 !important;
+                box-sizing: border-box !important;
+            }
 
         .company {
             margin: 0;
@@ -194,11 +213,11 @@
             word-break: normal;
         }
 
-        .items-table.has-measure-column .col-product { width: 18%; }
-        .items-table.has-measure-column .col-qty { width: 12%; }
-        .items-table.has-measure-column .col-measure { width: 28%; }
-        .items-table.has-measure-column .col-unit { width: 20%; }
-        .items-table.has-measure-column .col-subtotal { width: 22%; }
+        .items-table.has-measure-column .col-product { width: 14%; }
+        .items-table.has-measure-column .col-qty { width: 11%; }
+        .items-table.has-measure-column .col-measure { width: 25%; }
+        .items-table.has-measure-column .col-unit { width: 22%; }
+        .items-table.has-measure-column .col-subtotal { width: 28%; }
 
         .col-subtotal {
             width: 26%;
@@ -310,18 +329,18 @@
             font-size: 4.2mm;
         }
 
-        /* Tipografía optimizada para la salida física del botón verde. */
-        body.ticket-paper-80.thermal-print .company { font-size: 6.7mm; }
-        body.ticket-paper-80.thermal-print .subhead { font-size: 4.15mm; }
-        body.ticket-paper-80.thermal-print .doc-code { font-size: 5.3mm; }
+        /* Tipografía calibrada para el punto de oro físico del cabezal térmico. */
+        body.ticket-paper-80.thermal-print .company { font-size: 6.5mm; }
+        body.ticket-paper-80.thermal-print .subhead { font-size: 4.0mm; }
+        body.ticket-paper-80.thermal-print .doc-code { font-size: 5.2mm; }
         body.ticket-paper-80.thermal-print .info-table td,
-        body.ticket-paper-80.thermal-print .totals-table td { font-size: 3.4mm; }
+        body.ticket-paper-80.thermal-print .totals-table td { font-size: 3.35mm; }
         body.ticket-paper-80.thermal-print .items-table th { font-size: 3.2mm; }
         body.ticket-paper-80.thermal-print .items-table td {
-            font-size: 3.55mm;
-            line-height: 1.18;
+            font-size: 3.4mm;
+            line-height: 1.16;
         }
-        body.ticket-paper-80.thermal-print .grand-total td { font-size: 4.5mm; }
+        body.ticket-paper-80.thermal-print .grand-total td { font-size: 4.3mm; }
 
         body.ticket-paper-58.thermal-print .info-table td { font-size: 2.9mm; }
         body.ticket-paper-58.thermal-print .items-table th { font-size: 2.7mm; }
@@ -334,15 +353,17 @@
         body.thermal-print .notes { font-size: 3.25mm; }
         body.thermal-print .footer { font-size: 3mm; }
         body.thermal-print .thanks { font-size: 3.25mm; }
-        .dash-row td {
-            height: 3mm;
+        .dash-row td,
+        .dash-row th {
+            height: 3.2mm;
             padding: 0;
             overflow: hidden;
             white-space: nowrap;
             font-family: "Courier New", monospace;
-            font-size: 3mm;
+            font-size: 3.3mm;
             font-weight: 700;
-            line-height: 3mm;
+            letter-spacing: 0.5px;
+            line-height: 3.2mm;
         }
 
         body.thermal-print .company,
@@ -431,10 +452,32 @@
             gap: 2mm;
         }
 
+        .qr-dash {
+            width: 100%;
+            height: 3mm;
+            margin-top: 2.5mm;
+            margin-bottom: 2.5mm;
+            overflow: hidden;
+            white-space: nowrap;
+            font-family: "Courier New", monospace;
+            font-size: 3mm;
+            font-weight: 700;
+            line-height: 3mm;
+            text-align: center;
+        }
+
+        .qr-wrap {
+            margin-top: 2.5mm;
+            margin-bottom: 2.5mm;
+            text-align: center;
+        }
+
         .qr-wrap img {
             width: 24mm;
             height: 24mm;
             object-fit: contain;
+            display: block;
+            margin: 0 auto;
         }
 
         .footer {
@@ -449,7 +492,7 @@
         }
     </style>
 </head>
-<body class="ticket-paper-{{ (int) ($ticketPageWidthMm ?? 80) === 58 ? '58' : '80' }}{{ !empty($thermalPrint) ? ' thermal-print' : '' }}">
+<body class="ticket-paper-80 thermal-print">
 @php
     $docName = strtoupper($sale->documentType?->name ?? 'TICKET DE VENTA');
     $documentNameLower = mb_strtolower($docName, 'UTF-8');
@@ -492,8 +535,6 @@
         <p class="doc-code">{{ $docCode }}</p>
     </div>
 
-    <div class="separator"></div>
-
     <table class="info-table">
         <tr>
             <td class="info-label">Fecha:</td>
@@ -523,12 +564,10 @@
         @endif
     </table>
 
-    <div class="separator"></div>
-
     <table class="items-table{{ $showUnitColumn ? ' has-measure-column' : '' }}">
         <thead>
         <tr class="dash-row">
-            <th colspan="{{ $showUnitColumn ? 5 : 4 }}">------------------------------------------------------------</th>
+            <th colspan="{{ $showUnitColumn ? 5 : 4 }}">-----------------------------------------------------------------</th>
         </tr>
         <tr>
             <th class="col-product"><strong>Prod.</strong></th>
@@ -540,7 +579,7 @@
             <th class="col-subtotal"><strong>Subt.</strong></th>
         </tr>
         <tr class="dash-row">
-            <th colspan="{{ $showUnitColumn ? 5 : 4 }}">------------------------------------------------------------</th>
+            <th colspan="{{ $showUnitColumn ? 5 : 4 }}">-----------------------------------------------------------------</th>
         </tr>
         </thead>
         <tbody>
@@ -563,7 +602,7 @@
                 <td class="col-subtotal">{{ number_format($lineTotal, 2) }}</td>
             </tr>
         @endforeach
-            <tr class="dash-row"><td colspan="{{ $showUnitColumn ? 5 : 4 }}">------------------------------------------------------------</td></tr>
+            <tr class="dash-row"><td colspan="{{ $showUnitColumn ? 5 : 4 }}">-----------------------------------------------------------------</td></tr>
         </tbody>
     </table>
 
@@ -591,11 +630,15 @@
     @endif
 
     @if(!empty($qrImageUrl))
-        <div class="qr-dash">------------------------------------------------------------</div>
+        <table class="items-table" style="margin-top: 2.5mm; margin-bottom: 2.5mm;">
+            <tr class="dash-row"><th colspan="{{ $showUnitColumn ? 5 : 4 }}">-----------------------------------------------------------------</th></tr>
+        </table>
         <div class="qr-wrap">
             <img src="{{ $qrImageUrl }}" alt="QR del comprobante">
         </div>
-        <div class="qr-dash">------------------------------------------------------------</div>
+        <table class="items-table" style="margin-top: 2.5mm; margin-bottom: 2.5mm;">
+            <tr class="dash-row"><th colspan="{{ $showUnitColumn ? 5 : 4 }}">-----------------------------------------------------------------</th></tr>
+        </table>
         @if(!empty($ticketFooterMeta))
             <div class="ticket-footer-meta">
                 <div><strong>Pedido:</strong> {{ $ticketFooterMeta['order_number'] }}</div>
@@ -615,9 +658,7 @@
             </div>
         @endif
     @endif
-
-    <div class="separator"></div>
-
+<br>
     <div class="footer">
         Impreso: {{ $printedAt->format('d/m/Y H:i:s') }}<br>
         <div class="thanks">Gracias por su preferencia</div>
