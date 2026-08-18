@@ -1589,7 +1589,14 @@
 
                         const promotion = getPromotionDefinition(prodId);
                         if (promotion) {
-                            let map = {};
+                            let map = {
+                                [String(prodId)]: {
+                                    product_id: prodId,
+                                    quantity: qty,
+                                    strict: false,
+                                    name: productNameById(prodId),
+                                }
+                            };
                             const normalizedSelection = normalizePromotionSelectionForProduct(prodId, promotionSelection);
                             normalizedSelection.forEach((row) => {
                                 const componentQty = qty * (parseFloat(row?.quantity) || 0);
@@ -3700,14 +3707,6 @@
                     }
 
                     function buildProductStockLabel(prod, productBranch) {
-                        const promotion = getPromotionDefinition(prod?.id);
-                        if (promotion) {
-                            const mixLabel = promotion?.allows_mix_and_match ? 'Promo mix' : 'Promo';
-                            return {
-                                label: mixLabel,
-                                colorClass: 'text-blue-600 dark:text-blue-300',
-                            };
-                        }
                         const stockVal = Number(productBranch?.stock);
                         const stockText = !isNaN(stockVal) ? stockVal.toFixed(2) : '0.00';
                         const availability = getRecipeAvailability(prod?.id);

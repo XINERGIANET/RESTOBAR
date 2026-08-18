@@ -190,7 +190,14 @@ class ProductCompositionService
 
         if ((bool) ($product->is_promotion ?? false)) {
             $selectionRows = $this->normalizePromotionSelection($productId, $promotionSelection);
-            $out = [];
+            $out = [
+                (string) $productId => [
+                    'product_id' => $productId,
+                    'product_name' => $this->productName($productId),
+                    'quantity' => $quantity,
+                    'strict' => false,
+                ],
+            ];
             foreach ($selectionRows as $row) {
                 $componentQty = max(0, round($quantity * (float) ($row['quantity'] ?? 0), 6));
                 if ($componentQty <= 0) {
