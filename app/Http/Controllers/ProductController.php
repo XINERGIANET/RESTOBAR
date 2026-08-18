@@ -659,14 +659,17 @@ class ProductController extends Controller
                 // Único por sucursal: el mismo código no puede existir en otra sede con product_branch
                 function ($attribute, $value, $fail) use ($request, $excludeId) {
                     $branchId = (int) ($request->input('branch_id') ?: $request->session()->get('branch_id'));
-                    if (!$branchId || !$value) {
+                    $trimmedCode = trim((string) $value);
+                    if (!$branchId || $trimmedCode === '') {
                         return;
                     }
                     $exists = DB::table('products')
                         ->join('product_branch', 'product_branch.product_id', '=', 'products.id')
-                        ->where('products.code', $value)
+                        ->whereNull('products.deleted_at')
+                        ->whereNull('product_branch.deleted_at')
+                        ->whereRaw('LOWER(TRIM(products.code)) = ?', [strtolower($trimmedCode)])
                         ->where('product_branch.branch_id', $branchId)
-                        ->when($excludeId, fn($q) => $q->where('products.id', '!=', $excludeId))
+                        ->when($excludeId, fn($q) => $q->where('products.id', '!=', (int) $excludeId))
                         ->exists();
                     if ($exists) {
                         $fail('El código ya está registrado en esta sucursal.');
@@ -1020,10 +1023,11 @@ class ProductController extends Controller
         }
 
         $user = $request->user();
-        $userId = $user ? $user->id : null;
-        $userName = $user ? $user->name : 'Sistema';
-        $personId = $user ? $user->person_id : null;
-        $personName = $user && $user->person ? $user->person->name : null;
+        $userId = $user ? $user->id : (session('user_id') ?: null);
+        $userName = session('user_name') ?? ($user ? ($user->name ?? $user->username ?? 'Sistema') : 'Sistema');
+        $personId = session('person_id') ?? ($user ? $user->person_id : null);
+        $personName = session('person_fullname') ?? ($user?->person?->name ?? ($user?->person?->description ?? $userName));
+        $responsibleName = $personName ?: $userName;
 
         // 1. Tipo de Movimiento (Almacén / Inventario)
         $movementType = MovementType::where(function ($query) {
