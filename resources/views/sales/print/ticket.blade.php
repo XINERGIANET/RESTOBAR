@@ -74,9 +74,16 @@
             max-height: 48mm;
             margin: 0 auto;
             object-fit: contain;
+            filter: contrast(180%) brightness(0.85);
+            -webkit-filter: contrast(180%) brightness(0.85);
         }
 
         @media print {
+            .logo {
+                filter: contrast(200%) brightness(0.8);
+                -webkit-filter: contrast(200%) brightness(0.8);
+            }
+
             @page {
                 size: {{ (int) ($ticketPageWidthMm ?? 80) }}mm auto;
                 margin: 0 !important;
@@ -97,6 +104,7 @@
                 margin: 0 !important;
                 box-sizing: border-box !important;
             }
+        }
 
         .company {
             margin: 0;
