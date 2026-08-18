@@ -2215,8 +2215,6 @@ class SalesController extends Controller
             'qrPayload' => $this->buildSaleQrPayload($sale, $branchForLogo),
             'qrImageUrl' => $this->buildSaleQrImageUrl($sale, $branchForLogo),
             'viewId' => $request->input('view_id'),
-            'ticketPageWidthMm' => 80,
-            'thermalPrint' => true,
         ];
     }
 
