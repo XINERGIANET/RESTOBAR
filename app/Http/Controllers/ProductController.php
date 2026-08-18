@@ -20,6 +20,13 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
+use App\Models\DocumentType;
+use App\Models\Movement;
+use App\Models\MovementType;
+use App\Models\WarehouseMovement;
+use App\Models\WarehouseMovementDetail;
+use App\Services\KardexSyncService;
+use Illuminate\Support\Carbon;
 use App\Exports\PlantillaProductosExport;
 use Maatwebsite\Excel\Facades\Excel;
 
@@ -230,8 +237,21 @@ class ProductController extends Controller
                 $branchData['product_id'] = $product->id;
                 $branchData['branch_id'] = $branchId;
                 $branchData['status'] = 'A';
+                $initialStock = (float) ($branchData['stock'] ?? 0);
+                $branchData['stock'] = 0;
                 $productBranch = ProductBranch::create($branchData);
                 $this->syncProductBranchPrinters($productBranch, $request, $branchId);
+
+                if ($initialStock > 0) {
+                    $this->createAutomaticStockAdjustmentMovement(
+                        $request,
+                        $product,
+                        $productBranch,
+                        $branchId,
+                        0.0,
+                        $initialStock
+                    );
+                }
             }
 
             $this->productCompositionService->syncPromotionGroups($product, $promotionGroups);
@@ -407,7 +427,12 @@ class ProductController extends Controller
             if ($branchId) {
                 $productBranch = $product->productBranches()
                     ->where('branch_id', $branchId)
+                    ->lockForUpdate()
                     ->first();
+
+                $oldStock = $productBranch ? (float) ($productBranch->stock ?? 0) : 0.0;
+                $hasStockInRequest = array_key_exists('stock', $branchData) && $branchData['stock'] !== null && $branchData['stock'] !== '';
+                $targetStock = $hasStockInRequest ? (float) $branchData['stock'] : $oldStock;
 
                 if ($productBranch) {
                     $productBranch->update($branchData);
@@ -417,6 +442,18 @@ class ProductController extends Controller
                     $branchData['status'] = 'E';
                     $productBranch = ProductBranch::create($branchData);
                 }
+
+                if ($hasStockInRequest && abs($targetStock - $oldStock) > 0.000001) {
+                    $this->createAutomaticStockAdjustmentMovement(
+                        $request,
+                        $product,
+                        $productBranch,
+                        $branchId,
+                        $oldStock,
+                        $targetStock
+                    );
+                }
+
                 $this->syncProductBranchPrinters($productBranch, $request, $branchId);
             }
 
@@ -598,13 +635,7 @@ class ProductController extends Controller
         $branchRules = [
             'price' => ['nullable', 'numeric', 'min:0'],
             'purchase_price' => ['nullable', 'numeric', 'min:0'],
-            'stock' => array_values(array_filter([
-                'nullable',
-                'numeric',
-                'min:0',
-                $request->filled('stock_minimum') ? 'gte:stock_minimum' : null,
-                $request->input('stock_maximum', 0) > 0 ? 'lte:stock_maximum' : null,
-            ])),
+            'stock' => ['nullable', 'numeric', 'min:0'],
             'stock_minimum' => ['nullable', 'numeric', 'min:0'],
             'stock_maximum' => array_values(array_filter([
                 'nullable',
@@ -969,5 +1000,126 @@ class ProductController extends Controller
             new PlantillaProductosExport((int) effective_branch_id()),
             'plantilla_productos.xlsx'
         );
+    }
+
+    /**
+     * Genera un movimiento automático de almacén (Entrada o Salida) y sincroniza el Kardex
+     * cuando se modifica el stock de un producto al editarlo o crearlo.
+     */
+    private function createAutomaticStockAdjustmentMovement(
+        Request $request,
+        Product $product,
+        ProductBranch $productBranch,
+        int $branchId,
+        float $oldStock,
+        float $newStock
+    ): void {
+        $diff = round($newStock - $oldStock, 6);
+        if (abs($diff) < 0.000001) {
+            return;
+        }
+
+        $user = $request->user();
+        $userId = $user ? $user->id : null;
+        $userName = $user ? $user->name : 'Sistema';
+        $personId = $user ? $user->person_id : null;
+        $personName = $user && $user->person ? $user->person->name : null;
+
+        // 1. Tipo de Movimiento (Almacén / Inventario)
+        $movementType = MovementType::where(function ($query) {
+            $query->where('description', 'like', '%Almacén%')
+                ->orWhere('description', 'like', '%Warehouse%')
+                ->orWhere('description', 'like', '%Inventario%');
+        })->first() ?? MovementType::first();
+
+        if (!$movementType) {
+            return;
+        }
+
+        // 2. Tipo de Documento según sea Entrada (diff > 0) o Salida (diff < 0)
+        $isEntry = $diff > 0;
+        $quantity = abs($diff);
+
+        if ($isEntry) {
+            $documentType = DocumentType::find(7);
+            if (!$documentType) {
+                $documentType = DocumentType::where(function ($q) {
+                    $q->where('name', 'like', '%Entrada%')
+                        ->orWhere('name', 'like', '%entry%');
+                })->first();
+            }
+            $docPrefix = 'E-';
+            $comment = "Entrada automática por ajuste de stock al editar producto ({$product->description}): stock anterior {$oldStock}, nuevo stock {$newStock} (+{$quantity})";
+        } else {
+            $documentType = DocumentType::find(8);
+            if (!$documentType) {
+                $documentType = DocumentType::where(function ($q) {
+                    $q->where('name', 'like', '%Salida%')
+                        ->orWhere('name', 'like', '%exit%')
+                        ->orWhere('name', 'like', '%output%');
+                })->first();
+            }
+            $docPrefix = 'S-';
+            $comment = "Salida automática por ajuste de stock al editar producto ({$product->description}): stock anterior {$oldStock}, nuevo stock {$newStock} (-{$quantity})";
+        }
+
+        if (!$documentType) {
+            $documentType = DocumentType::where('movement_type_id', $movementType->id)->first();
+        }
+
+        if (!$documentType) {
+            return;
+        }
+
+        // 3. Generar número correlativo
+        $todayCount = Movement::where('document_type_id', $documentType->id)
+            ->whereDate('created_at', Carbon::today())
+            ->where('branch_id', $branchId)
+            ->count();
+        $number = $docPrefix . str_pad($todayCount + 1, 8, '0', STR_PAD_LEFT);
+
+        // 4. Crear Movement
+        $movement = Movement::create([
+            'number' => $number,
+            'moved_at' => now(),
+            'user_id' => $userId,
+            'user_name' => $userName,
+            'person_id' => $personId,
+            'person_name' => $personName,
+            'responsible_id' => $userId,
+            'responsible_name' => $personName ?: $userName,
+            'comment' => $comment,
+            'status' => 'A',
+            'movement_type_id' => $movementType->id,
+            'document_type_id' => $documentType->id,
+            'branch_id' => $branchId,
+            'parent_movement_id' => null,
+        ]);
+
+        // 5. Crear WarehouseMovement
+        $warehouseMovement = WarehouseMovement::create([
+            'status' => 'FINALIZADO',
+            'movement_id' => $movement->id,
+            'branch_id' => $branchId,
+        ]);
+
+        // 6. Crear WarehouseMovementDetail
+        WarehouseMovementDetail::create([
+            'warehouse_movement_id' => $warehouseMovement->id,
+            'product_id' => $product->id,
+            'product_snapshot' => [
+                'id' => $product->id,
+                'code' => $product->code,
+                'description' => $product->description,
+            ],
+            'unit_id' => $product->base_unit_id ?? 1,
+            'quantity' => $quantity,
+            'comment' => $comment,
+            'status' => 'A',
+            'branch_id' => $branchId,
+        ]);
+
+        // 7. Sincronizar Kardex (el KardexSyncService actualizará kardex y validará stock operativo)
+        app(KardexSyncService::class)->syncMovement($movement);
     }
 }

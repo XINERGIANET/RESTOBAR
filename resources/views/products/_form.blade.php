@@ -80,9 +80,7 @@
         return pt ? (pt.behavior === 'BOTH' || pt.behavior === 'SUPPLY') : false;
     },
     get disableStockEdit() {
-        // Solo bloquear edición de stock en productos vendibles (se recomienda gestionarlo vía kardex/almacén).
-        // Para insumos/suministros, se permite ajustar stock directamente aquí.
-        return this.isEdit && this.showBranchDetail && this.branchStore && (this.branchStore[this.selectedBranchId] !== undefined);
+        return false;
     },
     get showSupplyFields() {
         const pt = this.productTypeId != null ? this.productTypesById[this.productTypeId] : null;
@@ -778,9 +776,9 @@
             <div>
                 <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">
                     Stock actual <span class="text-red-500">*</span>
-                    <span class="ml-1 text-xs text-gray-400 dark:text-gray-500"
+                    <span class="ml-1 text-xs text-amber-600 dark:text-amber-400 font-normal"
                         x-show="isEdit && branchStore && (branchStore[selectedBranchId] !== undefined)">
-                        (Gestionar en movimientos de almacén)
+                        (Genera movimiento automático de almacén)
                     </span>
                     <span class="ml-1 text-xs text-gray-400 dark:text-gray-500"
                         x-show="isEdit && (!branchStore || (branchStore[selectedBranchId] === undefined))">
@@ -790,8 +788,7 @@
                 <input type="number" step="0.01" :name="showBranchDetail ? 'stock' : 'stock_skip'"
                     :required="showBranchDetail" x-model.number="branchFields.stock"
                     x-bind:disabled="disableStockEdit"
-                    :min="Number(branchFields.stock_minimum || 0)"
-                    :max="Number(branchFields.stock_maximum || 0) > 0 ? Number(branchFields.stock_maximum) : undefined"
+                    min="0"
                     class="dark:bg-dark-900 shadow-theme-xs h-11 w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm placeholder:text-gray-400 dark:border-gray-700 dark:text-white/90 dark:placeholder:text-white/30"
                     :class="disableStockEdit
                         ? 'bg-gray-100 dark:bg-gray-800 cursor-not-allowed text-gray-500'
