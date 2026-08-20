@@ -613,6 +613,41 @@
                                     </div>
                                     <div id="cobro-payment-methods-list" class="space-y-3 max-h-48 overflow-y-auto pr-1">
                                     </div>
+
+                                    <!-- Calculadora de Vuelto -->
+                                    <div class="mt-3 p-3 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-theme-xs">
+                                        <div class="flex items-center justify-between mb-2">
+                                            <span class="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">Calculadora de Vuelto</span>
+                                            <button type="button" onclick="clearCalculadoraVuelto()" class="text-xs text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 transition-colors">Limpiar</button>
+                                        </div>
+                                        
+                                        <!-- Billetes sugeridos -->
+                                        <div class="flex items-center gap-1.5 mb-3 flex-wrap">
+                                            <span class="text-xs text-gray-400 dark:text-gray-500">Paga con:</span>
+                                            <button type="button" onclick="setCalculadoraPagaCon(20)" class="px-2.5 py-1 text-xs font-semibold rounded bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 transition-all active:scale-95">S/ 20</button>
+                                            <button type="button" onclick="setCalculadoraPagaCon(50)" class="px-2.5 py-1 text-xs font-semibold rounded bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 transition-all active:scale-95">S/ 50</button>
+                                            <button type="button" onclick="setCalculadoraPagaCon(100)" class="px-2.5 py-1 text-xs font-semibold rounded bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 transition-all active:scale-95">S/ 100</button>
+                                            <button type="button" onclick="setCalculadoraPagaCon(200)" class="px-2.5 py-1 text-xs font-semibold rounded bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 transition-all active:scale-95">S/ 200</button>
+                                        </div>
+
+                                        <div class="grid grid-cols-2 gap-3">
+                                            <div>
+                                                <label class="block text-[10px] uppercase font-bold text-gray-400 dark:text-gray-500 mb-1.5">Monto Recibido</label>
+                                                <div class="relative">
+                                                    <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-gray-400 dark:text-gray-500">S/</span>
+                                                    <input type="number" id="vuelto-paga-con" oninput="calcularVuelto()" placeholder="0.00" step="any"
+                                                        class="w-full pl-7 pr-2 py-1.5 rounded border border-gray-200 dark:border-gray-700 bg-transparent text-sm text-slate-800 dark:text-white focus:outline-none focus:ring-1 focus:ring-slate-500">
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <label class="block text-[10px] uppercase font-bold text-gray-400 dark:text-gray-500 mb-1.5">Vuelto a entregar</label>
+                                                <div class="w-full bg-slate-50 dark:bg-slate-900 border border-gray-100 dark:border-gray-800 rounded py-1.5 px-2.5 text-slate-800 dark:text-white font-bold text-sm h-8 flex items-center justify-between" id="vuelto-resultado">
+                                                    S/ 0.00
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
                                     <div
                                         class="mt-3 rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-100 dark:bg-gray-800/80 px-3 py-2.5 space-y-2">
                                         <div id="cobro-order-total-row"
@@ -7109,6 +7144,69 @@
                         if (fh) {
                             fh.classList.toggle('hidden', !splitOn);
                         }
+                        if (typeof calcularVuelto === 'function') {
+                            calcularVuelto();
+                        }
+                    }
+
+                    function getCobroTotalToPay() {
+                        if (!window.currentTable) return 0;
+                        const items = window.currentTable.items || [];
+                        if (items.length === 0) return 0;
+
+                        const cb = document.getElementById('split-dividir-cuenta');
+                        const splitOn = !!(cb && cb.checked && window.__splitAccount && window.__splitAccount.enabled);
+                        if (splitOn) {
+                            try {
+                                const splitPayload = buildSplitPayloadForPayment();
+                                if (splitPayload) {
+                                    return computeSplitPartTotal(splitPayload);
+                                }
+                            } catch (e) {
+                                // fallback
+                            }
+                        }
+
+                        return getTotalsWithDelivery(items).total || 0;
+                    }
+
+                    function calcularVuelto() {
+                        const inputPagaCon = document.getElementById('vuelto-paga-con');
+                        const displayVuelto = document.getElementById('vuelto-resultado');
+                        if (!inputPagaCon || !displayVuelto) return;
+
+                        const totalToPay = getCobroTotalToPay();
+                        const pagaCon = parseFloat(inputPagaCon.value) || 0;
+
+                        if (pagaCon > 0 && pagaCon >= totalToPay) {
+                            const vuelto = pagaCon - totalToPay;
+                            displayVuelto.innerHTML = 'S/ ' + vuelto.toFixed(2);
+                            displayVuelto.classList.remove('text-red-500');
+                            displayVuelto.classList.add('text-emerald-600', 'dark:text-emerald-400');
+                        } else if (pagaCon > 0 && pagaCon < totalToPay) {
+                            displayVuelto.innerHTML = 'Monto insuficiente';
+                            displayVuelto.classList.remove('text-emerald-600', 'dark:text-emerald-400');
+                            displayVuelto.classList.add('text-red-500');
+                        } else {
+                            displayVuelto.innerHTML = 'S/ 0.00';
+                            displayVuelto.classList.remove('text-red-500', 'text-emerald-600', 'dark:text-emerald-400');
+                        }
+                    }
+
+                    function setCalculadoraPagaCon(amount) {
+                        const inputPagaCon = document.getElementById('vuelto-paga-con');
+                        if (inputPagaCon) {
+                            inputPagaCon.value = amount;
+                            calcularVuelto();
+                        }
+                    }
+
+                    function clearCalculadoraVuelto() {
+                        const inputPagaCon = document.getElementById('vuelto-paga-con');
+                        if (inputPagaCon) {
+                            inputPagaCon.value = '';
+                            calcularVuelto();
+                        }
                     }
 
                     function changeClient(selectEl) {
@@ -7307,6 +7405,10 @@
                     window.addCobroPaymentMethod = addCobroPaymentMethod;
                     window.removeCobroPaymentRow = removeCobroPaymentRow;
                     window.updateCobroTotalPaid = updateCobroTotalPaid;
+                    window.calcularVuelto = calcularVuelto;
+                    window.setCalculadoraPagaCon = setCalculadoraPagaCon;
+                    window.clearCalculadoraVuelto = clearCalculadoraVuelto;
+                    window.getCobroTotalToPay = getCobroTotalToPay;
                     window.autocompleteCobroAmount = autocompleteCobroAmount;
                     window.toggleCobroExtraFields = toggleCobroExtraFields;
                     window.clearHeaderClientName = clearHeaderClientName;
