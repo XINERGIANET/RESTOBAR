@@ -20,6 +20,7 @@ class DatabaseSeeder extends Seeder
             OrderPriceEditingParameterSeeder::class,
             BranchQzCertificateParametersSeeder::class,
             CloseTableParameterSeeder::class,
+            DefaultPaymentMethodParameterSeeder::class,
         ]);
     }
 }

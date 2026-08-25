@@ -138,3 +138,45 @@ if (!function_exists('effective_default_sale_document_type_id')) {
             ->value('id');
     }
 }
+
+if (!function_exists('effective_default_payment_method_id')) {
+    /**
+     * Resuelve el medio de pago por defecto para cobros en la sucursal.
+     * Prioriza branch_parameters -> parameters.value -> primer método habilitado para la sucursal.
+     */
+    function effective_default_payment_method_id(?int $branchId = null): ?int
+    {
+        $branchId = $branchId ?? effective_branch_id() ?? (session('branch_id') !== null ? (int) session('branch_id') : null);
+
+        $parameter = \Illuminate\Support\Facades\DB::table('parameters')
+            ->whereNull('parameters.deleted_at')
+            ->whereRaw('LOWER(TRIM(parameters.description)) = ?', ['medio de pago por defecto'])
+            ->first(['parameters.id', 'parameters.value']);
+
+        $resolvedId = null;
+        if ($parameter && $branchId) {
+            $branchValue = \Illuminate\Support\Facades\DB::table('branch_parameters')
+                ->whereNull('deleted_at')
+                ->where('branch_id', $branchId)
+                ->where('parameter_id', $parameter->id)
+                ->value('value');
+
+            $rawValue = $branchValue !== null && $branchValue !== '' ? $branchValue : $parameter->value;
+            if (is_numeric($rawValue)) {
+                $resolvedId = (int) $rawValue;
+            }
+        } elseif ($parameter && is_numeric($parameter->value)) {
+            $resolvedId = (int) $parameter->value;
+        }
+
+        $query = \App\Models\PaymentMethod::query()
+            ->where('status', true)
+            ->restrictedToBranch($branchId);
+
+        if ($resolvedId && (clone $query)->where('id', $resolvedId)->exists()) {
+            return $resolvedId;
+        }
+
+        return $query->orderBy('order_num')->value('id');
+    }
+}

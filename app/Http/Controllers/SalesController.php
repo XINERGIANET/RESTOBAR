@@ -375,6 +375,8 @@ class SalesController extends Controller
             ->orderBy('order_num')
             ->get(['id', 'description', 'order_num']);
 
+        $defaultPaymentMethodId = effective_default_payment_method_id($branchId ? (int) $branchId : null);
+
         $paymentGateways = PaymentGateways::query()
             ->where('status', true)
             ->orderBy('order_num')
@@ -505,6 +507,7 @@ class SalesController extends Controller
             'documentTypes' => $documentTypes,
             'defaultDocumentTypeId' => $defaultDocumentTypeId,
             'paymentMethods' => $paymentMethods,
+            'defaultPaymentMethodId' => $defaultPaymentMethodId,
             'paymentGateways' => $paymentGateways,
             'cards' => $cards,
             'digitalWallets' => $digitalWallets,

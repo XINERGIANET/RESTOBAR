@@ -554,6 +554,7 @@
         document.addEventListener('DOMContentLoaded', function() {
             const documentTypes = @json($documentTypes ?? []);
             const paymentMethods = @json($paymentMethods ?? []);
+            const defaultPaymentMethodId = @json($defaultPaymentMethodId ?? null);
             const paymentGateways = @json($paymentGateways ?? []);
             const cards = @json($cards ?? []);
             const digitalWallets = @json($digitalWallets ?? []);
@@ -867,7 +868,9 @@
                 const totalPaid = calculateTotalPaid();
                 const remaining = total - totalPaid;
                 
-                const defaultMethod = paymentMethods.find(pm => {
+                const defaultMethod = (defaultPaymentMethodId
+                    ? paymentMethods.find(pm => Number(pm.id) === Number(defaultPaymentMethodId))
+                    : null) || paymentMethods.find(pm => {
                     const desc = (pm.description || '').toLowerCase();
                     return !desc.includes('tarjeta') && !desc.includes('card');
                 }) || paymentMethods[0];
