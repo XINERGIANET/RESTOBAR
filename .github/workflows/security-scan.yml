@@ -18,8 +18,18 @@ jobs:
           MAXLEN=400
           FOUND=0
 
+          # el propio hook/workflow contiene las firmas como texto de deteccion:
+          # no auto-escanearse (mismo criterio que .githooks/pre-commit).
+          is_self() {
+            case "$1" in
+              .githooks/*|.github/workflows/security-scan.yml) return 0 ;;
+              *) return 1 ;;
+            esac
+          }
+
           echo "Buscando firmas literales conocidas en archivos rastreados..."
           while IFS= read -r f; do
+            is_self "$f" && continue
             if [ -f "$f" ] && grep -qEa "$LITERAL_PATTERN" "$f" 2>/dev/null; then
               echo "::error file=$f::Firma conocida del implante encontrada en $f"
               FOUND=1
@@ -28,6 +38,7 @@ jobs:
 
           echo "Buscando lineas anormalmente largas en config de build..."
           while IFS= read -r f; do
+            is_self "$f" && continue
             if [ -f "$f" ]; then
               longest=$(awk '{ print length }' "$f" | sort -rn | head -1)
               if [ -n "$longest" ] && [ "$longest" -gt "$MAXLEN" ]; then
