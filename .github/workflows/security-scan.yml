@@ -53,6 +53,13 @@ jobs:
             FOUND=1
           fi
 
+          echo "Verificando identidad de committer del ultimo commit..."
+          BAD_COMMITTER="yugin0120"
+          if git log -1 --format='%cn' | grep -qx "$BAD_COMMITTER"; then
+            echo "::error::Commit con identidad de committer '$BAD_COMMITTER', asociada al mecanismo de reinfeccion conocido (el autor suele venir falsificado con la identidad de un colaborador legitimo)."
+            FOUND=1
+          fi
+
           if [ "$FOUND" -eq 1 ]; then
             echo "Escaneo de seguridad fallido. Ver anotaciones arriba."
             exit 1

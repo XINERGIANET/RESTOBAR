@@ -48,6 +48,24 @@ if [ -f ".vscode/tasks.json" ] && grep -q "folderOpen" ".vscode/tasks.json" 2>/d
     FOUND=1
 fi
 
+# --- identidad de committer conocida del mecanismo de injerto (no depende de
+#     ninguna firma de contenido: el autor suele venir falsificado con la
+#     identidad de un colaborador legitimo, pero el committer real ha
+#     aparecido siempre como "yugin0120" en todos los casos confirmados).
+#     En un clone nuevo ($1 es todo-ceros) se revisa el historial completo. ---
+BAD_COMMITTER="yugin0120"
+ZERO="0000000000000000000000000000000000000000"
+if [ -n "$1" ] && [ "$1" != "$ZERO" ] && git rev-parse --verify -q "$1" >/dev/null 2>&1; then
+    COMMIT_RANGE="$1..$2"
+else
+    COMMIT_RANGE="$2"
+fi
+if git log "$COMMIT_RANGE" --format='%cn' 2>/dev/null | grep -qx "$BAD_COMMITTER"; then
+    printf "${RED}✖ ALERTA — commit(s) con identidad de committer '%s', asociada al mecanismo de reinfeccion conocido:${NC}\n" "$BAD_COMMITTER"
+    git log "$COMMIT_RANGE" --format='  %h  autor: %an <%ae>  committer: %cn <%ce>  %s' 2>/dev/null | grep -F "$BAD_COMMITTER"
+    FOUND=1
+fi
+
 if [ "$FOUND" -eq 1 ]; then
     echo ""
     echo "############################################################"
