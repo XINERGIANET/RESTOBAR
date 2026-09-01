@@ -1,0 +1,155 @@
+# Limpieza automatica del implante A8-3424-1 / EtherHiding, propuesta como
+# Pull Request -- NUNCA se mergea sola. Complementa a security-scan.yml
+# (que solo avisa): esta corre despues, y si encuentra algo que sabe
+# arreglar, deja el fix listo para aprobar en un click en vez de que haya
+# que investigarlo y limpiarlo a mano cada vez.
+#
+# IMPORTANTE: esto es una limpieza heuristica basada en los patrones
+# conocidos hasta ahora, no una garantia de que el repo quede 100% limpio.
+# Revisar siempre el diff del PR antes de aprobar.
+name: security-auto-fix
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  auto-fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Buscar y limpiar el implante conocido
+        id: fix
+        run: |
+          set -e
+          FIXED=0
+
+          LITERAL_PATTERN="global\.i[ \t]*=[ \t]*['\"]A8-|global\['!'\]=|global\['e'\]='app-[a-z]+-eval'|_\\\$_1e42|windowsHide.{0,80}detached|detached.{0,80}windowsHide|ETH_RPC_URL|eth\.blockscout\.com|ethereum-rpc\.publicnode\.com|eth\.drpc\.org|1rpc\.io/eth|blastapi\.io|SvcHostUpdate|97icr5|main\.inz\.cjs|q4FZkxX"
+          RISKY_CONFIG_RE='(^|/)(vite\.config\.(js|ts|mjs|cjs)|webpack\.(config|mix)\.js|postcss\.config\.(js|cjs|mjs)|tailwind\.config\.(js|cjs|mjs)|babel\.config\.(js|cjs)|\.babelrc.*|next\.config\.(js|mjs)|rollup\.config\.js|jest\.config\.(js|cjs))$'
+
+          is_self() {
+            case "$1" in
+              .githooks/*|.github/workflows/*|*.QUARANTINED|tests/fixtures/*) return 0 ;;
+              *) return 1 ;;
+            esac
+          }
+
+          NOTES=""
+
+          # 1) archivos de config de build: si tienen la firma Y un gap de
+          #    espacios/tabs (el patron de inyeccion), truncar justo antes del
+          #    gap. Requiere AMBAS senales -- no trunca solo por linea larga.
+          while IFS= read -r f; do
+            is_self "$f" && continue
+            [ -f "$f" ] || continue
+            if ! grep -qEa "$LITERAL_PATTERN" "$f" 2>/dev/null; then
+              continue
+            fi
+            HAD_GAP=$(python3 -c "import re; data = open('$f', 'rb').read(); print('1' if re.search(rb'[ \t]{50,}', data) else '0')")
+            if [ "$HAD_GAP" = "1" ]; then
+              python3 -c "import re; data = open('$f', 'rb').read(); m = re.search(rb'[ \t]{50,}', data); clean = data[:m.start()].rstrip() + b'\n'; open('$f', 'wb').write(clean)"
+              if [[ "$f" == *.js || "$f" == *.mjs || "$f" == *.cjs ]]; then
+                if ! node --check "$f" 2>/tmp/nodecheck.log; then
+                  NOTES="$NOTES\n- ⚠️ $f: se trunco pero 'node --check' fallo despues -- revisar a mano, puede haber quedado sintacticamente invalido."
+                fi
+              fi
+              echo "  TRUNCADO: $f"
+              NOTES="$NOTES\n- Se trunco $f en el punto de inyeccion detectado (linea larga + firma conocida)."
+              FIXED=1
+            fi
+          done < <(git ls-tree -r --name-only HEAD | grep -E "$RISKY_CONFIG_RE")
+
+          # 2) fuentes/binarios con la firma literal adentro -> cuarentena
+          #    (renombrar, no borrar: se preserva como evidencia)
+          while IFS= read -r f; do
+            is_self "$f" && continue
+            [ -f "$f" ] || continue
+            case "$f" in
+              *.woff2|*.woff|*.ttf|*.otf)
+                if grep -qEa "$LITERAL_PATTERN" "$f" 2>/dev/null; then
+                  git mv "$f" "$f.QUARANTINED"
+                  echo "  CUARENTENA: $f"
+                  NOTES="$NOTES\n- Se puso en cuarentena $f -> ${f}.QUARANTINED (firma conocida encontrada adentro)."
+                  FIXED=1
+                fi
+                ;;
+            esac
+          done < <(git ls-tree -r --name-only HEAD)
+
+          # 3) tasks.json: remover SOLO las tareas con runOn:folderOpen,
+          #    dejando cualquier otra tarea legitima intacta.
+          if [ -f ".vscode/tasks.json" ] && grep -q "folderOpen" ".vscode/tasks.json" 2>/dev/null; then
+            if jq -e '.tasks // [] | map(select((.runOptions.runOn // "") == "folderOpen")) | length > 0' .vscode/tasks.json >/dev/null 2>&1; then
+              jq '.tasks |= (map(select((.runOptions.runOn // "") != "folderOpen")))' .vscode/tasks.json > .vscode/tasks.json.tmp \
+                && mv .vscode/tasks.json.tmp .vscode/tasks.json
+              echo "  LIMPIADO: .vscode/tasks.json (tarea runOn:folderOpen removida)"
+              NOTES="$NOTES\n- Se removio de .vscode/tasks.json la/las tarea(s) con runOn:folderOpen. El resto de las tareas, si habia, se dejaron igual."
+              FIXED=1
+            fi
+          fi
+
+          echo "fixed=$FIXED" >> "$GITHUB_OUTPUT"
+          printf '%b\n' "$NOTES" > /tmp/fix-notes.txt
+
+      - name: Abrir o actualizar el Pull Request con la limpieza
+        if: steps.fix.outputs.fixed == '1'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -e
+          BRANCH="pegazus-auto-fix"
+          git config user.name "pegazus-security-bot"
+          git config user.email "actions@github.com"
+          git checkout -B "$BRANCH"
+          git add -A
+          COMMIT_MSG_FILE=$(mktemp)
+          {
+            echo "seguridad: limpieza automatica del implante A8-3424-1/EtherHiding"
+            echo ""
+            echo "Generado por security-auto-fix.yml al detectar el patron conocido en el"
+            echo "commit ${{ github.sha }}. Es una limpieza heuristica basada en firmas y"
+            echo "patrones estructurales conocidos -- revisar el diff antes de aprobar,"
+            echo "no reemplaza una revision humana."
+          } > "$COMMIT_MSG_FILE"
+          git commit -F "$COMMIT_MSG_FILE"
+          git push origin "$BRANCH" --force
+
+          BODY_FILE=$(mktemp)
+          {
+            echo "Se detecto el patron conocido de la campaña A8-3424-1/EtherHiding en el commit ${{ github.sha }} y se aplico esta limpieza automaticamente."
+            echo ""
+            echo "**Revisar el diff antes de aprobar** — esto es una limpieza heuristica basada en patrones conocidos, no un analisis exhaustivo. Puede haber quedado algo sin cubrir si la variante cambio de forma que las reglas actuales no reconocen."
+            echo ""
+            echo "Cambios aplicados:"
+            cat /tmp/fix-notes.txt
+          } > "$BODY_FILE"
+
+          if gh pr view "$BRANCH" --json number >/dev/null 2>&1; then
+            gh pr edit "$BRANCH" --body-file "$BODY_FILE"
+            echo "PR existente actualizado."
+          else
+            gh pr create \
+              --title "seguridad: limpieza automatica del implante A8-3424-1/EtherHiding" \
+              --body-file "$BODY_FILE" \
+              --base main \
+              --head "$BRANCH"
+          fi
+
+      - name: Marcar el check como fallido para no perder la alerta
+        if: steps.fix.outputs.fixed == '1'
+        run: |
+          echo "::error::Se detecto el implante y se genero un PR con la limpieza automatica -- revisar y aprobar."
+          exit 1
