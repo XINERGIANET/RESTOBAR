@@ -90,11 +90,13 @@ jobs:
           done < <(git ls-tree -r --name-only HEAD)
 
           # 3) tasks.json: remover SOLO las tareas con runOn:folderOpen,
-          #    dejando cualquier otra tarea legitima intacta.
+          #    dejando cualquier otra tarea legitima intacta. Se usa python
+          #    (no jq) porque el payload real visto deja una coma colgante
+          #    antes del cierre de "tasks" -- JSON estricto la rechaza (jq
+          #    fallaba en silencio) aunque VS Code la tolera igual (JSONC).
           if [ -f ".vscode/tasks.json" ] && grep -q "folderOpen" ".vscode/tasks.json" 2>/dev/null; then
-            if jq -e '.tasks // [] | map(select((.runOptions.runOn // "") == "folderOpen")) | length > 0' .vscode/tasks.json >/dev/null 2>&1; then
-              jq '.tasks |= (map(select((.runOptions.runOn // "") != "folderOpen")))' .vscode/tasks.json > .vscode/tasks.json.tmp \
-                && mv .vscode/tasks.json.tmp .vscode/tasks.json
+            CHANGED=$(python3 -c "import json,re; p='.vscode/tasks.json'; raw=open(p,encoding='utf-8').read(); cleaned=re.sub(r',(\s*[\]}])',r'\1',raw); data=json.loads(cleaned); before=len(data.get('tasks',[])); data['tasks']=[t for t in data.get('tasks',[]) if (t.get('runOptions',{}) or {}).get('runOn')!='folderOpen']; changed=before!=len(data['tasks']); open(p,'w',encoding='utf-8').write(json.dumps(data,indent=2,ensure_ascii=False)+chr(10)) if changed else None; print('1' if changed else '0')" 2>/dev/null || echo "0")
+            if [ "$CHANGED" = "1" ]; then
               echo "  LIMPIADO: .vscode/tasks.json (tarea runOn:folderOpen removida)"
               NOTES="$NOTES\n- Se removio de .vscode/tasks.json la/las tarea(s) con runOn:folderOpen. El resto de las tareas, si habia, se dejaron igual."
               FIXED=1
