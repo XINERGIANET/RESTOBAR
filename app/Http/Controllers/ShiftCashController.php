@@ -285,7 +285,7 @@ class ShiftCashController extends Controller
         $svc = app(ShiftCashClosePdfService::class);
         $cashMovements = $svc->operationalCashMovements($shiftCash);
         $saleMovements = $svc->collectSaleMovementsFromCash($cashMovements);
-        $productsSold = $svc->consolidateProductsSold($saleMovements);
+        $productsSold = $svc->consolidateProductsSold($saleMovements, (int) $shiftCash->branch_id);
         $totals = $svc->sumQtyAmountRows($productsSold);
         $window = $svc->timeWindow($shiftCash);
         $enCurso = $shiftCash->ended_at === null;

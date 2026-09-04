@@ -245,21 +245,33 @@
         <div class="section">
             <h2>Consolidado de productos vendidos</h2>
             <table>
-                <thead><tr><th>Producto</th><th class="text-right">Cantidad</th><th class="text-right">Importe</th></tr></thead>
+                <thead>
+                    <tr>
+                        <th>Producto</th>
+                        <th class="text-right">Stock Inicial</th>
+                        <th class="text-right">Cantidad</th>
+                        <th class="text-right">Stock Final</th>
+                        <th class="text-right">Importe</th>
+                    </tr>
+                </thead>
                 <tbody>
                     @forelse($r['products_sold'] ?? [] as $row)
                         <tr>
                             <td>{{ $row['product'] }}</td>
+                            <td class="text-right">{{ number_format($row['stock_initial'] ?? 0, 2) }}</td>
                             <td class="text-right">{{ number_format($row['qty'], 2) }}</td>
+                            <td class="text-right">{{ number_format($row['stock_final'] ?? 0, 2) }}</td>
                             <td class="text-right">S/ {{ number_format($row['amount'], 2) }}</td>
                         </tr>
                     @empty
-                        <tr><td colspan="3" class="text-center muted">Sin productos en ventas del turno.</td></tr>
+                        <tr><td colspan="5" class="text-center muted">Sin productos en ventas del turno.</td></tr>
                     @endforelse
                     @if(!empty($r['products_sold']))
                         <tr>
                             <th>Total</th>
+                            <th class="text-right">{{ number_format((float) ($r['products_sold_totals']['stock_initial'] ?? 0), 2) }}</th>
                             <th class="text-right">{{ number_format((float) ($r['products_sold_totals']['qty'] ?? 0), 2) }}</th>
+                            <th class="text-right">{{ number_format((float) ($r['products_sold_totals']['stock_final'] ?? 0), 2) }}</th>
                             <th class="text-right">S/ {{ number_format((float) ($r['products_sold_totals']['amount'] ?? 0), 2) }}</th>
                         </tr>
                     @endif
