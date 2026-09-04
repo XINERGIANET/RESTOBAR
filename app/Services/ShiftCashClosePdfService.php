@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\CashMovements;
 use App\Models\CashShiftRelation;
+use App\Models\ProductBranch;
 use App\Models\SalesMovement;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
@@ -286,7 +287,7 @@ class ShiftCashClosePdfService
         $map = [];
         foreach ($saleMovements as $sm) {
             foreach ($sm->details ?? [] as $line) {
-                $pid = $line->product_id ?? 0;
+                $pid = (int) ($line->product_id ?? 0);
                 $name = $line->product_snapshot['name'] ?? $line->description ?? 'Producto #'.$pid;
                 $key = (string) $pid.'|'.$name;
                 if (!isset($map[$key])) {
@@ -305,20 +306,23 @@ class ShiftCashClosePdfService
         }
 
         if ($branchId && !empty($map)) {
-            $productIds = array_filter(array_column($map, 'product_id'));
-            if (!empty($productIds)) {
-                $stocks = \App\Models\ProductBranch::where('branch_id', $branchId)
-                    ->whereIn('product_id', $productIds)
+            $pids = array_filter(array_column($map, 'product_id'));
+            $stocks = [];
+            if (!empty($pids)) {
+                $stocks = ProductBranch::query()
+                    ->where('branch_id', $branchId)
+                    ->whereIn('product_id', $pids)
                     ->pluck('stock', 'product_id')
                     ->all();
+            }
 
-                foreach ($map as $key => &$row) {
-                    $pid = $row['product_id'];
-                    $stockFinal = (float) ($stocks[$pid] ?? 0);
-                    $row['stock_final'] = $stockFinal;
-                    $row['stock_initial'] = $stockFinal + (float) $row['qty'];
-                }
-                unset($row);
+            foreach ($map as $key => $row) {
+                $pid = (int) ($row['product_id'] ?? 0);
+                $stockFinal = isset($stocks[$pid]) ? (float) $stocks[$pid] : 0.0;
+                $stockInitial = $stockFinal + (float) $row['qty'];
+
+                $map[$key]['stock_final'] = round($stockFinal, 4);
+                $map[$key]['stock_initial'] = round($stockInitial, 4);
             }
         }
 
@@ -398,7 +402,7 @@ class ShiftCashClosePdfService
     }
 
     /**
-     * @param  array<int, array{product: string, qty: float, amount: float}|array<string, mixed>>  $rows
+     * @param  array<int, array<string, mixed>>  $rows
      * @return array{qty: float, amount: float, stock_initial: float, stock_final: float}
      */
     public function sumQtyAmountRows(array $rows, string $qtyKey = 'qty'): array
@@ -417,8 +421,8 @@ class ShiftCashClosePdfService
         return [
             'qty' => $qty,
             'amount' => round($amt, 2),
-            'stock_initial' => $stockInitial,
-            'stock_final' => $stockFinal,
+            'stock_initial' => round($stockInitial, 4),
+            'stock_final' => round($stockFinal, 4),
         ];
     }
 

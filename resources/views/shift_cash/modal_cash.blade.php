@@ -114,7 +114,7 @@
                 @php
                     $group3 = [
                         ['id' => 'cancellations_products', 'label' => 'Anulaciones de productos', 'icon' => 'ri-delete-bin-line'],
-                        ['id' => 'sales_cancellations', 'label' => 'Anulaciones de ventas', 'icon' => 'ri-file-unread-line'],
+                        ['id' => 'sales_cancellations', 'label' => 'Anulaciones de ventas', 'icon' => 'ri-close-circle-line'],
                         ['id' => 'cancellations_history', 'label' => 'Histórico de anulaciones', 'icon' => 'ri-history-line'],
                         ['id' => 'discounts_by_product', 'label' => 'Descuentos por producto', 'icon' => 'ri-price-tag-3-line'],
                         ['id' => 'discounts_by_person', 'label' => 'Descuentos por persona', 'icon' => 'ri-user-unfollow-line'],

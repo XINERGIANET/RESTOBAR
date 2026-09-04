@@ -145,6 +145,8 @@
                                             $isMetodosPagoParam = str_contains($descLower, 'metodo') && str_contains($descLower, 'pago');
                                             // Solo por descripción para evitar confundir parámetros mal rotulados en producción.
                                             $showMetodosPagoUi = $isMetodosPagoParam;
+                                            // Medio de pago por defecto (distinto del checklist de habilitados: requiere "pago" + "defecto")
+                                            $isDefaultPaymentMethodParam = str_contains($descLower, 'pago') && str_contains($descLower, 'defecto');
                                             $isAllowZeroStockSalesParam =
                                                 str_contains($descLower, 'permitir') &&
                                                 str_contains($descLower, 'stock') &&
@@ -230,6 +232,21 @@
                                                     </label>
                                                 @endforeach
                                             </div>
+                                        @elseif($isDefaultPaymentMethodParam)
+                                            {{-- Medio de pago por defecto: preseleccionado al cobrar, se puede cambiar --}}
+                                            <p class="text-xs text-gray-500 dark:text-gray-400 mb-2">
+                                                Se mostrará seleccionado automáticamente al cobrar. El mozo/cajero podrá cambiarlo igual.
+                                            </p>
+                                            <select name="parameters[{{ $paramKey }}]"
+                                                    class="w-full border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 px-3 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-colors shadow-sm">
+                                                <option value="">Seleccionar...</option>
+                                                @foreach($paymentMethods ?? [] as $method)
+                                                    @continue(!in_array((int) $method->id, $branchPaymentMethodIds ?? [], true))
+                                                    <option value="{{ $method->id }}" {{ (string) ($parameter->branch_value ?? '') === (string) $method->id ? 'selected' : '' }}>
+                                                        {{ trim(str_ireplace('de venta', '', $method->description)) }}
+                                                    </option>
+                                                @endforeach
+                                            </select>
                                         @elseif($isAllowZeroStockSalesParam)
                                             {{-- Permitir vender con stock 0 (o insuficiente): 0/1 --}}
                                             <select name="parameters[{{ $paramKey }}]"
