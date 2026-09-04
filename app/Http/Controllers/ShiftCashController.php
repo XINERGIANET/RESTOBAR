@@ -286,7 +286,8 @@ class ShiftCashController extends Controller
         $cashMovements = $svc->operationalCashMovements($shiftCash);
         $saleMovements = $svc->collectSaleMovementsFromCash($cashMovements);
         $productsSold = $svc->consolidateProductsSold($saleMovements, (int) $shiftCash->branch_id);
-        $totals = $svc->sumQtyAmountRows($productsSold);
+        $allProductsStock = $svc->allProductsStock((int) $shiftCash->branch_id, $productsSold);
+        $allProductsStockTotals = $svc->sumQtyAmountRows($allProductsStock);
         $window = $svc->timeWindow($shiftCash);
         $enCurso = $shiftCash->ended_at === null;
 
@@ -294,6 +295,8 @@ class ShiftCashController extends Controller
             'shift' => $shiftCash,
             'productsSold' => $productsSold,
             'totals' => $totals,
+            'allProductsStock' => $allProductsStock,
+            'allProductsStockTotals' => $allProductsStockTotals,
             'window' => $window,
             'enCurso' => $enCurso,
             'viewId' => $request->input('view_id'),

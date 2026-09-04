@@ -61,7 +61,6 @@ desktop.ini
 
 # IDEs / editors
 /.idea/
-/.vscode/
 /.fleet/
 /.zed/
 /.nova/
