@@ -91,5 +91,54 @@
                 @endif
             </table>
         </div>
+
+        @if(!empty($allProductsStock))
+            <div class="mt-8">
+                <h3 class="mb-3 text-base font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                    <i class="ri-stack-line text-emerald-600 dark:text-emerald-400"></i>
+                    Control de inventario del turno (Todos los productos de la sucursal)
+                </h3>
+                <div class="overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-800">
+                    <table class="w-full min-w-[500px] text-left text-sm">
+                        <thead class="bg-[#124731] text-white">
+                            <tr>
+                                <th class="px-4 py-3 font-semibold uppercase tracking-wide">#</th>
+                                <th class="px-4 py-3 font-semibold uppercase tracking-wide">Producto</th>
+                                <th class="px-4 py-3 text-right font-semibold uppercase tracking-wide">Stock Inicial</th>
+                                <th class="px-4 py-3 text-right font-semibold uppercase tracking-wide">Vendidos</th>
+                                <th class="px-4 py-3 text-right font-semibold uppercase tracking-wide">Stock Final</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
+                            @forelse ($allProductsStock as $i => $row)
+                                <tr class="hover:bg-gray-50 dark:hover:bg-white/5">
+                                    <td class="px-4 py-3 text-gray-500">{{ $i + 1 }}</td>
+                                    <td class="px-4 py-3 font-medium text-gray-800 dark:text-white/90">{{ $row['product'] ?? '—' }}</td>
+                                    <td class="px-4 py-3 text-right tabular-nums">{{ number_format((float) ($row['stock_initial'] ?? 0), 2) }}</td>
+                                    <td class="px-4 py-3 text-right tabular-nums font-semibold {{ ($row['qty'] ?? 0) > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-400' }}">{{ number_format((float) ($row['qty'] ?? 0), 2) }}</td>
+                                    <td class="px-4 py-3 text-right tabular-nums font-medium">{{ number_format((float) ($row['stock_final'] ?? 0), 2) }}</td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="5" class="px-4 py-8 text-center text-gray-500">
+                                        No hay productos registrados en el inventario de esta sucursal.
+                                    </td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                        @if(count($allProductsStock) > 0)
+                            <tfoot class="border-t-2 border-gray-300 bg-gray-100 font-semibold dark:border-gray-600 dark:bg-gray-800">
+                                <tr>
+                                    <td colspan="2" class="px-4 py-3 text-right">Total inventario sucursal</td>
+                                    <td class="px-4 py-3 text-right tabular-nums">{{ number_format((float) ($allProductsStockTotals['stock_initial'] ?? 0), 2) }}</td>
+                                    <td class="px-4 py-3 text-right tabular-nums">{{ number_format((float) ($allProductsStockTotals['qty'] ?? 0), 2) }}</td>
+                                    <td class="px-4 py-3 text-right tabular-nums">{{ number_format((float) ($allProductsStockTotals['stock_final'] ?? 0), 2) }}</td>
+                                </tr>
+                            </tfoot>
+                        @endif
+                    </table>
+                </div>
+            </div>
+        @endif
     </x-common.component-card>
 @endsection

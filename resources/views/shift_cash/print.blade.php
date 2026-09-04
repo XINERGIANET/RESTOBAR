@@ -280,6 +280,44 @@
         </div>
     @endif
 
+    @if(!empty($opts['all_products_stock']))
+        <div class="section">
+            <h2>Control de inventario del turno (Todos los productos)</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width: 28px;">#</th>
+                        <th>Producto</th>
+                        <th class="text-right">Stock Inicial</th>
+                        <th class="text-right">Vendidos</th>
+                        <th class="text-right">Stock Final</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse($r['all_products_stock'] ?? [] as $idx => $row)
+                        <tr>
+                            <td>{{ $idx + 1 }}</td>
+                            <td>{{ $row['product'] }}</td>
+                            <td class="text-right">{{ number_format($row['stock_initial'] ?? 0, 2) }}</td>
+                            <td class="text-right">{{ number_format($row['qty'] ?? 0, 2) }}</td>
+                            <td class="text-right">{{ number_format($row['stock_final'] ?? 0, 2) }}</td>
+                        </tr>
+                    @empty
+                        <tr><td colspan="5" class="text-center muted">Sin productos configurados en la sucursal.</td></tr>
+                    @endforelse
+                    @if(!empty($r['all_products_stock']))
+                        <tr>
+                            <th colspan="2">Total inventario sucursal</th>
+                            <th class="text-right">{{ number_format((float) ($r['all_products_stock_totals']['stock_initial'] ?? 0), 2) }}</th>
+                            <th class="text-right">{{ number_format((float) ($r['all_products_stock_totals']['qty'] ?? 0), 2) }}</th>
+                            <th class="text-right">{{ number_format((float) ($r['all_products_stock_totals']['stock_final'] ?? 0), 2) }}</th>
+                        </tr>
+                    @endif
+                </tbody>
+            </table>
+        </div>
+    @endif
+
     @if(!empty($opts['sales_details_by_product']))
         <div class="section">
             <h2>Detalles de venta — por producto</h2>

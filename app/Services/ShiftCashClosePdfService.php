@@ -15,6 +15,7 @@ class ShiftCashClosePdfService
     public const OPTION_KEYS = [
         'sales_payments_summary',
         'products_sold_summary',
+        'all_products_stock',
         'cancellations_products',
         'expenses_by_payment_method_paid',
         'discounts_by_product',
@@ -90,6 +91,8 @@ class ShiftCashClosePdfService
         $cancellationProductsTotals = $this->sumQtyAmountRows($cancellationProductsConsolidated);
         $productsSoldTotals = $this->sumQtyAmountRows($productsSold);
         $salesDetailsTotals = $this->sumQtyAmountRows($salesDetails);
+        $allProductsStock = $this->allProductsStock($branchId, $productsSold);
+        $allProductsStockTotals = $this->sumQtyAmountRows($allProductsStock);
         $paidSalesByMethodTotal = round((float) array_sum($paidSalesByMethod), 2);
         $incomeByMethodTotal = round((float) array_sum($incomeByMethod), 2);
         $expenseByMethodTotal = round((float) array_sum($expenseByMethod), 2);
@@ -105,6 +108,8 @@ class ShiftCashClosePdfService
             'income_by_method' => $incomeByMethod,
             'expense_by_method' => $expenseByMethod,
             'products_sold' => $productsSold,
+            'all_products_stock' => $allProductsStock,
+            'all_products_stock_totals' => $allProductsStockTotals,
             'sales_details' => $salesDetails,
             'discounts_by_product_rows' => $discountsByProduct,
             'discounts_by_person_rows' => $discountsByPerson,
@@ -327,6 +332,53 @@ class ShiftCashClosePdfService
         }
 
         return array_values($map);
+    }
+
+    /**
+     * Obtención del listado completo de productos de la sucursal con control de stock (inicial, vendidos y final).
+     *
+     * @param  array<int, array<string, mixed>>  $productsSoldRows
+     * @return array<int, array{product_id: int, product: string, stock_initial: float, qty: float, stock_final: float}>
+     */
+    public function allProductsStock(int $branchId, array $productsSoldRows): array
+    {
+        if ($branchId <= 0) {
+            return [];
+        }
+
+        $salesQtyMap = [];
+        foreach ($productsSoldRows as $row) {
+            $pid = (int) ($row['product_id'] ?? 0);
+            if ($pid > 0) {
+                $salesQtyMap[$pid] = ($salesQtyMap[$pid] ?? 0.0) + (float) ($row['qty'] ?? 0);
+            }
+        }
+
+        $pbs = ProductBranch::query()
+            ->where('branch_id', $branchId)
+            ->with('product')
+            ->get();
+
+        $rows = [];
+        foreach ($pbs as $pb) {
+            $productName = $pb->product?->description ?? 'Producto #'.$pb->product_id;
+            $pid = (int) $pb->product_id;
+            $stockFinal = (float) ($pb->stock ?? 0);
+            $qtySold = (float) ($salesQtyMap[$pid] ?? 0.0);
+            $stockInitial = $stockFinal + $qtySold;
+
+            $rows[] = [
+                'product_id' => $pid,
+                'product' => $productName,
+                'stock_initial' => round($stockInitial, 4),
+                'qty' => round($qtySold, 4),
+                'stock_final' => round($stockFinal, 4),
+            ];
+        }
+
+        usort($rows, fn ($a, $b) => strcasecmp($a['product'], $b['product']));
+
+        return $rows;
     }
 
     /**
