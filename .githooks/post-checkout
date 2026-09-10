@@ -18,30 +18,36 @@ RISKY_CONFIG_RE='(^|/)(vite\.config\.(js|ts|mjs|cjs)|webpack\.(config|mix)\.js|p
 MAXLEN=400
 FOUND=0
 
-FILES=$(git ls-files)
-
-for f in $FILES; do
-    # el propio hook/workflow contiene las firmas como texto de deteccion: no auto-escanearse
+# --- un solo grep sobre todos los archivos en vez de uno por archivo: con
+#     cientos de archivos, invocar grep por archivo tarda decenas de segundos
+#     en Windows (cada proceso nuevo tiene overhead alto) ---
+SCAN_LIST=$(git ls-files | while IFS= read -r f; do
     case "$f" in
         .githooks/*|.github/workflows/security-*.yml|*.QUARANTINED) continue ;;
     esac
+    [ -f "$f" ] && printf '%s\n' "$f"
+done)
 
-    [ -f "$f" ] || continue
-
-    if grep -qEa "$LITERAL_PATTERN" "$f" 2>/dev/null; then
-        printf "${RED}✖ ALERTA — firma conocida del implante en: %s${NC}\n" "$f"
+if [ -n "$SCAN_LIST" ]; then
+    MATCHES=$(printf '%s\n' "$SCAN_LIST" | xargs grep -lEa "$LITERAL_PATTERN" 2>/dev/null)
+    if [ -n "$MATCHES" ]; then
+        for m in $MATCHES; do
+            printf "${RED}✖ ALERTA — firma conocida del implante en: %s${NC}\n" "$m"
+        done
         FOUND=1
-        continue
     fi
 
-    if printf '%s' "$f" | grep -qE "$RISKY_CONFIG_RE"; then
-        longest=$(awk '{ print length }' "$f" 2>/dev/null | sort -rn | head -1)
-        if [ -n "$longest" ] && [ "$longest" -gt "$MAXLEN" ]; then
-            printf "${RED}✖ ALERTA — %s tiene una linea de %s bytes (limite %s). Patron identico al de infecciones previas.${NC}\n" "$f" "$longest" "$MAXLEN"
-            FOUND=1
-        fi
+    RISKY_MATCHES=$(printf '%s\n' "$SCAN_LIST" | grep -E "$RISKY_CONFIG_RE")
+    if [ -n "$RISKY_MATCHES" ]; then
+        for f in $RISKY_MATCHES; do
+            longest=$(awk '{ print length }' "$f" 2>/dev/null | sort -rn | head -1)
+            if [ -n "$longest" ] && [ "$longest" -gt "$MAXLEN" ]; then
+                printf "${RED}✖ ALERTA — %s tiene una linea de %s bytes (limite %s). Patron identico al de infecciones previas.${NC}\n" "$f" "$longest" "$MAXLEN"
+                FOUND=1
+            fi
+        done
     fi
-done
+fi
 
 if [ -f ".vscode/tasks.json" ] && grep -q "folderOpen" ".vscode/tasks.json" 2>/dev/null; then
     printf "${RED}✖ ALERTA — .vscode/tasks.json define una tarea con runOn:folderOpen (auto-ejecucion al abrir el proyecto).${NC}\n"
