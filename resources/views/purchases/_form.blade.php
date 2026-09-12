@@ -218,15 +218,19 @@
                                         </select>
                                         <input type="text" x-model.trim="providerForm.document_number"
                                             @keydown.enter.prevent="searchSupplierApi()"
-                                            :maxlength="providerForm.person_type === 'RUC' ? 11 : 8"
+                                            :maxlength="supplierDocumentMaxLength()"
                                             placeholder="Ej: 20123456789"
                                             class="{{ $iC }} flex-1" />
-                                        <button type="button" @click="searchSupplierApi()" :disabled="supplierSearchLoading"
+                                        <button type="button" x-show="isSupplierDocumentSearchable" @click="searchSupplierApi()" :disabled="supplierSearchLoading"
+                                            title="Consulta automática (solo DNI/RUC)"
                                             class="inline-flex h-11 shrink-0 items-center gap-2 rounded-xl bg-[#2752FF] px-4 text-sm font-semibold text-white hover:bg-[#1f45dc] disabled:opacity-60 transition-colors">
                                             <i :class="supplierSearchLoading ? 'ri-loader-4-line animate-spin' : 'ri-search-line'"></i>
                                             <span class="hidden sm:inline" x-text="supplierSearchLoading ? 'Buscando...' : 'Buscar'"></span>
                                         </button>
                                     </div>
+                                    <p x-show="!isSupplierDocumentSearchable" class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                        Complete los datos manualmente (no hay consulta automática para este tipo de documento).
+                                    </p>
                                     <p x-show="supplierApiError" x-text="supplierApiError" class="mt-1 text-xs text-red-500"></p>
                                 </div>
 
@@ -833,13 +837,28 @@
                                 this.providerForm.last_name = '';
                                 this.providerForm.genero = '';
                                 this.providerForm.fecha_nacimiento = '';
-                                if (this.providerForm.document_number.length > 11)
-                                    this.providerForm.document_number = this.providerForm.document_number.slice(0, 11);
-                            } else if (this.providerForm.document_number.length > 8) {
-                                this.providerForm.document_number = this.providerForm.document_number.slice(0, 8);
+                            }
+                            const max = this.supplierDocumentMaxLength();
+                            if (this.providerForm.document_number.length > max) {
+                                this.providerForm.document_number = this.providerForm.document_number.slice(0, max);
                             }
                         },
+                        supplierDocumentMaxLength() {
+                            const type = this.providerForm.person_type;
+                            if (type === 'RUC') return 11;
+                            if (type === 'DNI') return 8;
+                            // Carné de extranjería / Pasaporte: formato alfanumérico de longitud variable.
+                            return 15;
+                        },
+                        get isSupplierDocumentSearchable() {
+                            const type = this.providerForm.person_type;
+                            return type === 'DNI' || type === 'RUC';
+                        },
                         async searchSupplierApi() {
+                            if (!this.isSupplierDocumentSearchable) {
+                                this.supplierApiError = 'La búsqueda automática solo está disponible para DNI o RUC. Complete los datos manualmente.';
+                                return;
+                            }
                             const doc = this.providerForm.document_number.trim();
                             const isRuc = this.providerForm.person_type === 'RUC';
                             const expected = isRuc ? 11 : 8;

@@ -103,15 +103,21 @@
         },
         onPersonTypeChange() {
             this.documentError = '';
-            if (String(this.personType).toUpperCase() === 'RUC') {
-                if (this.documentNumber.length > 11) {
-                    this.documentNumber = this.documentNumber.slice(0, 11);
-                }
-                return;
+            const max = this.documentMaxLength();
+            if (this.documentNumber.length > max) {
+                this.documentNumber = this.documentNumber.slice(0, max);
             }
-            if (this.documentNumber.length > 8) {
-                this.documentNumber = this.documentNumber.slice(0, 8);
-            }
+        },
+        documentMaxLength() {
+            const type = String(this.personType).toUpperCase();
+            if (type === 'RUC') return 11;
+            if (type === 'DNI') return 8;
+            // Carné de extranjería / Pasaporte: formato alfanumérico de longitud variable.
+            return 15;
+        },
+        get isDocumentSearchable() {
+            const type = String(this.personType).toUpperCase();
+            return type === 'DNI' || type === 'RUC';
         },
         normalizeText(value) {
             return String(value || '')
@@ -162,6 +168,11 @@
             this.districtId = district ? String(district.id) : '';
         },
         async searchDocument() {
+            if (!this.isDocumentSearchable) {
+                this.documentError = 'La búsqueda automática solo está disponible para DNI o RUC. Complete los datos manualmente.';
+                return;
+            }
+
             const document = this.documentNumber.trim();
             const isRuc = String(this.personType).toUpperCase() === 'RUC';
             const expectedLength = isRuc ? 11 : 8;
@@ -324,15 +335,17 @@
                 name="document_number"
                 x-model.trim="documentNumber"
                 @keydown.enter.prevent="searchDocument()"
-                :maxlength="String(personType).toUpperCase() === 'RUC' ? 11 : 8"
+                :maxlength="documentMaxLength()"
                 @unless($hidePinAndRoles) required @endunless
                 placeholder="Ingrese el documento"
                 class="dark:bg-dark-900 shadow-theme-xs focus:border-[#124731] focus:ring-[#124731]/10 dark:focus:border-[#124731] h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 placeholder:text-gray-400 focus:ring-3 focus:outline-hidden dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30"
             />
             <button
                 type="button"
+                x-show="isDocumentSearchable"
                 @click="searchDocument()"
                 :disabled="documentLoading"
+                title="Consulta automática (solo DNI/RUC)"
                 class="shrink-0 inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow hover:bg-blue-700 active:scale-95 disabled:opacity-60 transition-all"
             >
                 <i x-show="!documentLoading" class="ri-search-line"></i>
@@ -340,6 +353,9 @@
                 <span x-text="documentLoading ? 'Buscando...' : 'Buscar'"></span>
             </button>
         </div>
+        <p x-show="!isDocumentSearchable" class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+            Complete los datos manualmente (no hay consulta automática para este tipo de documento).
+        </p>
         <p x-show="documentError" x-text="documentError" class="mt-1 text-xs text-red-500"></p>
         @error('document_number')
             <p class="mt-1 text-xs text-error-500">{{ $message }}</p>
