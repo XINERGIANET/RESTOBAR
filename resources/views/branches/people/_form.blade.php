@@ -113,7 +113,7 @@
             if (type === 'RUC') return 11;
             if (type === 'DNI') return 8;
             // Carné de extranjería / Pasaporte: formato alfanumérico de longitud variable.
-            return 15;
+            return 12;
         },
         get isDocumentSearchable() {
             const type = String(this.personType).toUpperCase();
