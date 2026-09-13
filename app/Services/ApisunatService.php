@@ -150,29 +150,10 @@ class ApisunatService
             'serie' => $catalog['serie'],
         ]);
 
-        // La numeracion remota combinada con el máximo emitido localmente es la fuente de verdad.
+        // La numeración remota devuelta por APISUNAT es la fuente de verdad secuencial para evitar saltos o huecos.
         $suggested = $this->normalizeCorrelative(data_get($correlativeResp->json(), 'suggestedNumber', 0));
         $last = $this->normalizeCorrelative(data_get($correlativeResp->json(), 'lastNumber', 0));
         $targetNum = $suggested > 0 ? $suggested : ($last > 0 ? $last + 1 : 1);
-
-        $maxEmittedLocal = 0;
-        $emittedLocalSales = Movement::where('branch_id', $branch->id)
-            ->where('movement_type_id', 2)
-            ->where('document_type_id', $sale->document_type_id)
-            ->where('electronic_invoice_status', 'SENT')
-            ->whereNotNull('electronic_invoice_external_id')
-            ->where('electronic_invoice_external_id', '!=', '')
-            ->where('electronic_invoice_external_id', '!=', '0')
-            ->get();
-
-        foreach ($emittedLocalSales as $emitted) {
-            $num = $this->normalizeCorrelative($emitted->number);
-            if ($num > $maxEmittedLocal && $num < 100000) {
-                $maxEmittedLocal = $num;
-            }
-        }
-
-        $targetNum = max($targetNum, $maxEmittedLocal + 1);
 
         $attempts = 0;
         $sendResp = null;
@@ -528,7 +509,7 @@ class ApisunatService
                 }
             }
 
-            $startSequence = max($next, $maxLinkedNumber + 1);
+            $startSequence = $next > 0 ? $next : ($maxLinkedNumber + 1);
 
             $pending = Movement::with('salesMovement')
                 ->where('branch_id', $branch->id)
