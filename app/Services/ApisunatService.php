@@ -143,17 +143,20 @@ class ApisunatService
         $totals = $this->resolveMovementTotals($sale);
         $apiUrl = $this->resolveApiUrl($config);
 
-        $correlativeResp = Http::timeout(20)->post($apiUrl.'/personas/lastDocument', [
-            'personaId' => (string) $config->persona_id,
-            'personaToken' => (string) $config->persona_token,
-            'type' => $catalog['type'],
-            'serie' => $catalog['serie'],
-        ]);
+        // Buscar primero el menor correlativo faltante (hueco) en APISUNAT; si no hay huecos, usar la numeración secuencial remota.
+        $targetNum = $this->fetchNextCorrelativeFillingGaps($branch, $catalog['type']);
+        if ($targetNum <= 0) {
+            $correlativeResp = Http::timeout(20)->post($apiUrl.'/personas/lastDocument', [
+                'personaId' => (string) $config->persona_id,
+                'personaToken' => (string) $config->persona_token,
+                'type' => $catalog['type'],
+                'serie' => $catalog['serie'],
+            ]);
 
-        // La numeración remota devuelta por APISUNAT es la fuente de verdad secuencial para evitar saltos o huecos.
-        $suggested = $this->normalizeCorrelative(data_get($correlativeResp->json(), 'suggestedNumber', 0));
-        $last = $this->normalizeCorrelative(data_get($correlativeResp->json(), 'lastNumber', 0));
-        $targetNum = $suggested > 0 ? $suggested : ($last > 0 ? $last + 1 : 1);
+            $suggested = $this->normalizeCorrelative(data_get($correlativeResp->json(), 'suggestedNumber', 0));
+            $last = $this->normalizeCorrelative(data_get($correlativeResp->json(), 'lastNumber', 0));
+            $targetNum = $suggested > 0 ? $suggested : ($last > 0 ? $last + 1 : 1);
+        }
 
         $attempts = 0;
         $sendResp = null;
@@ -311,6 +314,48 @@ class ApisunatService
         }
 
         return 0;
+    }
+
+    /**
+     * Obtiene el siguiente correlativo a emitir en APISUNAT, priorizando el menor hueco
+     * no emitido dentro de la secuencia existente antes de avanzar con números superiores.
+     */
+    public function fetchNextCorrelativeFillingGaps(?Branch $branch, string $type = '03'): int
+    {
+        $config = $this->resolveConfigForBranch($branch);
+        if (! $config || ! $config->enabled) {
+            return 0;
+        }
+
+        $series = $type === '01'
+            ? trim((string) ($config->series_factura ?: config('apisunat.series.factura', 'F001')))
+            : trim((string) ($config->series_boleta ?: config('apisunat.series.boleta', 'B001')));
+
+        try {
+            $remoteDocuments = $this->fetchAllDocuments($branch, $type, $series);
+            $seenRemote = [];
+            $maxRemote = 0;
+
+            foreach ($remoteDocuments as $doc) {
+                $meta = $this->remoteDocumentMetadata($doc);
+                if ($meta['number'] > 0 && $meta['status'] !== 'EXCEPCION') {
+                    $seenRemote[$meta['number']] = true;
+                    if ($meta['number'] > $maxRemote) {
+                        $maxRemote = $meta['number'];
+                    }
+                }
+            }
+
+            for ($i = 1; $i <= $maxRemote; $i++) {
+                if (! isset($seenRemote[$i])) {
+                    return $i;
+                }
+            }
+
+            return $maxRemote > 0 ? $maxRemote + 1 : 1;
+        } catch (\Throwable $e) {
+            return $this->fetchLastDocumentNumber($branch, $type);
+        }
     }
 
     /** @return array<int, array<string, mixed>> */
@@ -477,9 +522,11 @@ class ApisunatService
             });
 
             $missingRemote = [];
+            $missingNumbers = [];
             for ($number = 1; $number < $next; $number++) {
                 if (! isset($seenRemote[$number])) {
                     $missingRemote[] = str_pad((string) $number, 8, '0', STR_PAD_LEFT);
+                    $missingNumbers[] = $number;
                 }
             }
             if ($missingRemote !== []) {
@@ -520,19 +567,28 @@ class ApisunatService
                 ->orderBy('id', 'asc')
                 ->get();
 
-            DB::transaction(function () use ($pending, $startSequence, $series) {
+            $initialGapsCount = count($missingNumbers);
+            DB::transaction(function () use ($pending, $startSequence, $series, &$missingNumbers) {
                 $sequence = $startSequence;
                 foreach ($pending as $movement) {
+                    if ($missingNumbers !== []) {
+                        $targetNumber = array_shift($missingNumbers);
+                    } else {
+                        $targetNumber = $sequence;
+                        $sequence++;
+                    }
+
                     $movement->forceFill([
-                        'number' => str_pad((string) $sequence, 8, '0', STR_PAD_LEFT),
+                        'number' => str_pad((string) $targetNumber, 8, '0', STR_PAD_LEFT),
                         'electronic_invoice_series' => null,
                         'electronic_invoice_number' => null,
                     ])->save();
                     $movement->salesMovement?->update(['series' => preg_replace('/^[A-Z]+/i', '', $series)]);
-                    $sequence++;
                 }
             });
-            $summary[] = "{$series}: {$linked} enlazados; {$pending->count()} pendientes reordenados desde ".str_pad((string) $startSequence, 8, '0', STR_PAD_LEFT);
+            $filledGaps = $initialGapsCount - count($missingNumbers);
+            $gapMsg = $filledGaps > 0 ? " ({$filledGaps} huecos cubiertos)" : "";
+            $summary[] = "{$series}: {$linked} enlazados; {$pending->count()} pendientes reordenados{$gapMsg} desde ".str_pad((string) $startSequence, 8, '0', STR_PAD_LEFT);
         }
 
         return [
