@@ -5,14 +5,34 @@ namespace App\Services;
 use App\Models\Branch;
 use App\Models\BranchElectronicBillingConfig;
 use App\Models\BranchParameter;
+use App\Models\DocumentType;
 use App\Models\Movement;
 use App\Models\TaxRate;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class ApisunatService
 {
+    /**
+     * Normaliza un número local o comprobante a su correlativo entero para SUNAT/Apisunat (máx. 8 dígitos),
+     * quitando prefijo de serie (ej: "B001-00000057" -> 57) y el "1" inicial heredado que algunos números locales arrastran (ej. "100000381" -> 381).
+     */
+    public function normalizeCorrelative(mixed $number): int
+    {
+        $str = (string) $number;
+        if (str_contains($str, '-')) {
+            $str = substr($str, strrpos($str, '-') + 1);
+        }
+        $raw = preg_replace('/\D+/', '', $str) ?: '';
+        if (strlen($raw) >= 9 && str_starts_with($raw, '1')) {
+            $raw = substr($raw, 1);
+        }
+
+        return (int) $raw;
+    }
+
     public function isEligibleDocument(Movement $sale): bool
     {
         $docName = mb_strtolower(trim((string) ($sale->documentType?->name ?? '')), 'UTF-8');
@@ -47,6 +67,42 @@ class ApisunatService
         return $this->resolveApiUrl($config) !== ''
             && trim((string) $config->persona_id) !== ''
             && trim((string) $config->persona_token) !== '';
+    }
+
+    /**
+     * Valida y ajusta la fecha de emisión a los 2 días máximos permitidos por SUNAT (RS 000003-2023/SUNAT)
+     * conservando la fecha original histórica en la base de datos local.
+     */
+    public function resolveSunatIssueDate(Movement $sale): array
+    {
+        $saleDate = $sale->moved_at
+            ? \Illuminate\Support\Carbon::parse($sale->moved_at)
+            : ($sale->created_at ? \Illuminate\Support\Carbon::parse($sale->created_at) : now());
+
+        $minAllowedDate = now()->subDays(2)->startOfDay();
+        $maxAllowedDate = now()->endOfDay();
+
+        if ($saleDate->lt($minAllowedDate)) {
+            // Si la fecha es de hace más de 2 días, enviamos a SUNAT con el límite máximo permitido (hace 2 días)
+            $issueDate = $minAllowedDate->format('Y-m-d');
+            $issueTime = now()->format('H:i:s');
+            $adjusted = true;
+        } elseif ($saleDate->gt($maxAllowedDate)) {
+            // Si la fecha es futura, usamos el día de hoy
+            $issueDate = now()->format('Y-m-d');
+            $issueTime = now()->format('H:i:s');
+            $adjusted = true;
+        } else {
+            $issueDate = $saleDate->format('Y-m-d');
+            $issueTime = $saleDate->format('H:i:s');
+            $adjusted = false;
+        }
+
+        return [
+            'issue_date' => $issueDate,
+            'issue_time' => $issueTime,
+            'adjusted' => $adjusted,
+        ];
     }
 
     public function emitSale(Movement $sale): array
@@ -87,19 +143,6 @@ class ApisunatService
         $totals = $this->resolveMovementTotals($sale);
         $apiUrl = $this->resolveApiUrl($config);
 
-        $usedNumbers = Movement::query()
-            ->where('branch_id', $sale->branch_id)
-            ->where('document_type_id', $sale->document_type_id)
-            ->where('movement_type_id', 2)
-            ->whereNotNull('electronic_invoice_external_id')
-            ->pluck('number')
-            ->map(fn ($n) => (int) preg_replace('/\D+/', '', (string) $n))
-            ->filter(fn ($n) => $n > 0)
-            ->toArray();
-
-        $usedSet = array_flip($usedNumbers);
-
-        $apiLastNum = 0;
         $correlativeResp = Http::timeout(20)->post($apiUrl.'/personas/lastDocument', [
             'personaId' => (string) $config->persona_id,
             'personaToken' => (string) $config->persona_token,
@@ -107,52 +150,38 @@ class ApisunatService
             'serie' => $catalog['serie'],
         ]);
 
-        if ($correlativeResp->successful()) {
-            $obj = $correlativeResp->object();
-            $sug = (int) data_get($obj, 'suggestedNumber', 0);
-            $last = (int) data_get($obj, 'lastNumber', 0);
-            $apiLastNum = max($sug, $last);
-        }
+        // La numeracion remota combinada con el máximo emitido localmente es la fuente de verdad.
+        $suggested = $this->normalizeCorrelative(data_get($correlativeResp->json(), 'suggestedNumber', 0));
+        $last = $this->normalizeCorrelative(data_get($correlativeResp->json(), 'lastNumber', 0));
+        $targetNum = $suggested > 0 ? $suggested : ($last > 0 ? $last + 1 : 1);
 
-        // Buscar el primer hueco no emitido en la secuencia desde 1 hasta apiLastNum
-        $firstGap = null;
-        if ($apiLastNum > 0) {
-            for ($i = 1; $i <= $apiLastNum; $i++) {
-                if (! isset($usedSet[$i])) {
-                    $firstGap = $i;
-                    break;
-                }
+        $maxEmittedLocal = 0;
+        $emittedLocalSales = Movement::where('branch_id', $branch->id)
+            ->where('movement_type_id', 2)
+            ->where('document_type_id', $sale->document_type_id)
+            ->where('electronic_invoice_status', 'SENT')
+            ->whereNotNull('electronic_invoice_external_id')
+            ->where('electronic_invoice_external_id', '!=', '')
+            ->where('electronic_invoice_external_id', '!=', '0')
+            ->get();
+
+        foreach ($emittedLocalSales as $emitted) {
+            $num = $this->normalizeCorrelative($emitted->number);
+            if ($num > $maxEmittedLocal && $num < 100000) {
+                $maxEmittedLocal = $num;
             }
         }
 
-        // Determinación del correlativo estricto para APISUNAT:
-        // 1. Si hay un hueco previo sin emitir, se rellena ese hueco (ej: 646).
-        // 2. Si no hay hueco, el número SIEMPRE es el correlativo inmediato de APISUNAT: apiLastNum + 1.
-        // 3. De lo contrario, el primer entero no emitido disponible.
-        if ($firstGap !== null) {
-            $targetNum = $firstGap;
-        } elseif ($apiLastNum > 0) {
-            $targetNum = $apiLastNum + 1;
-        } else {
-            $candidate = 1;
-            while (isset($usedSet[$candidate])) {
-                $candidate++;
-            }
-            $targetNum = $candidate;
-        }
+        $targetNum = max($targetNum, $maxEmittedLocal + 1);
 
         $attempts = 0;
         $sendResp = null;
         $number = '';
         $fileName = '';
 
-        while ($attempts < 5) {
+        // 5. Bucle de reintento automático por numeración repetida en APISUNAT (hasta 25 intentos)
+        while ($attempts < 25) {
             $attempts++;
-            // Asegurar no saltar si targetNum está en el conjunto usado
-            while (isset($usedSet[$targetNum])) {
-                $targetNum++;
-            }
-
             $number = str_pad((string) $targetNum, 8, '0', STR_PAD_LEFT);
             $fileName = trim((string) ($branch?->ruc ?? '0')).'-'.$catalog['type'].'-'.$catalog['serie'].'-'.$number;
             $documentBody = $this->buildDocumentBody($sale, $catalog, $customerDocument, $customerDocType, $totals, $number);
@@ -169,13 +198,31 @@ class ApisunatService
                 break;
             }
 
-            $errorMessage = data_get($sendResp->object(), 'error.message')
-                ?: data_get($sendResp->json(), 'error.message')
-                ?: $sendResp->body();
+            $rawBody = (string) $sendResp->body();
+            $errorObj = $sendResp->object();
+            $errorJson = $sendResp->json();
 
-            if (str_contains(mb_strtolower($errorMessage, 'UTF-8'), 'repetida') || str_contains(mb_strtolower($errorMessage, 'UTF-8'), 'ya existe')) {
-                $usedSet[$targetNum] = true;
-                $targetNum++;
+            $errorMessage = data_get($errorObj, 'error.message')
+                ?: data_get($errorObj, 'message')
+                ?: data_get($errorObj, 'description')
+                ?: data_get($errorJson, 'error.message')
+                ?: data_get($errorJson, 'message')
+                ?: data_get($errorJson, 'description')
+                ?: $rawBody;
+
+            $lowerErr = mb_strtolower($errorMessage, 'UTF-8');
+
+            if (
+                str_contains($lowerErr, 'repetida') ||
+                str_contains($lowerErr, 'ya existe') ||
+                str_contains($lowerErr, 'registrado') ||
+                str_contains($lowerErr, 'duplicate') ||
+                str_contains($lowerErr, 'exist')
+            ) {
+                $targetNum = $this->fetchLastDocumentNumber($branch, $catalog['type']);
+                if ($targetNum <= 0 || $targetNum > 99999999) {
+                    throw new \RuntimeException('No se pudo recuperar el siguiente correlativo luego de detectar un duplicado.');
+                }
                 continue;
             }
 
@@ -183,9 +230,17 @@ class ApisunatService
         }
 
         if (! $sendResp || $sendResp->failed()) {
-            $errorMessage = data_get($sendResp?->object(), 'error.message')
-                ?: data_get($sendResp?->json(), 'error.message')
-                ?: ($sendResp ? $sendResp->body() : 'Error enviando comprobante a Apisunat.');
+            $rawBody = (string) ($sendResp ? $sendResp->body() : 'Sin respuesta de APISUNAT.');
+            $errorObj = $sendResp?->object();
+            $errorJson = $sendResp?->json();
+
+            $errorMessage = data_get($errorObj, 'error.message')
+                ?: data_get($errorObj, 'message')
+                ?: data_get($errorObj, 'description')
+                ?: data_get($errorJson, 'error.message')
+                ?: data_get($errorJson, 'message')
+                ?: data_get($errorJson, 'description')
+                ?: $rawBody;
 
             throw new \RuntimeException('Error enviando comprobante a Apisunat: '.$errorMessage);
         }
@@ -196,8 +251,34 @@ class ApisunatService
             throw new \RuntimeException('Apisunat no devolvió documentId.');
         }
 
-        $extraDocumentData = $this->getDocumentById($documentId, $branch);
-        $urls = $this->extractDocumentUrls($extraDocumentData);
+        $extraDocumentData = [];
+        $urls = [];
+        try {
+            $extraDocumentData = $this->getDocumentById($documentId, $branch);
+            $urls = $this->extractDocumentUrls($extraDocumentData);
+        } catch (\Throwable $e) {
+            // Se continúa si no se pudo consultar el detalle extra de forma inmediata
+        }
+
+        // Sincronizar el número emitido en APISUNAT con la venta local en base de datos
+        $sale->number = $number;
+        $sale->electronic_invoice_provider = 'apisunat';
+        $sale->electronic_invoice_external_id = $documentId;
+        $sale->electronic_invoice_series = $catalog['serie'];
+        $sale->electronic_invoice_number = $catalog['serie'].'-'.$number;
+        $sale->electronic_invoice_file_name = $fileName.'.pdf';
+        $sale->electronic_invoice_pdf_ticket_url = $apiUrl.'/documents/'.$documentId.'/getPDF/ticket80mm/'.$fileName.'.pdf';
+        $sale->electronic_invoice_pdf_a4_url = $apiUrl.'/documents/'.$documentId.'/getPDF/A4/'.$fileName.'.pdf';
+        $sale->electronic_invoice_xml_url = $urls['xml_url'] ?? null;
+        $sale->electronic_invoice_cdr_url = $urls['cdr_url'] ?? null;
+        $sale->electronic_invoice_status = 'SENT';
+        $sale->electronic_invoice_response = (array) $result;
+        $sale->save();
+
+        if ($sale->salesMovement) {
+            $sale->salesMovement->series = $catalog['serie'];
+            $sale->salesMovement->save();
+        }
 
         return [
             'status' => 'SENT',
@@ -219,6 +300,313 @@ class ApisunatService
                 ],
             ],
         ];
+    }
+
+    public function fetchLastDocumentNumber(?Branch $branch, string $type = '03'): int
+    {
+        $config = $this->resolveConfigForBranch($branch);
+        if (! $config || ! $config->enabled) {
+            return 0;
+        }
+
+        $apiUrl = $this->resolveApiUrl($config);
+        $serie = $type === '01'
+            ? trim((string) ($config->series_factura ?: config('apisunat.series.factura', 'F001')))
+            : trim((string) ($config->series_boleta ?: config('apisunat.series.boleta', 'B001')));
+
+        $res = Http::timeout(10)->post($apiUrl.'/personas/lastDocument', [
+            'personaId' => (string) $config->persona_id,
+            'personaToken' => (string) $config->persona_token,
+            'type' => $type,
+            'serie' => $serie,
+        ]);
+
+        if ($res->successful()) {
+            $obj = $res->object();
+            $sug = (int) data_get($obj, 'suggestedNumber', 0);
+            $last = (int) data_get($obj, 'lastNumber', 0);
+
+            return $sug > 0 ? $sug : ($last > 0 ? $last + 1 : 1);
+        }
+
+        return 0;
+    }
+
+    /** @return array<int, array<string, mixed>> */
+    public function fetchAllDocuments(?Branch $branch, string $type, string $series): array
+    {
+        $config = $this->resolveConfigForBranch($branch);
+        if (! $config || ! $config->enabled) {
+            throw new \RuntimeException('La sucursal no tiene APISUNAT configurado.');
+        }
+
+        $documents = [];
+        $limit = 100;
+        for ($skip = 0; $skip < 10000; $skip += $limit) {
+            $response = Http::timeout(30)->get($this->resolveApiUrl($config).'/documents/getAll', [
+                'personaId' => (string) $config->persona_id,
+                'personaToken' => (string) $config->persona_token,
+                'type' => $type,
+                'serie' => $series,
+                'limit' => $limit,
+                'skip' => $skip,
+                'order' => 'ASC',
+            ]);
+
+            if ($response->failed()) {
+                throw new \RuntimeException('No se pudo descargar el listado de comprobantes de APISUNAT.');
+            }
+
+            $page = $this->documentListFromResponse($response->json());
+            $documents = array_merge($documents, $page);
+            if (count($page) < $limit) {
+                break;
+            }
+        }
+
+        return $documents;
+    }
+
+    /**
+     * Enlaza el inventario real de APISUNAT y luego resecuencia solamente las
+     * ventas pendientes. Ante cualquier ambiguedad, ese tipo no se resecuencia.
+     *
+     * @return array{success:bool,message:string}
+     */
+    public function reconcileBranchDocuments(Branch $branch): array
+    {
+        $config = $this->resolveConfigForBranch($branch);
+        if (! $config || ! $this->isConfiguredForBranch($branch)) {
+            throw new \RuntimeException('La sucursal no tiene APISUNAT configurado.');
+        }
+
+        $documentTypes = DocumentType::where(function ($query) {
+            $query->where('name', 'like', '%boleta%')->orWhere('name', 'like', '%factura%');
+        })->get();
+        $summary = [];
+        $problems = [];
+
+        foreach ($documentTypes as $documentType) {
+            $name = mb_strtolower((string) $documentType->name, 'UTF-8');
+            $type = str_contains($name, 'factura') ? '01' : '03';
+            $series = trim((string) ($type === '01' ? $config->series_factura : $config->series_boleta));
+
+            $typeProblems = [];
+            $remoteDocuments = [];
+            try {
+                $remoteDocuments = $this->fetchAllDocuments($branch, $type, $series);
+            } catch (\Throwable $e) {
+                $typeProblems[] = "Aviso al consultar APISUNAT ({$series}): " . $e->getMessage();
+            }
+
+            $next = 0;
+            try {
+                $next = $this->fetchLastDocumentNumber($branch, $type);
+            } catch (\Throwable $e) {
+                // Se usará el número local más alto como base
+            }
+
+            $movements = Movement::with('salesMovement')
+                ->where('branch_id', $branch->id)
+                ->where('movement_type_id', 2)
+                ->where('document_type_id', $documentType->id)
+                ->orderBy('moved_at')->orderBy('id')->get();
+            $linked = 0;
+            $seenRemote = [];
+
+            DB::transaction(function () use ($remoteDocuments, $movements, $branch, $config, $type, $series, &$linked, &$seenRemote, &$typeProblems) {
+                foreach ($remoteDocuments as $document) {
+                    $remote = $this->remoteDocumentMetadata($document);
+                    if ($remote['status'] === 'EXCEPCION') {
+                        continue;
+                    }
+                    if (($remote['type'] !== '' && $remote['type'] !== $type)
+                        || ($remote['series'] !== '' && strcasecmp($remote['series'], $series) !== 0)) {
+                        continue;
+                    }
+                    if ($remote['number'] <= 0 || $remote['external_id'] === '') {
+                        $typeProblems[] = 'documento remoto sin ID o correlativo';
+                        continue;
+                    }
+                    if (isset($seenRemote[$remote['number']])) {
+                        $typeProblems[] = "{$series}-{$remote['number_padded']} esta duplicado en APISUNAT";
+                        continue;
+                    }
+                    $seenRemote[$remote['number']] = true;
+
+                    $fullNumber = $series.'-'.$remote['number_padded'];
+                    $candidates = $movements->filter(
+                        fn (Movement $movement) => $movement->electronic_invoice_external_id === $remote['external_id']
+                    );
+                    if ($candidates->isEmpty()) {
+                        $candidates = $movements->filter(
+                            fn (Movement $movement) => $movement->electronic_invoice_number === $fullNumber
+                        );
+                    }
+                    if ($candidates->isEmpty()) {
+                        $candidates = $movements->filter(
+                            fn (Movement $movement) => (empty($movement->electronic_invoice_external_id) || $movement->electronic_invoice_external_id === $remote['external_id'])
+                                && $movement->number === $remote['number_padded']
+                        );
+                    }
+                    if ($candidates->isEmpty()) {
+                        $candidates = $movements->filter(
+                            fn (Movement $movement) => (empty($movement->electronic_invoice_external_id) || $movement->electronic_invoice_external_id === $remote['external_id'])
+                                && $this->normalizeCorrelative($movement->number) === $remote['number']
+                        );
+                    }
+
+                    $unlinkedCandidates = $candidates->filter(
+                        fn (Movement $movement) => empty($movement->electronic_invoice_external_id)
+                            || $movement->electronic_invoice_external_id === $remote['external_id']
+                    );
+
+                    if ($unlinkedCandidates->isEmpty()) {
+                        $typeProblems[] = "{$fullNumber} no tiene venta local candidata disponible";
+                        continue;
+                    }
+
+                    /** @var Movement $movement */
+                    $movement = $unlinkedCandidates->first();
+                    if ($movement->electronic_invoice_external_id
+                        && $movement->electronic_invoice_external_id !== $remote['external_id']) {
+                        $typeProblems[] = "venta {$movement->id} ya enlazada a otro documento";
+                        continue;
+                    }
+
+                    $fileName = preg_replace('/\.pdf$/i', '', $remote['file_name']) ?: trim((string) $branch->ruc)."-{$type}-{$fullNumber}";
+                    $apiUrl = rtrim((string) ($config->api_url ?: config('apisunat.url')), '/');
+                    $movement->forceFill([
+                        'number' => $remote['number_padded'],
+                        'electronic_invoice_provider' => 'apisunat',
+                        'electronic_invoice_status' => 'SENT',
+                        'electronic_invoice_external_id' => $remote['external_id'],
+                        'electronic_invoice_series' => $series,
+                        'electronic_invoice_number' => $fullNumber,
+                        'electronic_invoice_file_name' => $fileName.'.pdf',
+                        'electronic_invoice_pdf_ticket_url' => $apiUrl.'/documents/'.$remote['external_id'].'/getPDF/ticket80mm/'.$fileName.'.pdf',
+                        'electronic_invoice_pdf_a4_url' => $apiUrl.'/documents/'.$remote['external_id'].'/getPDF/A4/'.$fileName.'.pdf',
+                        'electronic_invoice_xml_url' => $remote['xml_url'],
+                        'electronic_invoice_cdr_url' => $remote['cdr_url'],
+                        'electronic_invoice_response' => $remote['payload'],
+                    ])->save();
+                    $movement->salesMovement?->update(['series' => preg_replace('/^[A-Z]+/i', '', $series)]);
+                    $linked++;
+                }
+            });
+
+            $missingRemote = [];
+            for ($number = 1; $number < $next; $number++) {
+                if (! isset($seenRemote[$number])) {
+                    $missingRemote[] = str_pad((string) $number, 8, '0', STR_PAD_LEFT);
+                }
+            }
+            if ($missingRemote !== []) {
+                $typeProblems[] = "{$series} tiene huecos remotos: ".implode(', ', array_slice($missingRemote, 0, 10));
+            }
+
+            if ($typeProblems !== []) {
+                $problems = array_merge($problems, $typeProblems);
+            }
+
+            $maxLinkedNumber = 0;
+            $updatedMovements = Movement::where('branch_id', $branch->id)
+                ->where('movement_type_id', 2)
+                ->where('document_type_id', $documentType->id)
+                ->get();
+
+            $emittedIds = [];
+            foreach ($updatedMovements as $m) {
+                $extId = trim((string) $m->electronic_invoice_external_id);
+                $status = strtoupper(trim((string) $m->electronic_invoice_status));
+                if ($extId !== '' && $extId !== '0' && $status === 'SENT') {
+                    $emittedIds[] = $m->id;
+                    $num = $this->normalizeCorrelative($m->number);
+                    if ($num > $maxLinkedNumber && $num < 100000) {
+                        $maxLinkedNumber = $num;
+                    }
+                }
+            }
+
+            $startSequence = max($next, $maxLinkedNumber + 1);
+
+            $pending = Movement::with('salesMovement')
+                ->where('branch_id', $branch->id)
+                ->where('movement_type_id', 2)
+                ->where('document_type_id', $documentType->id)
+                ->whereNotIn('id', $emittedIds ?: [0])
+                ->orderBy('moved_at', 'asc')
+                ->orderBy('id', 'asc')
+                ->get();
+
+            DB::transaction(function () use ($pending, $startSequence, $series) {
+                $sequence = $startSequence;
+                foreach ($pending as $movement) {
+                    $movement->forceFill([
+                        'number' => str_pad((string) $sequence, 8, '0', STR_PAD_LEFT),
+                        'electronic_invoice_series' => null,
+                        'electronic_invoice_number' => null,
+                    ])->save();
+                    $movement->salesMovement?->update(['series' => preg_replace('/^[A-Z]+/i', '', $series)]);
+                    $sequence++;
+                }
+            });
+            $summary[] = "{$series}: {$linked} enlazados; {$pending->count()} pendientes reordenados desde ".str_pad((string) $startSequence, 8, '0', STR_PAD_LEFT);
+        }
+
+        return [
+            'success' => $problems === [],
+            'message' => 'Conciliacion APISUNAT: '.implode(' | ', $summary)
+                .($problems ? '. Revisar: '.implode('; ', array_slice(array_unique($problems), 0, 10)) : ''),
+        ];
+    }
+
+    /** @return array<string, mixed> */
+    public function remoteDocumentMetadata(array $document): array
+    {
+        $fileName = trim((string) (data_get($document, 'fileName') ?: data_get($document, 'file_name', '')));
+        $type = trim((string) data_get($document, 'type', ''));
+        $series = strtoupper(trim((string) (data_get($document, 'serie') ?: data_get($document, 'series', ''))));
+        $number = $this->normalizeCorrelative(data_get($document, 'number', ''));
+
+        if (preg_match('/-(\d{2})-([A-Z0-9]{4})-(\d{1,8})(?:\.\w+)?$/i', $fileName, $matches) === 1) {
+            $type = $type !== '' ? $type : $matches[1];
+            $series = $series !== '' ? $series : strtoupper($matches[2]);
+            $number = $number > 0 ? $number : (int) $matches[3];
+        }
+
+        return [
+            'external_id' => trim((string) (data_get($document, 'documentId') ?: data_get($document, '_id') ?: data_get($document, 'id', ''))),
+            'type' => $type,
+            'series' => $series,
+            'number' => $number,
+            'number_padded' => $number > 0 ? str_pad((string) $number, 8, '0', STR_PAD_LEFT) : '',
+            'file_name' => $fileName,
+            'status' => strtoupper(trim((string) data_get($document, 'status', ''))),
+            'xml_url' => $this->findUrlByKeyword($document, ['xml']),
+            'cdr_url' => $this->findUrlByKeyword($document, ['cdr']),
+            'payload' => $document,
+        ];
+    }
+
+    /** @return array<int, array<string, mixed>> */
+    private function documentListFromResponse(mixed $payload): array
+    {
+        if (! is_array($payload)) {
+            return [];
+        }
+        if (array_is_list($payload)) {
+            return array_values(array_filter($payload, 'is_array'));
+        }
+
+        foreach (['documents', 'data', 'payload', 'data.documents', 'payload.documents'] as $key) {
+            $candidate = data_get($payload, $key);
+            if (is_array($candidate) && array_is_list($candidate)) {
+                return array_values(array_filter($candidate, 'is_array'));
+            }
+        }
+
+        return [];
     }
 
     public function consultDocument(?Branch $branch, string $document): array
@@ -353,45 +741,19 @@ class ApisunatService
         return compact('subtotal', 'tax', 'total');
     }
 
-    public function resolveSunatIssueDate(Movement $sale): array
-    {
-        $saleDate = $sale->moved_at
-            ? \Illuminate\Support\Carbon::parse($sale->moved_at)
-            : ($sale->created_at ? \Illuminate\Support\Carbon::parse($sale->created_at) : now());
-
-        $minAllowedDate = now()->subDays(2)->startOfDay();
-        $maxAllowedDate = now()->endOfDay();
-
-        if ($saleDate->lt($minAllowedDate)) {
-            // Si la fecha original es mayor a 2 días de antigüedad, ajustar al límite SUNAT (hace 2 días)
-            $issueDate = $minAllowedDate->format('Y-m-d');
-            $issueTime = now()->format('H:i:s');
-            $adjusted = true;
-        } elseif ($saleDate->gt($maxAllowedDate)) {
-            // Si la fecha es futura, ajustar al día de hoy
-            $issueDate = now()->format('Y-m-d');
-            $issueTime = now()->format('H:i:s');
-            $adjusted = true;
-        } else {
-            $issueDate = $saleDate->format('Y-m-d');
-            $issueTime = $saleDate->format('H:i:s');
-            $adjusted = false;
-        }
-
-        return [
-            'issue_date' => $issueDate,
-            'issue_time' => $issueTime,
-            'adjusted' => $adjusted,
-        ];
-    }
-
     private function buildDocumentBody(Movement $sale, array $catalog, string $customerDocument, string $customerDocType, array $totals, string $number): array
     {
         $branch = $sale->branch;
         $customerName = trim((string) ($sale->person_name ?: 'CLIENTES VARIOS'));
         $details = $this->resolveDetailsForSale($sale);
         $defaultTaxPercent = $this->resolveDefaultTaxPercentForBranch($branch);
+
         $dates = $this->resolveSunatIssueDate($sale);
+
+        $supplierAddress = trim((string) ($branch?->address ?? ''));
+        if ($supplierAddress === '' || $supplierAddress === '-') {
+            $supplierAddress = 'AV. PRINCIPAL S/N - CHICLAYO';
+        }
 
         $documentBody = [
             'cbc:UBLVersionID' => ['_text' => '2.1'],
@@ -418,7 +780,7 @@ class ApisunatService
                         'cac:RegistrationAddress' => [
                             'cbc:AddressTypeCode' => ['_text' => '0000'],
                             'cac:AddressLine' => [
-                                'cbc:Line' => ['_text' => trim((string) ($branch?->address ?? '-'))],
+                                'cbc:Line' => ['_text' => $supplierAddress],
                             ],
                         ],
                     ],
@@ -434,7 +796,7 @@ class ApisunatService
                     ],
                     'cac:PartyLegalEntity' => [
                         'cbc:RegistrationName' => [
-                            '_text' => $customerName !== '' ? $customerName : 'CLIENTES VARIOS',
+                            '_text' => $this->sanitizeCustomerRegistrationName($customerName, $customerDocType),
                         ],
                     ],
                 ],
@@ -466,9 +828,9 @@ class ApisunatService
                 continue;
             }
 
-            $taxPercent = $defaultTaxPercent;
-            $taxFactor = $taxPercent > 0 ? ($taxPercent / 100) : 0.18;
-            $lineSubtotal = round($taxFactor > 0 ? ($lineTotal / (1 + $taxFactor)) : $lineTotal, 2);
+            $taxPercent = 18.0;
+            $taxFactor = 0.18;
+            $lineSubtotal = round($lineTotal / (1 + $taxFactor), 2);
             $lineIgv = round($lineTotal - $lineSubtotal, 2);
             $grossUnitPrice = round($lineTotal / $billableQty, 2);
             $unitValue = round($lineSubtotal / $billableQty, 2);
@@ -516,7 +878,7 @@ class ApisunatService
                             '_text' => $lineIgv,
                         ],
                         'cac:TaxCategory' => [
-                            'cbc:Percent' => ['_text' => round($taxFactor * 100, 2)],
+                            'cbc:Percent' => ['_text' => 18],
                             'cbc:TaxExemptionReasonCode' => ['_text' => '10'],
                             'cac:TaxScheme' => [
                                 'cbc:ID' => ['_text' => '1000'],
@@ -559,7 +921,7 @@ class ApisunatService
                 '_attributes' => ['currencyID' => 'PEN'],
                 '_text' => $headerTax,
             ],
-            'cac:TaxSubtotal' => [
+            'cac:TaxSubtotal' => [[
                 'cbc:TaxableAmount' => [
                     '_attributes' => ['currencyID' => 'PEN'],
                     '_text' => $headerSubtotal,
@@ -569,13 +931,14 @@ class ApisunatService
                     '_text' => $headerTax,
                 ],
                 'cac:TaxCategory' => [
+                    'cbc:Percent' => ['_text' => 18],
                     'cac:TaxScheme' => [
                         'cbc:ID' => ['_text' => '1000'],
                         'cbc:Name' => ['_text' => 'IGV'],
                         'cbc:TaxTypeCode' => ['_text' => 'VAT'],
                     ],
                 ],
-            ],
+            ]],
         ];
 
         $documentBody['cac:LegalMonetaryTotal'] = [
@@ -596,12 +959,24 @@ class ApisunatService
         return $documentBody;
     }
 
-    private function validateDocumentBodyForSunat(array $documentBody): void
+    private function validateDocumentBodyForSunat(array &$documentBody): void
     {
-        $lines = data_get($documentBody, 'cac:InvoiceLine', []);
+        $lines = &$documentBody['cac:InvoiceLine'];
         if (! is_array($lines) || count($lines) === 0) {
             throw new \RuntimeException('No se puede emitir electrónicamente: el comprobante no tiene líneas válidas para SUNAT.');
         }
+
+        // Armonización y validación SUNAT (Regla 3462): La tasa del IGV debe ser idéntica a la vigencial (18) en todas las líneas del comprobante
+        foreach ($lines as &$line) {
+            $taxReasonCode = trim((string) data_get($line, 'cac:TaxTotal.cac:TaxSubtotal.0.cac:TaxCategory.cbc:TaxExemptionReasonCode._text', '10'));
+            if ($taxReasonCode === '10') {
+                data_set($line, 'cac:TaxTotal.cac:TaxSubtotal.0.cac:TaxCategory.cbc:Percent._text', 18);
+            }
+        }
+        unset($line);
+
+        // Cabecera del IGV obligatoria al 18% para SUNAT 3462
+        data_set($documentBody, 'cac:TaxTotal.cac:TaxSubtotal.0.cac:TaxCategory.cbc:Percent._text', 18);
 
         foreach ($lines as $idx => $line) {
             $lineNumber = $idx + 1;
@@ -627,7 +1002,7 @@ class ApisunatService
             }
         }
 
-        $headerTaxSchemeId = trim((string) data_get($documentBody, 'cac:TaxTotal.cac:TaxSubtotal.cac:TaxCategory.cac:TaxScheme.cbc:ID._text', ''));
+        $headerTaxSchemeId = trim((string) data_get($documentBody, 'cac:TaxTotal.cac:TaxSubtotal.0.cac:TaxCategory.cac:TaxScheme.cbc:ID._text', ''));
         if ($headerTaxSchemeId === '') {
             throw new \RuntimeException('No se puede emitir electrónicamente: el resumen tributario del comprobante está incompleto.');
         }
@@ -648,28 +1023,51 @@ class ApisunatService
 
     private function resolveDefaultTaxPercentForBranch(?Branch $branch): float
     {
-        $taxRateId = null;
+        $val = null;
 
         if ($branch?->id) {
-            $taxRateId = BranchParameter::query()
+            $val = BranchParameter::query()
                 ->join('parameters as p', 'p.id', '=', 'branch_parameters.parameter_id')
                 ->where('branch_parameters.branch_id', $branch->id)
                 ->whereRaw('LOWER(p.description) = ?', ['igv_defecto'])
                 ->value('branch_parameters.value');
         }
 
-        $taxRate = $taxRateId
-            ? TaxRate::query()->whereKey((int) $taxRateId)->first()
-            : null;
-
-        if (! $taxRate) {
-            $taxRate = TaxRate::query()
-                ->where('status', true)
-                ->orderBy('order_num')
-                ->first();
+        if ($val !== null && is_numeric($val)) {
+            $taxRate = TaxRate::query()->whereKey((int) $val)->first();
+            if ($taxRate && is_numeric($taxRate->tax_rate) && (float) $taxRate->tax_rate > 0) {
+                return (float) $taxRate->tax_rate;
+            }
+            if ((float) $val > 0) {
+                return (float) $val;
+            }
         }
 
-        return $taxRate ? (float) $taxRate->tax_rate : 18.0;
+        $taxRate = TaxRate::query()
+            ->where('status', true)
+            ->orderBy('order_num')
+            ->first();
+
+        return ($taxRate && is_numeric($taxRate->tax_rate) && (float) $taxRate->tax_rate > 0)
+            ? (float) $taxRate->tax_rate
+            : 18.0;
+    }
+
+    private function sanitizeCustomerRegistrationName(string $name, string $docType): string
+    {
+        $name = trim($name);
+
+        // Si es boleta sin DNI (docType 0) o está vacío
+        if ($name === '' || $name === '-' || $docType === '0') {
+            return 'CLIENTES VARIOS';
+        }
+
+        // Si tiene menos de 3 caracteres (ej. "Dj"), SUNAT rechaza con el Error 2022 (estándar mínimo 3 caracteres)
+        if (mb_strlen($name, 'UTF-8') < 3) {
+            return mb_strtoupper($name, 'UTF-8') . ' CLIENTE';
+        }
+
+        return mb_strtoupper($name, 'UTF-8');
     }
 
     private function findUrlByKeyword(array $payload, array $keywords): ?string

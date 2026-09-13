@@ -3434,4 +3434,151 @@ class SalesController extends Controller
 
         return null;
     }
+
+    /**
+     * Emitir un solo comprobante de venta a APISUNAT.
+     */
+    public function emitSingleSunat(Request $request, Movement $sale, ApisunatService $apisunatService)
+    {
+        $filterKeys = ['search', 'date_from', 'date_to', 'person_id', 'document_type_id', 'payment_method_id', 'cash_shift_relation_id', 'sale_type', 'per_page', 'page'];
+        $savedFilters = session('sales_index_filters', []);
+        foreach ($filterKeys as $k) {
+            if ($request->has($k)) {
+                $savedFilters[$k] = $request->input($k);
+            }
+        }
+        session(['sales_index_filters' => $savedFilters]);
+
+        try {
+            $res = $this->syncElectronicInvoiceForSale($sale, $apisunatService);
+            if (($res['status'] ?? '') === 'SENT') {
+                $dateInfo = $apisunatService->resolveSunatIssueDate($sale);
+                $dateNotice = ($dateInfo['adjusted'] ?? false) ? ' (Fecha ajustada al límite de 2 días SUNAT)' : '';
+                return back()->with('status', "Comprobante N° {$sale->number} enviado y aceptado por SUNAT{$dateNotice}.");
+            }
+            return back()->with('error', $res['message'] ?? 'No se pudo emitir el comprobante.');
+        } catch (\Throwable $e) {
+            return back()->with('error', 'Error emitiendo a SUNAT: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Enviar masivamente Boletas y Facturas a APISUNAT.
+     */
+    public function batchSyncSunat(Request $request, ApisunatService $apisunatService)
+    {
+        $branchId = (int) session('branch_id');
+        $branch = $branchId ? Branch::find($branchId) : null;
+
+        if (! $branch || ! $apisunatService->isConfiguredForBranch($branch)) {
+            return response()->json(['success' => false, 'message' => 'Sucursal no configurada para APISUNAT.'], 422);
+        }
+
+        $movements = Movement::query()
+            ->with(['documentType', 'branch', 'salesMovement'])
+            ->where('branch_id', $branchId)
+            ->where('movement_type_id', 2)
+            ->where(function ($q) {
+                $q->whereNull('electronic_invoice_external_id')
+                  ->orWhere('electronic_invoice_status', '!=', 'SENT');
+            })
+            ->whereHas('documentType', function ($q) {
+                $q->where(DB::raw('LOWER(name)'), 'like', '%boleta%')
+                  ->orWhere(DB::raw('LOWER(name)'), 'like', '%factura%');
+            })
+            ->orderBy('moved_at', 'asc')
+            ->orderBy('id', 'asc')
+            ->get();
+
+        if ($movements->isEmpty()) {
+            return response()->json(['success' => true, 'message' => 'No hay ventas pendientes por enviar a APISUNAT.']);
+        }
+
+        $sentCount = 0;
+        $adjustedDateCount = 0;
+        $skippedCount = 0;
+        $errors = [];
+
+        foreach ($movements as $movement) {
+            if ($movement->electronic_invoice_external_id && $movement->electronic_invoice_status === 'SENT') {
+                $skippedCount++;
+                continue;
+            }
+
+            try {
+                $dateInfo = $apisunatService->resolveSunatIssueDate($movement);
+                if ($dateInfo['adjusted'] ?? false) {
+                    $adjustedDateCount++;
+                }
+
+                $res = $this->syncElectronicInvoiceForSale($movement, $apisunatService);
+                if (($res['status'] ?? '') === 'SENT') {
+                    $sentCount++;
+                } elseif (($res['status'] ?? '') === 'SKIPPED') {
+                    $skippedCount++;
+                }
+            } catch (\Throwable $e) {
+                $errors[] = "Venta N° {$movement->number} (ID {$movement->id}): " . $e->getMessage();
+            }
+        }
+
+        $dateAdjustMsg = $adjustedDateCount > 0 ? " ({$adjustedDateCount} con fecha de emisión ajustada al límite de 2 días SUNAT)" : "";
+        $errMsg = count($errors) > 0 ? ". Errores en " . count($errors) . " ventas" : "";
+        $msg = "Envío masivo completado. Enviados con éxito: {$sentCount}{$dateAdjustMsg}, Omitidos/Emitidos: {$skippedCount}{$errMsg}.";
+
+        return response()->json([
+            'success' => $sentCount > 0 || count($errors) === 0,
+            'message' => $msg,
+            'emitted_count' => $sentCount,
+            'errors' => array_slice($errors, 0, 5),
+        ]);
+    }
+
+    /**
+     * Sincronizar y resecuenciar correlativos locales en base al último comprobante registrado en APISUNAT.
+     */
+    public function reorganizeCorrelatives(Request $request, ApisunatService $apisunatService)
+    {
+        try {
+            $branchId = (int) session('branch_id');
+            $branch = $branchId ? Branch::find($branchId) : null;
+            if (! $branch) {
+                return response()->json(['success' => false, 'message' => 'No se encontró sucursal activa.'], 422);
+            }
+
+            if (! $apisunatService->isConfiguredForBranch($branch)) {
+                return response()->json(['success' => false, 'message' => 'La sucursal no tiene facturación electrónica configurada.'], 422);
+            }
+
+            return response()->json($apisunatService->reconcileBranchDocuments($branch));
+        } catch (\Throwable $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al reorganizar correlativos: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    public function syncApisunatCorrelatives(Request $request)
+    {
+        try {
+            $branchId = (int) session('branch_id');
+            $branch = $branchId ? Branch::find($branchId) : null;
+            if (! $branch) {
+                return response()->json(['success' => false, 'message' => 'No se encontró sucursal activa.'], 422);
+            }
+
+            $apisunatService = app(ApisunatService::class);
+            if (! $apisunatService->isConfiguredForBranch($branch)) {
+                return response()->json(['success' => false, 'message' => 'La sucursal no tiene facturación electrónica configurada.'], 422);
+            }
+
+            return response()->json($apisunatService->reconcileBranchDocuments($branch));
+        } catch (\Throwable $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al sincronizar con APISUNAT: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
 }

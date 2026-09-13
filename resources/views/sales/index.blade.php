@@ -1,9 +1,5 @@
 @extends('layouts.app')
 
-@push('styles')
-    <style>[x-cloak] { display: none !important; }</style>
-@endpush
-
 @section('content')
     @php
         $printJobPreviews = collect($unresolvedPrintJobs ?? [])->mapWithKeys(fn ($job) => [
@@ -22,6 +18,9 @@
                 printPreviewMeta: '',
                 printPreviewContent: '',
                 printJobPreviews: @js($printJobPreviews),
+                deletedSalesOpen: false,
+                deletedSalesLoading: false,
+                deletedSales: [],
                 openPrintPreview(jobId) {
                     const preview = this.printJobPreviews[String(jobId)];
                     if (!preview) return;
@@ -30,11 +29,58 @@
                     this.printPreviewMeta = preview.meta || '';
                     this.printPreviewContent = preview.content || '';
                     this.printPreviewOpen = true;
+                },
+                openDeletedSales() {
+                    this.deletedSalesOpen = true;
+                    this.deletedSalesLoading = true;
+                    this.deletedSales = [];
+                    fetch('{{ route("sales.deleted.list") }}', {
+                        headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
+                    })
+                        .then(res => res.json())
+                        .then(json => {
+                            if (json.success) {
+                                this.deletedSales = json.sales || json.data || [];
+                            } else {
+                                alert(json.message || 'Error al cargar ventas eliminadas.');
+                            }
+                        })
+                        .catch(err => {
+                            console.error(err);
+                            alert('Error de conexión.');
+                        })
+                        .finally(() => {
+                            this.deletedSalesLoading = false;
+                        });
+                },
+                restoreDeletedSale(saleId) {
+                    if (!confirm('¿Estás seguro de que deseas restaurar esta venta?')) return;
+                    
+                    fetch(`/admin/ventas/${saleId}/restore`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                        }
+                    })
+                    .then(res => res.json())
+                    .then(json => {
+                        if (json.success) {
+                            alert(json.message || 'Venta restaurada.');
+                            window.location.reload();
+                        } else {
+                            alert(json.message || 'Error al restaurar.');
+                        }
+                    })
+                    .catch(err => {
+                        console.error(err);
+                        alert('Error de conexión.');
+                    });
                 }
             };
         };
     </script>
-    <div x-data="window.salesPrintIndex()">
+    <div x-data="window.salesPrintIndex()" x-on:open-deleted-sales-modal.window="openDeletedSales()">
         @php
             use Illuminate\Support\Facades\Route;
 
@@ -199,17 +245,89 @@
             </div>
         </div>
 
+        <!-- Modal de Ventas Eliminadas -->
+        <div x-show="deletedSalesOpen" x-cloak @keydown.escape.window="deletedSalesOpen = false"
+            class="fixed inset-0 z-[1000001] flex items-center justify-center p-4">
+            <div class="absolute inset-0 bg-black/50" @click="deletedSalesOpen = false"></div>
+            <div class="relative flex max-h-[90vh] w-full max-w-5xl flex-col overflow-hidden rounded-2xl bg-white dark:bg-gray-900 shadow-2xl transition-all duration-300">
+                <div class="flex items-start justify-between border-b border-gray-200 dark:border-gray-800 px-6 py-5 bg-gray-50 dark:bg-gray-800/50">
+                    <div>
+                        <h3 class="font-bold text-gray-900 dark:text-white text-lg flex items-center gap-2">
+                            <i class="ri-delete-bin-line text-red-500"></i> Papelera de Ventas
+                        </h3>
+                        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Listado de ventas eliminadas recientemente. Puedes restaurar cualquier venta para regresarla al listado activo.</p>
+                    </div>
+                    <button type="button" @click="deletedSalesOpen = false"
+                        class="flex h-9 w-9 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                        aria-label="Cerrar"><i class="ri-close-line text-xl"></i></button>
+                </div>
+                
+                <div class="overflow-y-auto p-6 flex-1 min-h-[300px] flex flex-col">
+                    <!-- Loading State -->
+                    <div x-show="deletedSalesLoading" class="flex-1 flex flex-col items-center justify-center gap-3 py-12">
+                        <svg class="animate-spin h-8 w-8 text-red-500" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        <span class="text-sm font-medium text-gray-500 dark:text-gray-400">Cargando ventas eliminadas...</span>
+                    </div>
+
+                    <!-- Table of Deleted Sales -->
+                    <div x-show="!deletedSalesLoading && deletedSales.length > 0" class="table-responsive rounded-xl border border-gray-200 dark:border-gray-800 overflow-hidden shadow-sm bg-white dark:bg-gray-950">
+                        <table class="w-full min-w-[800px] text-sm">
+                            <thead>
+                                <tr class="bg-gray-900 text-white text-xs uppercase font-semibold">
+                                    <th class="px-5 py-3 text-left">Comprobante</th>
+                                    <th class="px-5 py-3 text-left">Cliente</th>
+                                    <th class="px-5 py-3 text-left">Total</th>
+                                    <th class="px-5 py-3 text-left">Eliminado por</th>
+                                    <th class="px-5 py-3 text-left">Fecha elim.</th>
+                                    <th class="px-5 py-3 text-center w-28">Acción</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
+                                <template x-for="sale in deletedSales" :key="sale.id">
+                                    <tr class="hover:bg-gray-50 dark:hover:bg-white/5 transition-colors">
+                                        <td class="px-5 py-4 font-medium text-gray-950 dark:text-white" x-text="sale.number"></td>
+                                        <td class="px-5 py-4 text-gray-600 dark:text-gray-300" x-text="sale.client"></td>
+                                        <td class="px-5 py-4 font-bold text-gray-900 dark:text-white" x-text="'S/ ' + parseFloat(sale.total).toFixed(2)"></td>
+                                        <td class="px-5 py-4 text-gray-600 dark:text-gray-300">
+                                            <span class="inline-flex items-center gap-1">
+                                                <i class="ri-user-smile-line text-slate-400"></i>
+                                                <span x-text="sale.deleted_by"></span>
+                                            </span>
+                                        </td>
+                                        <td class="px-5 py-4 text-gray-500 dark:text-gray-400" x-text="sale.deleted_at"></td>
+                                        <td class="px-5 py-4 text-center">
+                                            <button type="button" @click="restoreDeletedSale(sale.id)"
+                                                class="inline-flex items-center gap-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 text-xs font-semibold shadow-sm hover:shadow-md transition-all duration-200 active:scale-95">
+                                                <i class="ri-history-line"></i> Restaurar
+                                            </button>
+                                        </td>
+                                    </tr>
+                                </template>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Empty State -->
+                    <div x-show="!deletedSalesLoading && deletedSales.length === 0" class="flex-1 flex flex-col items-center justify-center gap-2 py-12">
+                        <div class="h-16 w-16 rounded-full bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-slate-400 dark:text-slate-500">
+                            <i class="ri-checkbox-circle-line text-3xl"></i>
+                        </div>
+                        <h4 class="font-bold text-slate-700 dark:text-slate-300 text-base">La papelera está vacía</h4>
+                        <p class="text-sm text-slate-500 dark:text-slate-400">No se encontraron ventas eliminadas para esta sucursal.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <x-common.component-card title="Listado de ventas" desc="Gestiona las ventas registradas.">
             <div class="flex flex-col gap-4">
                 <form method="GET" class="w-full flex flex-col gap-4">
                     @if ($viewId)
                         <input type="hidden" name="view_id" value="{{ $viewId }}">
                     @endif
-
-                    @if (!empty($showDeleted))
-                        <input type="hidden" name="show_deleted" value="1">
-                    @endif
-
                     <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
                         <div class="flex flex-1 flex-col gap-3 sm:flex-row sm:items-center flex-wrap">
 
@@ -220,26 +338,25 @@
                                     <i class="ri-search-line"></i>
                                 </span>
                                 <input type="text" name="search" value="{{ $search }}" placeholder="Buscar..."
-                                    class="dark:bg-dark-900 shadow-theme-xs focus:border-[#124731] focus:ring-[#124731]/10 dark:focus:border-[#124731] h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 pl-12 text-sm text-gray-800 placeholder:text-gray-400 focus:ring-3 focus:outline-hidden dark:border-gray-700 dark:bg-gray-900 dark:text-white/90" />
+                                    class="dark:bg-dark-900 shadow-theme-xs focus:border-[#111827] focus:ring-[#111827]/10 dark:focus:border-[#111827] h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 pl-12 text-sm text-gray-800 placeholder:text-gray-400 focus:ring-3 focus:outline-hidden dark:border-gray-700 dark:bg-gray-900 dark:text-white/90" />
                             </div>
-                            <div class="flex gap-2 w-full sm:w-auto">
+                            <div class="flex gap-2 w-full sm:w-auto flex-wrap">
                                 <x-ui.button size="md" variant="primary" type="submit"
                                     class="h-11 w-full sm:w-auto px-6 shadow-sm hover:shadow-md transition-all duration-200 active:scale-95"
-                                    style="background-color: #0A2E1F; border-color: #0A2E1F;">
+                                    style="background-color: #09090b; border-color: #09090b;">
                                     <i class="ri-search-line text-gray-100"></i>
-                                    <span class="font-medium text-gray-100 hidden sm:inline">Buscar</span>
+                                    <span class="font-medium text-gray-100">Buscar</span>
                                 </x-ui.button>
                                 <x-ui.link-button size="md" variant="outline"
                                     href="{{ route('sales.index', array_merge($viewId ? ['view_id' => $viewId] : [], ['clear_filters' => 1])) }}"
                                     class="h-11 w-full sm:w-auto px-6 border-gray-200 text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-all duration-200">
                                     <i class="ri-refresh-line"></i>
-                                    <span class="font-medium hidden sm:inline">Limpiar</span>
+                                    <span class="font-medium">Limpiar</span>
                                 </x-ui.link-button>
-
-                                <button type="button" @click="$dispatch('open-deleted-sales-modal')"
-                                    class="h-11 w-full sm:w-auto px-5 rounded-lg border border-red-300 bg-white text-red-700 hover:bg-red-50 hover:border-red-400 transition-all duration-200 shadow-xs flex items-center justify-center gap-2">
-                                    <i class="ri-delete-bin-line text-lg text-red-600"></i>
-                                    <span class="font-medium hidden sm:inline">Ver Eliminadas</span>
+                                <button type="button" @click="openDeletedSales()"
+                                    class="h-11 w-full sm:w-auto px-6 border border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 transition-all duration-200 rounded-lg inline-flex items-center justify-center gap-1.5 font-medium text-sm">
+                                    <i class="ri-delete-bin-line"></i>
+                                    <span>Ver Eliminadas</span>
                                 </button>
                             </div>
                         </div>
@@ -248,7 +365,7 @@
                             @if ($topOperations->isNotEmpty())
                                 @foreach ($topOperations as $operation)
                                     @php
-                                        $topColor = $operation->color ?: '#124731';
+                                        $topColor = $operation->color ?: '#111827';
                                         $topTextColor = '#FFFFFF';
                                         $topStyle = "background-color: {$topColor}; color: {$topTextColor};";
                                         $topActionUrl = $resolveActionUrl($operation->action ?? '', null, $operation);
@@ -261,7 +378,7 @@
                                 @endforeach
                             @else
                                 <x-ui.link-button size="md" variant="primary"
-                                    style="background-color: #124731; color: #FFFFFF;"
+                                    style="background-color: #111827; color: #FFFFFF;"
                                     href="{{ route('sales.create', $viewId ? ['view_id' => $viewId] : []) }}"
                                     class="h-11">
                                     <i class="ri-add-line"></i>
@@ -277,7 +394,7 @@
                                 $filterClass = 'shrink-0';
                                 $labelClass = 'mb-1.5 block text-xs font-medium text-gray-600 dark:text-gray-400';
                                 $inputClass =
-                                    'h-11 w-full lg:w-[155px] rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 shadow-theme-xs focus:border-brand-300 focus:outline-hidden focus:ring-2 focus:ring-brand-500/10 dark:border-gray-600 dark:bg-gray-900 dark:text-white/90 dark:focus:border-[#124731]';
+                                    'h-11 w-full lg:w-[155px] rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 shadow-theme-xs focus:border-brand-300 focus:outline-hidden focus:ring-2 focus:ring-brand-500/10 dark:border-gray-600 dark:bg-gray-900 dark:text-white/90 dark:focus:border-[#111827]';
                             @endphp
 
                             <div class="{{ $filterClass }}">
@@ -320,7 +437,7 @@
                             <div class="{{ $filterClass }}">
                                 <label class="{{ $labelClass }}">Turno</label>
                                 <select name="cash_shift_relation_id" class="{{ $inputClass }}">
-                                    <option value="" @selected(($cashShiftRelationId ?? '') === '' || ($cashShiftRelationId ?? '') === 'all')>Todos</option>
+                                    <option value="">Todos</option>
                                     @foreach ($cashShiftSessions ?? [] as $csr)
                                         @php
                                             $shiftName = $csr->cashMovementStart?->shift?->name ?? 'Turno';
@@ -329,7 +446,7 @@
                                             $statusLabel = $csrStatus === '1' ? 'En curso' : 'Cerrado';
                                             $csrLabel = $shiftName . ($started ? ' | ' . $started : '') . ' (' . $statusLabel . ')';
                                         @endphp
-                                        <option value="{{ $csr->id }}" @selected(($cashShiftRelationId ?? '') == $csr->id && ($cashShiftRelationId !== 'all' && $cashShiftRelationId !== '' && $cashShiftRelationId !== null))>
+                                        <option value="{{ $csr->id }}" @selected(($cashShiftRelationId ?? '') == $csr->id)>
                                             {{ $csrLabel }}
                                         </option>
                                     @endforeach
@@ -345,31 +462,26 @@
                                 </select>
                             </div>
                         </div>
-                             <button type="button" onclick="sincronizarApisunat()"
-                                 class="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 text-sm font-medium text-white shadow-sm transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
-                                 <i class="ri-refresh-line text-base"></i>
-                                 <span>Sincronizar APISUNAT</span>
-                             </button>
-                             <button type="button" onclick="descargarPdf()"
-                                 data-pdf-url="{{ route(
-                                     'admin.sales.pdf',
-                                     array_filter([
-                                         'view_id' => $viewId ?? null,
-                                         'date_from' => $dateFrom,
-                                         'date_to' => $dateTo,
-                                         'search' => $search,
-                                         'document_type_id' => $documentTypeId ?? null,
-                                         'payment_method_id' => $paymentMethodId ?? null,
-                                         'cash_register_id' => $cashRegisterId ?? null,
-                                         'cash_shift_relation_id' => $cashShiftRelationId ?? null,
-                                         'sale_type' => $saleType ?? null,
-                                         'show_deleted' => !empty($showDeleted) ? 1 : null,
-                                     ]),
-                                 ) }}"
-                                 class="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-orange-600 px-4 text-sm font-medium text-white shadow-sm transition hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2">
-                                 <i class="ri-file-pdf-line text-base"></i>
-                                 <span>Descargar PDF</span>
-                             </button>
+                        <div class="shrink-0 flex flex-wrap items-center gap-2">
+                            <button type="button" onclick="descargarPdf()"
+                                data-pdf-url="{{ route(
+                                    'admin.sales.pdf',
+                                    array_filter([
+                                        'view_id' => $viewId ?? null,
+                                        'date_from' => $dateFrom,
+                                        'date_to' => $dateTo,
+                                        'search' => $search,
+                                        'document_type_id' => $documentTypeId ?? null,
+                                        'payment_method_id' => $paymentMethodId ?? null,
+                                        'cash_register_id' => $cashRegisterId ?? null,
+                                        'cash_shift_relation_id' => $cashShiftRelationId ?? null,
+                                        'sale_type' => $saleType ?? null,
+                                    ]),
+                                ) }}"
+                                class="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-orange-600 px-4 text-sm font-medium text-white shadow-sm transition hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2">
+                                <i class="ri-file-pdf-line text-base"></i>
+                                <span>Descargar PDF</span>
+                            </button>
                             <button type="button" onclick="descargarExcel()"
                                 data-excel-url="{{ route(
                                     'admin.sales.excel',
@@ -383,7 +495,6 @@
                                         'cash_register_id' => $cashRegisterId ?? null,
                                         'cash_shift_relation_id' => $cashShiftRelationId ?? null,
                                         'sale_type' => $saleType ?? null,
-                                        'show_deleted' => !empty($showDeleted) ? 1 : null,
                                     ]),
                                 ) }}"
                                 class="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-emerald-600 px-4 text-sm font-medium text-white shadow-sm transition hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2">
@@ -405,6 +516,25 @@
                             @endif
                         </div>
                     </div>
+
+                    {{-- Botones de Acción Masivos --}}
+                    <div class="flex flex-wrap items-center gap-2 mt-3">
+                        <button type="button" onclick="sincronizarApisunat()"
+                            class="inline-flex h-11 items-center gap-2 rounded-lg bg-blue-600 px-4 text-sm font-medium text-white shadow-sm hover:bg-blue-700 transition">
+                            <i class="ri-cloud-line text-base"></i>
+                            <span>Sincronizar APISUNAT</span>
+                        </button>
+                        <button type="button" onclick="reorganizarCorrelativos()"
+                            class="inline-flex h-11 items-center gap-2 rounded-lg bg-indigo-600 px-4 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 transition">
+                            <i class="ri-sort-asc text-base"></i>
+                            <span>Reordenar Correlativos</span>
+                        </button>
+                        <button type="button" onclick="enviarLoteApisunat()"
+                            class="inline-flex h-11 items-center gap-2 rounded-lg bg-emerald-600 px-4 text-sm font-medium text-white shadow-sm hover:bg-emerald-700 transition">
+                            <i class="ri-cloud-upload-line text-base"></i>
+                            <span>Enviar Pendientes a APISUNAT</span>
+                        </button>
+                    </div>
                 </form>
             </div>
 
@@ -412,7 +542,7 @@
                 class="table-responsive mt-4 rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03]">
                 <table class="w-full min-w-[1100px]">
                     <thead>
-                        <tr style="background-color: #124731; color: #FFFFFF;">
+                        <tr style="background-color: #111827; color: #FFFFFF;">
                             <th class="px-5 py-3 text-left sm:px-6 first:rounded-tl-xl sticky-left-header">
                                 <p class="font-semibold text-white text-center text-theme-xs uppercase">#</p>
                             </th>
@@ -442,12 +572,12 @@
                     <tbody>
                         @forelse ($sales as $sale)
                             <tr
-                                class="border-b border-gray-100 transition {{ $sale->trashed() ? 'bg-red-50/70 dark:bg-red-950/20' : 'hover:bg-gray-50 dark:border-gray-800 dark:hover:bg-white/5' }}">
+                                class="border-b border-gray-100 transition hover:bg-gray-50 dark:border-gray-800 dark:hover:bg-white/5">
                                 <td class="px-4 text-center justify-center py-4 sm:px-6 sticky-left">
                                     <div class="flex items-center justify-center gap-2">
                                         <button type="button"
                                             @click="openRow === {{ $sale->id }} ? openRow = null : openRow = {{ $sale->id }}"
-                                            class="inline-flex h-6 w-6 items-center justify-center rounded-full bg-[#124731] text-white transition hover:bg-[#0A2E1F]">
+                                            class="inline-flex h-6 w-6 items-center justify-center rounded-full bg-[#111827] text-white transition hover:bg-[#09090b]">
                                             <i class="ri-add-line" x-show="openRow !== {{ $sale->id }}"></i>
                                             <i class="ri-subtract-line" x-show="openRow === {{ $sale->id }}"></i>
                                         </button>
@@ -458,7 +588,22 @@
                                         @php
                                             $displayNumber = trim((string) ($sale->electronic_invoice_number ?? ''));
                                             if ($displayNumber === '') {
-                                                $displayNumber = strtoupper(substr($sale->documentType->name, 0, 1)) . ($sale->salesMovement->series ?? '') . '-' . $sale->number;
+                                                $cleanCorrelative = app(\App\Services\ApisunatService::class)->normalizeCorrelative($sale->number);
+                                                $paddedCorrelative = str_pad((string) $cleanCorrelative, 8, '0', STR_PAD_LEFT);
+                                                if (!empty($sale->electronic_invoice_series)) {
+                                                    $seriesPrefix = $sale->electronic_invoice_series;
+                                                } else {
+                                                    $docName = $sale->documentType?->name ?? '';
+                                                    $letter = strtoupper(substr(trim($docName), 0, 1)) ?: 'B';
+                                                    $rawSeries = trim((string) ($sale->salesMovement?->series ?? '001'));
+                                                    if ($rawSeries === '') {
+                                                        $rawSeries = '001';
+                                                    }
+                                                    $seriesPrefix = preg_match('/^[A-Za-z]/', $rawSeries)
+                                                        ? strtoupper($rawSeries)
+                                                        : $letter . str_pad($rawSeries, 3, '0', STR_PAD_LEFT);
+                                                }
+                                                $displayNumber = $seriesPrefix . '-' . $paddedCorrelative;
                                             }
                                         @endphp
                                         <p class="font-bold text-gray-800 text-theme-sm dark:text-white/90">
@@ -478,7 +623,7 @@
                                         {{ number_format((float) ($sale->salesMovement?->tax ?? 0), 2) }}</p>
                                 </td>
                                 <td class="px-5 text-center py-4 sm:px-6">
-                                    <p class="font-bold text-[#124731] text-theme-sm dark:text-[#124731]/80">S/ 
+                                    <p class="font-bold text-[#111827] text-theme-sm dark:text-[#111827]/80">S/ 
                                         {{ number_format((float) ($sale->salesMovement?->total ?? 0), 2) }}</p>
                                 </td>
                                 <td class="px-5 py-4 sm:px-6">
@@ -492,10 +637,7 @@
                                         $status = $sale->status ?? 'A';
                                         $badgeColor = 'success';
                                         $badgeText = 'Activo';
-                                        if ($sale->trashed()) {
-                                            $badgeColor = 'error';
-                                            $badgeText = 'Eliminado';
-                                        } elseif ($status === 'P') {
+                                        if ($status === 'P') {
                                             $badgeColor = 'warning';
                                             $badgeText = 'Pendiente';
                                         } elseif ($status !== 'A') {
@@ -509,6 +651,34 @@
                                 </td>
                                 <td class="px-5 text-center py-4 sm:px-6">
                                     <div class="flex items-center justify-center gap-2">
+                                        @php
+                                            $docName = mb_strtolower(trim((string) ($sale->documentType?->name ?? '')), 'UTF-8');
+                                            $isEligibleSunat = str_contains($docName, 'boleta') || str_contains($docName, 'factura');
+                                            $isAlreadySentSunat = !empty($sale->electronic_invoice_external_id) || ($sale->electronic_invoice_status ?? '') === 'SENT';
+                                        @endphp
+                                        @if ($isEligibleSunat && !$isAlreadySentSunat && !$sale->trashed())
+                                            <div class="relative group">
+                                                <form method="POST" action="{{ route('sales.emit.sunat', $sale->id) }}" class="inline-block">
+                                                    @csrf
+                                                    @if ($viewId)
+                                                        <input type="hidden" name="view_id" value="{{ $viewId }}">
+                                                    @endif
+                                                    @foreach (request()->query() as $qKey => $qVal)
+                                                        @if ($qKey !== 'view_id' && !is_array($qVal))
+                                                            <input type="hidden" name="{{ $qKey }}" value="{{ $qVal }}">
+                                                        @endif
+                                                    @endforeach
+                                                    <button type="submit" class="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-blue-600 text-white shadow-sm transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500/40" title="Enviar a SUNAT">
+                                                        <i class="ri-cloud-upload-line"></i>
+                                                    </button>
+                                                </form>
+                                                <span
+                                                    class="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-3 whitespace-nowrap rounded-md bg-gray-900 px-2.5 py-1 text-xs text-white opacity-0 transition group-hover:opacity-100 z-[100] shadow-xl">
+                                                    Enviar a APISUNAT
+                                                    <span class="absolute top-full left-1/2 -ml-1 border-4 border-transparent border-t-gray-900"></span>
+                                                </span>
+                                            </div>
+                                        @endif
                                         @php
                                             $documentName = mb_strtolower(trim((string) ($sale->documentType?->name ?? '')), 'UTF-8');
                                             $canConvertTicket = str_contains($documentName, 'ticket');
@@ -547,41 +717,8 @@
                                                         class="absolute top-full left-1/2 -ml-1 border-4 border-transparent border-t-gray-900"></span>
                                                 </span>
                                             </div>
-                                         @endif
-
-                                         @php
-                                             $docName = mb_strtolower(trim((string) ($sale->documentType?->name ?? '')), 'UTF-8');
-                                             $isEligibleSunat = str_contains($docName, 'boleta') || str_contains($docName, 'factura');
-                                             $isAlreadySentSunat = !empty($sale->electronic_invoice_external_id) || ($sale->electronic_invoice_status ?? '') === 'SENT';
-                                         @endphp
-                                         @if ($isEligibleSunat && !$isAlreadySentSunat && !$sale->trashed())
-                                             <div class="relative group">
-                                                 <form method="POST" action="{{ route('sales.emit.sunat', $sale->id) }}">
-                                                     @csrf
-                                                     @if ($viewId)
-                                                         <input type="hidden" name="view_id" value="{{ $viewId }}">
-                                                     @endif
-                                                     @foreach (request()->query() as $qKey => $qVal)
-                                                         @if ($qKey !== 'view_id' && !is_array($qVal))
-                                                             <input type="hidden" name="{{ $qKey }}" value="{{ $qVal }}">
-                                                         @endif
-                                                     @endforeach
-                                                     <button type="submit"
-                                                         class="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-blue-600 text-white shadow-sm transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500/40"
-                                                         aria-label="Enviar a SUNAT">
-                                                         <i class="ri-cloud-upload-line"></i>
-                                                     </button>
-                                                     <span
-                                                         class="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-3 whitespace-nowrap rounded-md bg-gray-900 px-2.5 py-1 text-xs text-white opacity-0 transition group-hover:opacity-100 z-[100] shadow-xl">
-                                                         Enviar a SUNAT
-                                                         <span
-                                                             class="absolute top-full left-1/2 -ml-1 border-4 border-transparent border-t-gray-900"></span>
-                                                     </span>
-                                                 </form>
-                                             </div>
-                                         @endif
-
-                                         @if ($rowOperations->isNotEmpty())
+                                        @endif
+                                        @if ($rowOperations->isNotEmpty())
                                             @foreach ($rowOperations as $operation)
                                                 @php
                                                     $action = $operation->action ?? '';
@@ -599,7 +736,7 @@
                                                             $separator . 'movement_id=' . urlencode($sale->id);
                                                     }
 
-                                                    $buttonColor = $operation->color ?: '#124731';
+                                                    $buttonColor = $operation->color ?: '#111827';
                                                     $buttonTextColor = str_contains($action, 'edit')
                                                         ? '#111827'
                                                         : '#FFFFFF';
@@ -611,35 +748,34 @@
                                                             : 'primary');
                                                     $variant = $isPrint ? 'outline' : $variant;
                                                 @endphp
+
                                                 @if ($isDelete)
-                                                    @if (!$sale->trashed())
-                                                        <form method="POST" action="{{ $actionUrl }}"
-                                                            class="relative group js-swal-delete"
-                                                            data-swal-title="Eliminar venta?"
-                                                            data-swal-text="Se eliminara la venta {{ $sale->number }}. Esta accion no se puede deshacer."
-                                                            data-swal-confirm="Si, eliminar" data-swal-cancel="Cancelar"
-                                                            data-swal-confirm-color="#ef4444"
-                                                            data-swal-cancel-color="#6b7280">
-                                                            @csrf
-                                                            @method('DELETE')
-                                                            @if ($viewId)
-                                                                <input type="hidden" name="view_id"
-                                                                    value="{{ $viewId }}">
-                                                            @endif
-                                                            <x-ui.button size="icon" variant="{{ $variant }}"
-                                                                type="submit" className="rounded-xl"
-                                                                style="{{ $buttonStyle }}"
-                                                                aria-label="{{ $operation->name }}">
-                                                                <i class="{{ $operation->icon }}"></i>
-                                                            </x-ui.button>
+                                                    <form method="POST" action="{{ $actionUrl }}"
+                                                        class="relative group js-swal-delete"
+                                                        data-swal-title="Eliminar venta?"
+                                                        data-swal-text="Se eliminara la venta {{ $sale->number }}. Esta accion no se puede deshacer."
+                                                        data-swal-confirm="Si, eliminar" data-swal-cancel="Cancelar"
+                                                        data-swal-confirm-color="#ef4444"
+                                                        data-swal-cancel-color="#6b7280">
+                                                        @csrf
+                                                        @method('DELETE')
+                                                        @if ($viewId)
+                                                            <input type="hidden" name="view_id"
+                                                                value="{{ $viewId }}">
+                                                        @endif
+                                                        <x-ui.button size="icon" variant="{{ $variant }}"
+                                                            type="submit" className="rounded-xl"
+                                                            style="{{ $buttonStyle }}"
+                                                            aria-label="{{ $operation->name }}">
+                                                            <i class="{{ $operation->icon }}"></i>
+                                                        </x-ui.button>
+                                                        <span
+                                                            class="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-3 whitespace-nowrap rounded-md bg-gray-900 px-2.5 py-1 text-xs text-white opacity-0 transition group-hover:opacity-100 z-[100] shadow-xl">
+                                                            {{ $operation->name }}
                                                             <span
-                                                                class="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-3 whitespace-nowrap rounded-md bg-gray-900 px-2.5 py-1 text-xs text-white opacity-0 transition group-hover:opacity-100 z-[100] shadow-xl">
-                                                                {{ $operation->name }}
-                                                                <span
-                                                                    class="absolute top-full left-1/2 -ml-1 border-4 border-transparent border-t-gray-900"></span>
-                                                            </span>
-                                                        </form>
-                                                    @endif
+                                                                class="absolute top-full left-1/2 -ml-1 border-4 border-transparent border-t-gray-900"></span>
+                                                        </span>
+                                                    </form>
                                                 @elseif ($isPrint)
                                                     <div class="relative group">
                                                         <x-ui.link-button size="icon" variant="outline"
@@ -750,7 +886,7 @@
                                 <td colspan="8" class="px-6 py-5">
                                     <div class="rounded-xl border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-900 overflow-hidden shadow-sm">
                                         <div class="px-4 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/80 flex items-center gap-2">
-                                            <i class="ri-file-list-3-line text-[#124731]"></i>
+                                            <i class="ri-file-list-3-line text-[#111827]"></i>
                                             <h4 class="text-sm font-bold text-gray-700 dark:text-gray-200">Detalle de la venta #{{ $sale->salesMovement?->number ?? $sale->id }}</h4>
                                         </div>
                                         @php
@@ -861,7 +997,7 @@
                                             registradas.</p>
                                         <p class="text-gray-500">Crea la primera venta para comenzar.</p>
                                         <x-ui.link-button size="sm" variant="primary"
-                                            style="background-color: #124731; color: #FFFFFF;"
+                                            style="background-color: #111827; color: #FFFFFF;"
                                             href="{{ route('sales.create', $viewId ? ['view_id' => $viewId] : []) }}">
                                             <i class="ri-add-line"></i>
                                             <span>Registrar venta</span>
@@ -888,6 +1024,7 @@
                 </div>
             </div>
         </x-common.component-card>
+    </div>
 
     <div x-data="{ open: false, saleId: null, personId: '', documentTypeId: '{{ $firstConvertibleDocumentTypeId }}' }"
         x-on:open-convert-ticket-modal.window="
@@ -939,7 +1076,7 @@
                         @if ($branch ?? null)
                             <button type="button" title="Nuevo cliente"
                                 onclick="window.dispatchEvent(new CustomEvent('open-person-modal'))"
-                                class="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-gray-300 bg-white text-[#124731] hover:bg-[#124731]/10 dark:border-gray-600 dark:bg-gray-800 dark:hover:bg-[#124731]/20">
+                                class="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-gray-300 bg-white text-[#111827] hover:bg-[#111827]/10 dark:border-gray-600 dark:bg-gray-800 dark:hover:bg-[#111827]/20">
                                 <i class="ri-add-line text-xl"></i>
                             </button>
                         @endif
@@ -970,7 +1107,7 @@
                 <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div class="flex items-center gap-4">
                         <div
-                            class="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#124731]/10 text-[#124731] dark:bg-[#124731]/20 dark:text-[#124731]">
+                            class="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#111827]/10 text-[#111827] dark:bg-[#111827]/20 dark:text-[#111827]">
                             <i class="ri-user-add-line text-2xl"></i>
                         </div>
                         <div>
@@ -999,7 +1136,7 @@
                             Cancelar
                         </button>
                         <button type="submit"
-                            class="px-5 py-2.5 rounded-xl bg-[#124731] text-white font-semibold hover:bg-[#0A2E1F] shadow-lg shadow-[#124731]/30 transition-all">
+                            class="px-5 py-2.5 rounded-xl bg-[#111827] text-white font-semibold hover:bg-[#09090b] shadow-lg shadow-[#111827]/30 transition-all">
                             <i class="ri-save-line mr-1"></i> Guardar Cliente
                         </button>
                     </div>
@@ -1019,9 +1156,8 @@
                 function openSaleTicketPdfTab(movementId) {
                     if (!movementId) return;
                     let ticketUrl = salesTicketPrintBaseUrl.replace('__SALE__', movementId);
-                    ticketUrl += (ticketUrl.includes('?') ? '&' : '?') + 'direct_print=1';
                     if (salesIndexViewId) {
-                        ticketUrl += '&view_id=' + encodeURIComponent(salesIndexViewId);
+                        ticketUrl += (ticketUrl.includes('?') ? '&' : '?') + 'view_id=' + encodeURIComponent(salesIndexViewId);
                     }
                     window.open(ticketUrl, '_blank', 'noopener,noreferrer');
                 }
@@ -1054,20 +1190,13 @@
                 }
 
                 function resolveStrictLocalPrinterName() {
-                    try {
-                        const localPrinter = String(localStorage.getItem('xinergia_local_printer_name') ||
-                            localStorage.getItem('xinergia_print_bridge_printer') || '').trim();
-                        if (localPrinter) return localPrinter;
-                    } catch (e) {}
                     const sel = document.getElementById('sales-index-thermal-printer');
                     if (sel && sel.value) {
                         const opt = sel.options[sel.selectedIndex];
                         const label = String(opt?.textContent || '').split('â€”')[0].trim();
                         if (label) return label;
                     }
-                    const host = String(window.location.hostname || '').trim().toLowerCase();
-                    const isLocalhost = ['localhost', '127.0.0.1', '::1'].includes(host);
-                    return isLocalhost ? 'BARRA' : 'BARRA2';
+                    return @json(optional(($thermalPrinters ?? collect())->first())->name);
                 }
 
                 function requiresStrictLocalQz(printerName) {
@@ -1107,15 +1236,38 @@
                     const printerId = sel && sel.value ? parseInt(sel.value, 10) : null;
                     const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
                     const preferredPrinterName = resolveStrictLocalPrinterName();
+                    const strictLocalQz = requiresStrictLocalQz(preferredPrinterName);
                     const body = {
                         movement_id: movementId,
-                        printer_name: preferredPrinterName || null
                     };
+                    if (preferredPrinterName) body.printer_name = preferredPrinterName;
                     if (printerId) {
                         body.printer_id = printerId;
                     }
 
-                    // Prioridad 1: QZ Tray si está activo localmente
+                    // Prioridad 1: impresión RAW por la IP configurada.
+                    if (@json((bool) ($clientOnLocalNetwork ?? false))) try {
+                        const networkResponse = await fetch(salesThermalPrintUrl, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': csrf,
+                                Accept: 'application/json',
+                            },
+                            credentials: 'same-origin',
+                            body: JSON.stringify(body),
+                        });
+                        const networkData = networkResponse.headers.get('content-type')?.includes('application/json') ?
+                            await networkResponse.json() : null;
+                        if (networkResponse.ok && networkData?.success) {
+                            thermalPrintToast('Impresión', networkData.message || 'Comprobante enviado por red.', 'success');
+                            return;
+                        }
+                    } catch (networkError) {
+                        console.warn('Impresión por IP no disponible; se intentará QZ.', networkError);
+                    }
+
+                    // Prioridad 2: QZ Tray como respaldo.
                     if (qzApi && await ensureQzTrayConnected(qzApi, preferredPrinterName)) {
                         try {
                             const tr = await fetch(salesThermalPrintUrl, {
@@ -1130,46 +1282,102 @@
                             });
                             const td = tr.headers.get('content-type')?.includes('application/json') ? await tr.json() : null;
                             if (tr.ok && td?.duplicate_skipped) return;
-                            if (tr.ok && td?.success && (td?.ticket_pdf_b64 || td?.ticket_html_b64)) {
-                                let printerName = preferredPrinterName || td.printer_name || '';
-                                if (!printerName) {
-                                    printerName = await qzApi.printers.getDefault();
-                                }
-                                const paperMm = (parseInt(td.paper_width, 10) || 58) === 80 ? 80 : 58;
-                                const paperHeight = Math.max(120, parseFloat(td.paper_height) || 200);
-                                const sizeOpts = { units: 'mm', size: { width: paperMm, height: paperHeight } };
-                                const configPdf = qzApi.configs.create(printerName, {
-                                    ...sizeOpts,
-                                    scaleContent: true,
-                                    rasterize: false,
-                                    colorType: 'blackwhite',
-                                });
-                                const printHtmlTicket = () => qzApi.print(configPdf, [{
-                                    type: 'pixel',
-                                    format: 'html',
+                            if (!tr.ok || !td?.success || (!td?.payload_b64 && !td?.ticket_pdf_b64 && !td?.ticket_html_b64)) {
+                                throw new Error(td?.message || 'No se pudo obtener el ticket del servidor.');
+                            }
+                            let printerName = preferredPrinterName || td.printer_name || '';
+                            if (!printerName) {
+                                printerName = await qzApi.printers.getDefault();
+                            }
+                            if (!printerName) {
+                                openSaleTicketPdfTab(movementId);
+                                return;
+                            }
+                            const paperMm = 80;
+                            const paperHeight = Math.max(120, parseFloat(td.paper_height) || 200);
+                            const sizeOpts = { units: 'mm', size: { width: paperMm, height: paperHeight } };
+                            const configPdf = qzApi.configs.create(printerName, {
+                                ...sizeOpts,
+                                scaleContent: true,
+                                rasterize: false,
+                                colorType: 'blackwhite',
+                            });
+                            const configRaw = qzApi.configs.create(printerName, {
+                                units: 'mm',
+                                size: {
+                                    width: paperMm,
+                                    height: paperHeight,
+                                },
+                                margins: 0,
+                                scaleContent: false,
+                            });
+                            const printHtmlTicket = () => qzApi.print(configPdf, [{
+                                type: 'pixel',
+                                format: 'html',
+                                flavor: 'base64',
+                                data: td.ticket_html_b64,
+                            }]);
+                            if (td.payload_b64) {
+                                await qzApi.print(configRaw, [{
+                                    type: 'raw',
+                                    format: 'command',
                                     flavor: 'base64',
-                                    data: td.ticket_html_b64,
+                                    data: td.payload_b64,
                                 }]);
-                                if (td.ticket_pdf_b64 && td.qz_print_format === 'pdf') {
+                            } else if (td.ticket_pdf_b64 && td.qz_print_format === 'pdf') {
+                                try {
                                     await qzApi.print(configPdf, [{
                                         type: 'pixel',
                                         format: 'pdf',
                                         flavor: 'base64',
                                         data: td.ticket_pdf_b64,
-                                        options: { ignoreTransparency: true },
+                                        options: {
+                                            ignoreTransparency: true,
+                                        },
                                     }]);
-                                } else {
-                                    await printHtmlTicket();
+                                } catch (pdfErr) {
+                                    console.warn('QZ Tray: resultado PDF incierto; no se reintenta para evitar duplicados', pdfErr);
+                                    throw pdfErr;
                                 }
-                                thermalPrintToast('Impresión', 'Comprobante enviado a "' + printerName + '".', 'success');
-                                return;
+                            } else {
+                                await printHtmlTicket();
                             }
+                            thermalPrintToast('Impresión', 'Comprobante enviado a "' + printerName + '".', 'success');
                         } catch (e) {
                             console.warn('QZ Ticket listado:', e);
+                            if (strictLocalQz) {
+                                openSaleTicketPdfTab(movementId);
+                                return;
+                            }
+                            try {
+                                const tr = await fetch(salesThermalPrintUrl, {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                        'X-CSRF-TOKEN': csrf,
+                                        Accept: 'application/json',
+                                    },
+                                    credentials: 'same-origin',
+                                    body: JSON.stringify(body),
+                                });
+                                const td = tr.headers.get('content-type')?.includes('application/json') ? await tr.json() : null;
+                                if (tr.ok && td?.success) {
+                                    thermalPrintToast('Impresión', td.message || 'Enviado a la ticketera.', 'success');
+                                } else {
+                                    openSaleTicketPdfTab(movementId);
+                                }
+                            } catch (e2) {
+                                openSaleTicketPdfTab(movementId);
+                            }
                         }
+                        return;
                     }
 
-                    // Fallback principal: Impresión vía servidor/red/puente (idéntico a la acción de cobro)
+                    if (strictLocalQz) {
+                        openSaleTicketPdfTab(movementId);
+                        return;
+                    }
+
                     try {
                         const tr = await fetch(salesThermalPrintUrl, {
                             method: 'POST',
@@ -1183,17 +1391,12 @@
                         });
                         const td = tr.headers.get('content-type')?.includes('application/json') ? await tr.json() : null;
                         if (tr.ok && td?.success) {
-                            if (td?.print_bridge) {
-                                thermalPrintToast('En Cola', td.message || 'Comprobante enviado a la cola de impresión.', 'info');
-                            } else {
-                                thermalPrintToast('Impresión', td.message || 'Enviado a la ticketera.', 'success');
-                            }
+                            thermalPrintToast('Impresión', td.message || 'Enviado a la ticketera.', 'success');
                         } else {
-                            thermalPrintToast('Error', td?.message || 'No se pudo enviar a la ticketera.', 'error');
+                            openSaleTicketPdfTab(movementId);
                         }
                     } catch (e) {
-                        console.error('Error al reimprimir comprobante:', e);
-                        thermalPrintToast('Error de Red', 'No se pudo conectar con el servicio de impresión.', 'error');
+                        openSaleTicketPdfTab(movementId);
                     }
                 }
 
@@ -1279,50 +1482,43 @@
             })();
 
             function sincronizarApisunat() {
-                if (!confirm("¿Desea sincronizar los comprobantes y correlativos del sistema con APISUNAT?")) {
-                    return;
-                }
+                if (!confirm("¿Desea conciliar los comprobantes de APISUNAT con sus ventas y reordenar únicamente los pendientes desde el siguiente correlativo libre? No se enviará ningún comprobante.")) return;
                 const token = document.querySelector('meta[name="csrf-token"]')?.content || '{{ csrf_token() }}';
                 fetch("{{ route('sales.sync.apisunat') }}", {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': token,
-                        'X-Requested-With': 'XMLHttpRequest',
-                        'Accept': 'application/json'
-                    }
+                    headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': token, 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
                 })
                 .then(res => res.json())
-                .then(data => {
-                    alert(data.message || 'Sincronización completada.');
-                    if (data.success) window.location.reload();
-                })
-                .catch(err => {
-                    console.error(err);
-                    alert('Error al sincronizar con APISUNAT.');
-                });
+                .then(data => { alert(data.message); if (data.success) window.location.reload(); });
             }
-                    return;
-                }
+
+            function enviarLoteApisunat() {
+                if (!confirm("¿Desea enviar todas las ventas pendientes a APISUNAT? Las fechas antiguas de hace más de 2 días se enviarán automáticamente con la fecha máxima permitida por SUNAT (últimos 2 días) para que no sean rechazadas.")) return;
                 const token = document.querySelector('meta[name="csrf-token"]')?.content || '{{ csrf_token() }}';
                 fetch("{{ route('sales.batch.sunat') }}", {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': token,
-                        'X-Requested-With': 'XMLHttpRequest',
-                        'Accept': 'application/json'
-                    }
+                    headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': token, 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
                 })
                 .then(res => res.json())
                 .then(data => {
-                    alert(data.message || 'Proceso completado.');
-                    if (data.success) window.location.reload();
+                    alert(data.message);
+                    if (data.success || (data.emitted_count && data.emitted_count > 0)) window.location.reload();
                 })
                 .catch(err => {
                     console.error(err);
-                    alert('Error al enviar documentos a APISUNAT.');
+                    alert('Error de conexión al procesar el envío masivo.');
                 });
+            }
+
+            function reorganizarCorrelativos() {
+                if (!confirm("¿Desea reorganizar secuencialmente los correlativos de las ventas PENDIENTES (sin tocar las ya emitidas a SUNAT) para eliminar cualquier hueco?")) return;
+                const token = document.querySelector('meta[name="csrf-token"]')?.content || '{{ csrf_token() }}';
+                fetch("{{ route('sales.reorganize.correlatives') }}", {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': token, 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
+                })
+                .then(res => res.json())
+                .then(data => { alert(data.message); if (data.success) window.location.reload(); });
             }
 
             function descargarPdf() {
@@ -1344,8 +1540,8 @@
                 const baseUrl = btn ? btn.dataset.excelUrl : "{{ route('admin.sales.excel') }}";
 
                 const url = new URL(baseUrl, window.location.origin);
-                const dfVal = document.querySelector('[name="date_from"]')?.value;
-                const dtVal = document.querySelector('[name="date_to"]')?.value;
+                const dfVal = document.querySelector('[name=\"date_from\"]')?.value;
+                const dtVal = document.querySelector('[name=\"date_to\"]')?.value;
                 if (dfVal) url.searchParams.set('date_from', dfVal);
                 if (dtVal) url.searchParams.set('date_to', dtVal);
 
@@ -1353,7 +1549,7 @@
             }
 
             function setupSalesConvertQuickClientForm() {
-                const form = document.getElementById('sales-convert-quick-client-form');
+                const form = document.getElementById('quick-client-form-sales-convert');
                 if (!form || form.dataset.boundSalesConvert === '1') return;
                 form.dataset.boundSalesConvert = '1';
                 form.addEventListener('submit', async function (e) {
@@ -1420,189 +1616,9 @@
                     }
                 });
             }
-            function deletedSalesModal() {
-                return {
-                    open: false,
-                    loading: false,
-                    hasRestored: false,
-                    sales: [],
-                    searchQuery: '',
-                    fetchDeletedSales() {
-                        this.loading = true;
-                        const url = '{{ route('sales.deleted.list') }}' + (this.searchQuery ? '?search=' + encodeURIComponent(this.searchQuery) : '');
-                        fetch(url, {
-                            headers: {
-                                'X-Requested-With': 'XMLHttpRequest',
-                                'Accept': 'application/json'
-                            }
-                        })
-                        .then(res => res.json())
-                        .then(data => {
-                            this.sales = data.sales || [];
-                            this.loading = false;
-                        })
-                        .catch(err => {
-                            console.error('Error al cargar ventas eliminadas:', err);
-                            this.loading = false;
-                        });
-                    },
-                    restoreSale(id) {
-                        if (!confirm('¿Desea restaurar esta venta eliminada?')) return;
-                        const token = document.querySelector('meta[name="csrf-token"]')?.content || '{{ csrf_token() }}';
-                        fetch('/admin/ventas/' + id + '/restore', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'X-CSRF-TOKEN': token,
-                                'X-Requested-With': 'XMLHttpRequest',
-                                'Accept': 'application/json'
-                            }
-                        })
-                        .then(res => res.json())
-                        .then(data => {
-                            if (data.success) {
-                                this.hasRestored = true;
-                                this.fetchDeletedSales();
-                            } else {
-                                alert(data.message || 'Error al restaurar la venta.');
-                            }
-                        })
-                        .catch(err => {
-                            console.error(err);
-                            alert('Error al restaurar la venta.');
-                        });
-                    },
-                    closeModal() {
-                        this.open = false;
-                        if (this.hasRestored) {
-                            window.location.reload();
-                        }
-                    }
-                };
-            }
-
             setupSalesConvertQuickClientForm();
             document.addEventListener('DOMContentLoaded', setupSalesConvertQuickClientForm);
             document.addEventListener('turbo:load', setupSalesConvertQuickClientForm);
         </script>
     @endpush
-
-    <!-- Modal para Ventas Eliminadas -->
-    <div x-data="deletedSalesModal()"
-        x-on:open-deleted-sales-modal.window="open = true; hasRestored = false; fetchDeletedSales();"
-        x-show="open"
-        x-cloak
-        style="display: none;"
-        :class="{ 'flex': open, 'hidden': !open }"
-        class="fixed inset-0 z-[120] items-center justify-center bg-slate-900/60 p-4 backdrop-blur-sm"
-        @keydown.escape.window="closeModal()">
-
-        <div class="relative flex max-h-[90vh] w-full max-w-5xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl dark:bg-gray-900 border border-gray-200 dark:border-gray-800">
-            <!-- Header -->
-            <div class="flex items-center justify-between border-b border-gray-200 px-6 py-4 dark:border-gray-800 bg-red-50/50 dark:bg-red-950/30">
-                <div class="flex items-center gap-3">
-                    <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-red-100 text-red-600 dark:bg-red-900/40 dark:text-red-400">
-                        <i class="ri-delete-bin-line text-xl"></i>
-                    </div>
-                    <div>
-                        <h3 class="text-lg font-bold text-gray-900 dark:text-white">Ventas Eliminadas / Anuladas</h3>
-                        <p class="text-xs text-gray-500 dark:text-gray-400">Histórico de comprobantes anulados o eliminados del sistema</p>
-                    </div>
-                </div>
-                <button type="button" @click="closeModal()"
-                    class="flex h-9 w-9 items-center justify-center rounded-full text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-800 dark:hover:text-white">
-                    <i class="ri-close-line text-xl"></i>
-                </button>
-            </div>
-
-            <!-- Search Bar -->
-            <div class="flex items-center gap-3 border-b border-gray-200 px-6 py-3 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900">
-                <div class="relative flex-1">
-                    <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400">
-                        <i class="ri-search-line text-base"></i>
-                    </span>
-                    <input type="text" x-model="searchQuery" @keyup.enter="fetchDeletedSales()" placeholder="Buscar por comprobante, cliente o usuario..."
-                        class="h-10 w-full rounded-lg border border-gray-300 bg-white pl-10 pr-4 text-sm text-gray-800 placeholder-gray-400 focus:border-red-500 focus:outline-none focus:ring-2 focus:ring-red-500/20 dark:border-gray-700 dark:bg-gray-800 dark:text-white" />
-                </div>
-                <button type="button" @click="fetchDeletedSales()"
-                    class="h-10 rounded-lg bg-red-600 px-4 text-sm font-semibold text-white shadow-xs hover:bg-red-700 transition">
-                    Buscar
-                </button>
-            </div>
-
-            <!-- Content -->
-            <div class="flex-1 overflow-y-auto p-6">
-                <div x-show="loading" class="flex flex-col items-center justify-center py-12">
-                    <i class="ri-loader-4-line text-4xl text-red-600 animate-spin mb-2"></i>
-                    <p class="text-sm text-gray-500 font-medium">Cargando comprobantes eliminados...</p>
-                </div>
-
-                <div x-show="!loading && sales.length === 0" class="flex flex-col items-center justify-center py-12 text-center">
-                    <div class="flex h-16 w-16 items-center justify-center rounded-full bg-gray-100 text-gray-400 dark:bg-gray-800 mb-3">
-                        <i class="ri-inbox-line text-3xl"></i>
-                    </div>
-                    <h4 class="text-base font-semibold text-gray-800 dark:text-white">No se encontraron ventas eliminadas</h4>
-                    <p class="text-xs text-gray-500 dark:text-gray-400 max-w-sm mt-1">No hay registros de comprobantes eliminados o que coincidan con la búsqueda.</p>
-                </div>
-
-                <div x-show="!loading && sales.length > 0" class="overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-800">
-                    <table class="w-full text-left text-sm">
-                        <thead>
-                            <tr class="bg-gray-100 text-xs uppercase font-semibold text-gray-600 dark:bg-gray-800 dark:text-gray-300">
-                                <th class="px-4 py-3">Comprobante</th>
-                                <th class="px-4 py-3">Fecha Venta</th>
-                                <th class="px-4 py-3">Fecha Eliminado</th>
-                                <th class="px-4 py-3">Cliente / Persona</th>
-                                <th class="px-4 py-3">Registrado por</th>
-                                <th class="px-4 py-3 text-right">Total</th>
-                                <th class="px-4 py-3 text-center">Estado</th>
-                                <th class="px-4 py-3 text-center">Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-gray-200 dark:divide-gray-800">
-                            <template x-for="s in sales" :key="s.id">
-                                <tr class="hover:bg-red-50/40 dark:hover:bg-red-950/20 transition">
-                                    <td class="px-4 py-3 font-bold text-gray-800 dark:text-white" x-text="s.display_number"></td>
-                                    <td class="px-4 py-3 text-xs text-gray-600 dark:text-gray-400" x-text="s.date"></td>
-                                    <td class="px-4 py-3 text-xs text-red-600 dark:text-red-400 font-medium" x-text="s.deleted_at"></td>
-                                    <td class="px-4 py-3 text-gray-700 dark:text-gray-300" x-text="s.person_name"></td>
-                                    <td class="px-4 py-3 text-xs text-gray-600 dark:text-gray-400" x-text="s.user_name"></td>
-                                    <td class="px-4 py-3 text-right font-bold text-red-700 dark:text-red-400" x-text="'S/ ' + s.total"></td>
-                                    <td class="px-4 py-3 text-center">
-                                        <span class="inline-flex items-center rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-semibold text-red-800 dark:bg-red-900/30 dark:text-red-400">
-                                            Eliminado
-                                        </span>
-                                    </td>
-                                    <td class="px-4 py-3 text-center">
-                                        <button type="button" @click="restoreSale(s.id)"
-                                            class="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white shadow-xs hover:bg-emerald-700 active:scale-95 transition">
-                                            <i class="ri-restart-line text-sm"></i>
-                                            <span>Restaurar</span>
-                                        </button>
-                                    </td>
-                                </tr>
-                            </template>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <!-- Footer -->
-            <div class="flex items-center justify-between border-t border-gray-200 px-6 py-4 dark:border-gray-800 bg-gray-50 dark:bg-gray-900">
-                <div class="text-xs text-gray-500">
-                    <span x-show="loading" class="inline-flex items-center gap-1.5 text-gray-500 font-medium">
-                        <i class="ri-loader-4-line text-sm text-red-600 animate-spin"></i>
-                        <span>Buscando comprobantes...</span>
-                    </span>
-                    <span x-show="!loading">
-                        <strong class="font-bold text-gray-800 dark:text-white" x-text="sales.length">0</strong> comprobante(s) eliminado(s) encontrado(s)
-                    </span>
-                </div>
-                <button type="button" @click="closeModal()"
-                    class="rounded-xl border border-gray-300 bg-white px-5 py-2 text-sm font-semibold text-gray-700 shadow-xs hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 transition">
-                    Cerrar
-                </button>
-            </div>
-        </div>
-    </div>
 @endsection
